@@ -29,16 +29,20 @@ try {
     await extractTar({ file: archive, cwd: scratch, strict: true, preservePaths: false })
   }
   const executable = join(scratch, process.platform === 'win32' ? 'dsh-tui.exe' : 'dsh-tui')
-  const run = args => {
+  const run = (phase, timeout = 60000) => {
+    const args = ['--dump-config']
     const started = performance.now()
-    const result = spawnSync(executable, args, { env: { ...env, PATH: '' }, encoding: 'utf8', timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
+    const result = spawnSync(executable, args, { env: { ...env, PATH: '' }, encoding: 'utf8', timeout, maxBuffer: 16 * 1024 * 1024 })
     const elapsed = Math.round(performance.now() - started)
-    assert.equal(result.status, 0, `Standalone ${args.join(' ')} failed after ${elapsed} ms: status=${result.status}, signal=${result.signal}, error=${result.error?.code ?? 'none'}\n${result.stderr}`)
-    console.log(`standalone ${args.join(' ')} OK (${elapsed} ms)`)
+    assert.equal(result.status, 0, `Standalone ${phase} failed after ${elapsed} ms (budget ${timeout} ms): status=${result.status}, signal=${result.signal}, error=${result.error?.code ?? 'none'}\n${result.stderr}`)
+    console.log(`standalone ${phase} OK (${elapsed} ms; budget ${timeout} ms)`)
     return result
   }
+  // Cold install extracts the full dependency tree; repair also deletes the
+  // damaged tree. Intel macOS CI repair has taken 57.6s before runner variance.
+  const extractionTimeout = 180000
   for (let attempt = 0; attempt < 2; attempt++) {
-    const config = run(['--dump-config'])
+    const config = attempt === 0 ? run('cold startup', extractionTimeout) : run('warm startup')
     assert.equal(config.status, 0, config.stderr)
     assert.match(config.stdout, /# == @askdkc\/dsh-cli/u)
   }
@@ -49,7 +53,7 @@ try {
   writeFileSync(manifestPath, JSON.stringify(manifest))
   const patch = join(dirname(manifestPath), 'cordis.patch.yml')
   writeFileSync(patch, '# user overlay\n[]\n')
-  const config = run(['--dump-config'])
+  const config = run('preserved profile')
   assert.equal(config.status, 0, config.stderr)
   assert.match(config.stdout, /dsh-tui/u)
   assert.equal(JSON.parse(readFileSync(manifestPath, 'utf8')).custom, 'preserved')
@@ -61,7 +65,7 @@ try {
   const dsh = JSON.parse(readFileSync(join(dshRoot, 'package.json'), 'utf8'))
   const entry = join(dshRoot, typeof dsh.bin === 'string' ? dsh.bin : dsh.bin.dsh)
   writeFileSync(entry, 'throw new Error("damaged runtime")\n')
-  const repaired = run(['--dump-config'])
+  const repaired = run('cache repair', extractionTimeout)
   assert.equal(repaired.status, 0, repaired.stderr)
   assert.match(repaired.stdout, /# == @askdkc\/dsh-cli/u, 'real executable repairs its cached entry')
 
