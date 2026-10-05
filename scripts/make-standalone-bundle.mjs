@@ -8,7 +8,6 @@
  * 产物：<out>/ 目录下各平台的压缩包：
  *   - dsh-tui-standalone-linux-x64.tar.gz  (内含 dsh-tui)
  *   - dsh-tui-standalone-linux-arm64.tar.gz (内含 dsh-tui)
- *   - dsh-tui-standalone-win-x64.zip       (内含 dsh-tui.exe)
  *   - dsh-tui-standalone-darwin-arm64.tar.gz (内含 dsh-tui)
  *   - dsh-tui-standalone-darwin-x64.tar.gz (内含 dsh-tui)
  */
@@ -43,7 +42,7 @@ const argOut = process.argv.indexOf('--out')
 const outDir = resolve(argOut >= 0 ? process.argv[argOut + 1] : join(root, 'dist-standalone'))
 
 const argTargets = process.argv.indexOf('--targets')
-const defaultTargets = 'node24-linux-x64,node24-linux-arm64,node24-win-x64,node24-macos-arm64,node24-macos-x64'
+const defaultTargets = 'node24-linux-x64,node24-linux-arm64,node24-macos-arm64,node24-macos-x64'
 const targets = argTargets >= 0 ? process.argv[argTargets + 1] : defaultTargets
 const targetList = targets.split(',').map(standaloneTarget)
 // Each executable carries only its own native dependency graph.
