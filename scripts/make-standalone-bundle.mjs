@@ -14,7 +14,7 @@
  */
 import { execFileSync, execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { c as createTar } from 'tar'
+import { createStandaloneArchive } from './lib/standalone-archive.mjs'
 import { readRuntimeMetadata, ensureProfile } from '../standalone/runtime.cjs'
 import {
   chmodSync,
@@ -209,7 +209,7 @@ for (const args of [['--help'], ['--profile', 'dsh-cli', '--dump-config']]) {
 }
 rmSync(smokeHome, { recursive: true, force: true })
 console.log('    正在打包 node_modules 到 runtime.tar.gz…')
-await createTar({ file: runtimeTar, cwd: standaloneDir, gzip: true }, ['node_modules'])
+createStandaloneArchive(runtimeTar, standaloneDir, ['node_modules'])
 const archiveDigest = createHash('sha256').update(readFileSync(runtimeTar)).digest('hex')
 metadata.bundleId = `tui-${metadata.tuiVersion}-dsh-${metadata.dshVersion}-${archiveDigest.slice(0, 16)}`
 writeFileSync(join(standaloneDir, 'runtime-meta.json'), `${JSON.stringify(metadata, null, 2)}\n`)
@@ -245,8 +245,10 @@ const pkgArgs = [
   targets,
   '--out-path',
   stageDir,
+  // runtime.tar.gz is already compressed. pkg compression would materialize
+  // the entire large asset in memory and a temporary file before tar can read it.
   '--compress',
-  'GZip',
+  'None',
   '--no-bytecode',
   '--public',
 ]
@@ -329,7 +331,7 @@ for (const stagedFile of stagedFiles) {
       execFileSync('zip', ['-j', archivePath, targetBinPath], { stdio: 'inherit' })
     }
   } else {
-    await createTar({ file: archivePath, cwd: binDir, gzip: true }, [binaryName])
+    createStandaloneArchive(archivePath, binDir, [binaryName])
   }
 
   const archStat = statSync(archivePath)

@@ -29,7 +29,14 @@ try {
     await extractTar({ file: archive, cwd: scratch, strict: true, preservePaths: false })
   }
   const executable = join(scratch, process.platform === 'win32' ? 'dsh-tui.exe' : 'dsh-tui')
-  const run = args => spawnSync(executable, args, { env: { ...env, PATH: '' }, encoding: 'utf8', timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
+  const run = args => {
+    const started = performance.now()
+    const result = spawnSync(executable, args, { env: { ...env, PATH: '' }, encoding: 'utf8', timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
+    const elapsed = Math.round(performance.now() - started)
+    assert.equal(result.status, 0, `Standalone ${args.join(' ')} failed after ${elapsed} ms: status=${result.status}, signal=${result.signal}, error=${result.error?.code ?? 'none'}\n${result.stderr}`)
+    console.log(`standalone ${args.join(' ')} OK (${elapsed} ms)`)
+    return result
+  }
   for (let attempt = 0; attempt < 2; attempt++) {
     const config = run(['--dump-config'])
     assert.equal(config.status, 0, config.stderr)

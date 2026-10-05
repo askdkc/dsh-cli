@@ -2,7 +2,7 @@
   "assets": [
     "runtime.tar.gz"
   ],
-  "compress": "GZip",
+  "compress": "None",
   "bytecode": false,
   "public": true
 }
