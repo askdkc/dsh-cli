@@ -4,40 +4,10 @@ allowBuilds:
   '@google/genai': false
   protobufjs: false
 
-# Develop against the single validated DSH release. Published peers use the same baseline.
+autoInstallPeers: false
+
+# Preserve the independent provider catalog override; DSH follows the manifest channel.
 overrides:
-  '@deepseek-ai/dsh-agent': 0.2.0-rc.2
-  '@deepseek-ai/dsh-agent-instructions': 0.2.0-rc.2
-  '@deepseek-ai/dsh-atomic-write': 0.2.0-rc.2
-  '@deepseek-ai/dsh-attachment': 0.2.0-rc.2
-  '@deepseek-ai/dsh-brand': 0.2.0-rc.2
-  '@deepseek-ai/dsh-code-runtime': 0.2.0-rc.2
-  '@deepseek-ai/dsh-commands': 0.2.0-rc.2
-  '@deepseek-ai/dsh-command-compact': 0.2.0-rc.2
-  '@deepseek-ai/dsh-compaction-basic': 0.2.0-rc.2
-  '@deepseek-ai/dsh-compaction-tool-result-pruner': 0.2.0-rc.2
-  '@deepseek-ai/dsh-cordis-host-runner': 0.2.0-rc.2
-  '@deepseek-ai/dsh-fs': 0.2.0-rc.2
-  '@deepseek-ai/dsh-fs-local': 0.2.0-rc.2
-  '@deepseek-ai/dsh-home-paths': 0.2.0-rc.2
-  '@deepseek-ai/dsh-invariants': 0.2.0-rc.2
-  '@deepseek-ai/dsh-llm': 0.2.0-rc.2
-  '@deepseek-ai/dsh-llm-pi-ai': 0.2.0-rc.2
-  '@deepseek-ai/dsh-persona': 0.2.0-rc.2
-  '@deepseek-ai/dsh-plan-mode': 0.2.0-rc.2
-  '@deepseek-ai/dsh-sandbox': 0.2.0-rc.2
-  '@deepseek-ai/dsh-sandbox-policy': 0.2.0-rc.2
-  '@deepseek-ai/dsh-scope': 0.2.0-rc.2
-  '@deepseek-ai/dsh-session': 0.2.0-rc.2
-  '@deepseek-ai/dsh-session-persistence': 0.2.0-rc.2
-  '@deepseek-ai/dsh-session-persistence-jsonl': 0.2.0-rc.2
-  '@deepseek-ai/dsh-authorization': 0.2.0-rc.2
-  '@deepseek-ai/dsh-credentials': 0.2.0-rc.2
-  '@deepseek-ai/dsh-launch-environment': 0.2.0-rc.2
-  '@deepseek-ai/dsh-settings': 0.2.0-rc.2
-  '@deepseek-ai/dsh-timeout': 0.2.0-rc.2
-  '@deepseek-ai/dsh-typert-protocol': 0.2.0-rc.2
-  '@deepseek-ai/dsh-user-questions': 0.2.0-rc.2
   # OpenCode model list: force the pi-ai catalog past dsh-llm-pi-ai's
   # ^0.87.1 pin to the latest verified list (0.99.1). Mirrors the parent
   # repo override; dsh-auth installs from its own directory.

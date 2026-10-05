@@ -470,6 +470,7 @@ const GROUPS = {
 // （仅 bundleId）自愈升级、清单外文件不设防（边界确认）、chmod 收紧
 // 限定自建层级（预存 cacheBase 保持用户权限，自建根目录与版本子目录
 // 0700）。mini runtime fixture 由清单造树 + 系统 tar 打包，解压器注入。
+    ["verify-standalone-runtime", ['node', 'scripts/verify-standalone-runtime.mjs']],
     ["verify-standalone-cache-guard", ['node', 'scripts/verify-standalone-cache-guard.mjs']],
 // ~/.dsh-tui 数据文件权限回归（安全修复）：history.jsonl（用户输入全文）、
 // mouse-debug.log 与 session-index.json（会话标题/分支名）落盘 0600、

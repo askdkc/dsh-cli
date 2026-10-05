@@ -2,7 +2,8 @@ packages:
   - .
 
 nodeLinker: hoisted
-autoInstallPeers: false
+# The official CLI owns its required peer graph; bundled TUI peers stay optional.
+autoInstallPeers: true
 
 supportedArchitectures:
   os:

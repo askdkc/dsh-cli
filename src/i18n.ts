@@ -686,25 +686,6 @@ const dict = {
   'logo-tagline': { zh: '探索未至之境！', en: 'Explore the uncharted!' },
   'logo-tip-prefix': { zh: '提示：', en: 'Tip: ' },
   'logo-tip-more': { zh: '更多技巧', en: 'more tips' },
-  // Upstream-drift notice (merged one-liner under the tip; copy explains
-  // the problem AND the fix — the command pins the validated line).
-  'logo-drift-newer': {
-    zh: 'dsh 引擎为 {{installed}}，比本界面验证过的 {{validated}} 新，可能出现兼容问题；求稳可执行 npm i -g @deepseek-ai/dsh@{{primary}} 降级，或等待 dsh-tui 适配新版。',
-    en: 'The dsh engine ({{installed}}) is newer than the {{validated}} this UI is validated against, so issues are possible; downgrade via npm i -g @deepseek-ai/dsh@{{primary}} for stability, or wait for a dsh-tui update.',
-  },
-  'logo-drift-older': {
-    zh: 'dsh 引擎为 {{installed}}，低于本界面验证过的 {{validated}}，部分功能可能不可用；建议执行 npm i -g @deepseek-ai/dsh@{{primary}} 升级。',
-    en: 'The dsh engine ({{installed}}) is older than the {{validated}} this UI is validated against; some features may be missing. Upgrade via npm i -g @deepseek-ai/dsh@{{primary}}.',
-  },
-  'logo-drift-mixed': {
-    zh: '检测到 dsh 引擎多版本混装（{{installed}}），容易出现奇怪问题；建议执行 npm i -g @deepseek-ai/dsh@{{primary}} 统一版本。',
-    en: 'Mixed dsh engine versions detected ({{installed}}), which can cause odd behavior; unify them via npm i -g @deepseek-ai/dsh@{{primary}}.',
-  },
-  'logo-drift-broken': {
-    zh: 'dsh 引擎版本异常（{{installed}}），本界面验证过 {{validated}}；建议执行 npm i -g @deepseek-ai/dsh@{{primary}} 重装。',
-    en: 'Unexpected dsh engine versions ({{installed}}); this UI is validated against {{validated}}. Reinstall via npm i -g @deepseek-ai/dsh@{{primary}}.',
-  },
-
   // ── components/PromptInput.tsx ──────────────────────────────────────
   'input-sent-after-turn': { zh: '已发送，当前回合结束后处理', en: 'Sent, processed after the current turn' },
   'input-injected': { zh: '已从编辑器发送', en: 'Sent from editor' },

@@ -10,13 +10,11 @@
 
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { parse } from 'yaml'
 import { applyEntryPatches } from '@deepseek-ai/cordis-plugin-include'
 import { evaluate } from '@deepseek-ai/cordis-plugin-loader'
-import { prepareUpstreamSourceResolver } from './upstream-source-baseline.mjs'
 
 const yamlOptions = { logLevel: 'silent' }
 const loadPatch = path => parse(readFileSync(path, 'utf8'), yamlOptions)
@@ -31,6 +29,7 @@ const baselines = [{
   version: installedWebVersion,
   baseUrl: pathToFileURL(tuiPath).href,
   webPath: installedWebPath,
+  presetPath: fileURLToPath(import.meta.resolve('@deepseek-ai/dsh-web-app/presets/standard.patch.yml')),
 }]
 
 const sourceRoot = process.env.DSH_HARNESS_SOURCE_ROOT === undefined
@@ -42,18 +41,15 @@ const sourceBasePath = join(sourceRoot, 'packages/bundle/base/cordis.patch.yml')
 const requireSourceBaseline = process.env.DSH_REQUIRE_UPSTREAM_BASELINE === '1'
 if (existsSync(sourceWebPath) && existsSync(sourceWebManifest) && existsSync(sourceBasePath)) {
   const sourceWebVersion = JSON.parse(readFileSync(sourceWebManifest, 'utf8')).version
-  if (requireSourceBaseline && sourceWebVersion !== '0.2.0-rc.2') {
-    throw new Error(`required source baseline is 0.2.0-rc.2, got ${sourceWebVersion}`)
-  }
-  const resolver = prepareUpstreamSourceResolver(sourceRoot)
   baselines.push({
     label: `source web-app ${sourceWebVersion}`,
     version: sourceWebVersion,
-    baseUrl: resolver.baseUrl,
+    baseUrl: pathToFileURL(sourceWebManifest).href,
+    presetPath: join(sourceRoot, 'packages/bundle/web-app/presets/standard.patch.yml'),
     basePath: sourceBasePath,
     webPath: sourceWebPath,
   })
-} else if (requireSourceBaseline) {
+} else if (requireSourceBaseline || process.env.DSH_HARNESS_SOURCE_ROOT !== undefined) {
   throw new Error(`required source baseline missing under ${sourceRoot}`)
 }
 
@@ -76,20 +72,7 @@ const shared = [
 ]
 
 for (const baseline of baselines) {
-  const require = createRequire(baseline.baseUrl)
-  const resolvePackage = specifier => {
-    try {
-      return require.resolve(specifier)
-    } catch (error) {
-      if (
-        error?.code === 'ERR_MODULE_NOT_FOUND'
-        || error?.code === 'MODULE_NOT_FOUND'
-        || error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED'
-      ) return undefined
-      throw error
-    }
-  }
-  const shippedOwnsCommandGoal = insertedRows(loadPatch(resolvePackage('@deepseek-ai/dsh-web-app/presets/standard.patch.yml')))
+  const shippedOwnsCommandGoal = insertedRows(loadPatch(baseline.presetPath))
     .some(row => row.config.plugins.some(plugin => plugin.id === 'command-goal'))
   const basePatches = baseline.basePath === undefined ? [] : loadPatch(baseline.basePath)
   const webPatches = loadPatch(baseline.webPath)

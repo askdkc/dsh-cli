@@ -208,7 +208,7 @@ CI 回归都要跑。窄改动还要跑最近的聚焦脚本：
 | 改动区域 | 聚焦验证 |
 | --- | --- |
 | 通用无头屏幕组装 | `pnpm smoke` |
-| Harness 验证线更新 | `pnpm typecheck`、`pnpm verify:upstream-source`（`DSH_HARNESS_SOURCE_ROOT` 指向 `0.2.0-rc.2` 源码）、`pnpm verify:live-session -- --real-upstream`、`pnpm --dir dsh-auth verify` |
+| Harness 兼容性更新 | `pnpm typecheck`、`pnpm verify:upstream-source`（`DSH_HARNESS_SOURCE_ROOT` 指向当前上游源码）、`pnpm verify:live-session -- --real-upstream`、`pnpm --dir dsh-auth verify` |
 | 跨代理会话迁移（src/migrate、adapter 解析或事件合成） | `node --import tsx/esm scripts/verify-migrate.mjs` |
 | Channel submit/steer/pending 行为 | `node scripts/verify-submit.mjs` |
 | 回退后编辑重发与历史 Inbox 清理 | `pnpm verify:rewind-edit` |
@@ -395,7 +395,7 @@ TypeScript 源的脚本在头部声明 `node --import tsx/esm <script>` 形式�
 | 用户可见的文档化行为 | 中英文 README，外加适用的配置注释/帮助文本 |
 | 贡献入口 | `docs/contributing.md`、`docs/contributing.en.md`、`.github/ISSUE_TEMPLATE/`、`.github/workflows/ci.yml` |
 | 包版本或依赖 | `package.json`、`pnpm-lock.yaml`、适用时的生成/发布产物；不要顺手搅动旧 npm 锁文件 |
-| 上游验证线 bump | `src/dsh-adapter/contract.ts`、`package.json` peer+dev 两组范围、随包内置的 `dsh-auth/package.json` 与 `dsh-auth/pnpm-lock.yaml`、`vendor/dsh-working-activity/package.json` 的适用 peer、`pnpm-workspace.yaml`、`.github/workflows/ci.yml` upstream-contract 的上游 SHA、`scripts/verify-{upstream-source,patch-surface,web-coexistence,upstream-contract}` 内的版本常量、`patch-surface.snapshot.json`、`ADAPTER.md`、`docs/user-guide.md`；步骤见 [ADAPTER.md](../ADAPTER.md) 升级流程 |
+| 上游 API/依赖更新 | 更新实际依赖 lockfile，运行 `verify:contract`、`verify:manifest-deps`、patch/共存回归和源码类型验证；不新增版本白名单或固定 SHA。只有 TUI 自有 surface 改变才更新 `patch-surface.snapshot.json`；见 [ADAPTER.md](../ADAPTER.md) |
 
 ## Git 与发布安全（Git And Release Safety）
 

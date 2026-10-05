@@ -50,11 +50,11 @@
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-commands": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-user-questions": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-attachment": "*",
+    "@deepseek-ai/dsh-commands": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-llm-pi-ai": "*",
+    "@deepseek-ai/dsh-user-questions": "*",
     "@deepseek-ai/schemastery": "^3.18.1"
   },
   "peerDependenciesMeta": {
@@ -63,15 +63,30 @@
     },
     "@deepseek-ai/dsh-llm-pi-ai": {
       "optional": true
+    },
+    "@deepseek-ai/cordis": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-commands": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-llm": {
+      "optional": true
+    },
+    "@deepseek-ai/dsh-user-questions": {
+      "optional": true
+    },
+    "@deepseek-ai/schemastery": {
+      "optional": true
     }
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
-    "@deepseek-ai/dsh-attachment": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-commands": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.2.0-rc.2",
-    "@deepseek-ai/dsh-user-questions": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-attachment": "alpha",
+    "@deepseek-ai/dsh-commands": "alpha",
+    "@deepseek-ai/dsh-llm": "alpha",
+    "@deepseek-ai/dsh-llm-pi-ai": "alpha",
+    "@deepseek-ai/dsh-user-questions": "alpha",
     "@deepseek-ai/schemastery": "^3.18.1",
     "@types/node": "^22.0.0",
     "typescript": "^6.0.3",
@@ -82,6 +97,9 @@
     "@ai-sdk/provider": "4.0.21",
     "esbuild": "0.28.2",
     "zod": "4.1.8",
-    "tsx": "4.23.13"
+    "tsx": "4.23.13",
+    "@deepseek-ai/dsh-launch-environment": "alpha",
+    "@deepseek-ai/dsh-authorization": "alpha",
+    "@deepseek-ai/dsh-credentials": "alpha"
   }
 }

@@ -1,11 +1,10 @@
 /**
  * Patch-surface contract for the TUI bundle overlay.
  *
- * TUI-owned inserts/config overrides are one fixed snapshot. Comparisons with
- * the official web patch are keyed by web-app version because ownership moved
- * between rc.2 and alpha.1. Dynamic disabled conditions are evaluated from
- * each baseline's package root so the snapshot records effective ownership,
- * not the raw YAML representation. The installed package is always checked; a
+ * TUI-owned inserts/config overrides are one snapshot. Official Web ownership
+ * is checked structurally, independent of release labels. Dynamic disabled
+ * conditions are evaluated from each baseline's package root. An installed
+ * package is checked when available; a
  * source-authoritative prerelease tree is checked too when present. CI sets
  * DSH_REQUIRE_UPSTREAM_BASELINE=1 so that baseline can never be skipped.
  *
@@ -16,7 +15,6 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { evaluate } from '@deepseek-ai/cordis-plugin-loader'
 import { parse as parseYaml } from 'yaml'
-import { prepareUpstreamSourceResolver } from './upstream-source-baseline.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const tuiPatchPath = join(root, 'cordis.patch.yml')
@@ -41,7 +39,6 @@ interface WebComparison {
 interface Snapshot {
   inserts: string[]
   configOverrides: string[]
-  webAppComparisons: Record<string, WebComparison>
 }
 
 interface WebBaseline {
@@ -155,13 +152,8 @@ const sourceManifest = join(sourceRoot, 'packages/bundle/web-app/package.json')
 const sourcePatch = join(sourceRoot, 'packages/bundle/web-app/cordis.patch.yml')
 const requireSourceBaseline = process.env.DSH_REQUIRE_UPSTREAM_BASELINE === '1'
 if (existsSync(sourceManifest) && existsSync(sourcePatch)) {
-  const resolver = prepareUpstreamSourceResolver(sourceRoot)
-  const source = baseline('source', sourceManifest, sourcePatch, resolver.baseUrl)
-  if (requireSourceBaseline && source.version !== '0.2.0-rc.2') {
-    throw new Error(`required source baseline is 0.2.0-rc.2, got ${source.version}`)
-  }
-  baselines.push(source)
-} else if (requireSourceBaseline) {
+  baselines.push(baseline('source', sourceManifest, sourcePatch))
+} else if (requireSourceBaseline || process.env.DSH_HARNESS_SOURCE_ROOT !== undefined) {
   throw new Error(`required source baseline missing under ${sourceRoot}`)
 }
 
@@ -169,22 +161,21 @@ const ownSurface = {
   inserts: tui.inserts.map(row => row.id),
   configOverrides: tui.overrides.filter(row => !row.disabled && row.hasConfig).map(row => row.id),
 }
-const liveComparisons = new Map<string, WebComparison>()
+// These differences express TUI ownership, not a particular DSH release.
+const expectedComparison: WebComparison = {
+  disablesBeyondWebApp: [],
+  webAppDisablesBeyondTui: ['tool-plugin-manager', 'workflow-ptc'],
+  insertsSharedWithWebApp: [],
+}
+if (baselines.length === 0) throw new Error('patch-surface requires a Web baseline')
 for (const webApp of baselines) {
-  const value = comparison(tui, webApp)
-  if (value.insertsSharedWithWebApp.length > 0) {
-    console.error(
-      `patch-surface: TUI inserts reuse ${webApp.label} web-app ${webApp.version} ids: `
-      + value.insertsSharedWithWebApp.join(', '),
-    )
-    process.exit(1)
+  const actual = comparison(tui, webApp)
+  for (const key of Object.keys(expectedComparison) as Array<keyof WebComparison>) {
+    if (JSON.stringify([...actual[key]].sort()) !== JSON.stringify([...expectedComparison[key]].sort())) {
+      throw new Error(`patch-surface: ${webApp.label} web-app ${webApp.version} ${key}: `
+        + `expected ${JSON.stringify(expectedComparison[key])}, got ${JSON.stringify(actual[key])}`)
+    }
   }
-  const previous = liveComparisons.get(webApp.version)
-  if (previous !== undefined && JSON.stringify(previous) !== JSON.stringify(value)) {
-    console.error(`patch-surface: ${webApp.version} differs between installed and sibling baselines`)
-    process.exit(1)
-  }
-  liveComparisons.set(webApp.version, value)
 }
 
 const mode = process.argv[2]
@@ -193,12 +184,7 @@ if (mode === '--snapshot') {
     console.error('refusing to snapshot without any @deepseek-ai/dsh-web-app baseline')
     process.exit(1)
   }
-  const next: Snapshot = {
-    ...ownSurface,
-    webAppComparisons: {
-      ...Object.fromEntries(liveComparisons),
-    },
-  }
+  const next: Snapshot = ownSurface
   writeFileSync(snapshotPath, `${JSON.stringify(next, null, 2)}\n`)
   console.log(`patch-surface snapshot written: ${snapshotPath}`)
   process.exit(0)
@@ -212,15 +198,6 @@ const recorded = JSON.parse(readFileSync(snapshotPath, 'utf8')) as Snapshot
 const failures: string[] = []
 if (JSON.stringify(recorded.inserts) !== JSON.stringify(ownSurface.inserts)) failures.push('TUI inserts')
 if (JSON.stringify(recorded.configOverrides) !== JSON.stringify(ownSurface.configOverrides)) failures.push('TUI config overrides')
-for (const webApp of baselines) {
-  const expected = recorded.webAppComparisons?.[webApp.version]
-  const actual = liveComparisons.get(webApp.version)!
-  if (expected === undefined) {
-    failures.push(`${webApp.label} web-app ${webApp.version} has no recorded comparison`)
-  } else if (JSON.stringify(expected) !== JSON.stringify(actual)) {
-    failures.push(`${webApp.label} web-app ${webApp.version} comparison`)
-  }
-}
 
 if (failures.length === 0) {
   console.log(

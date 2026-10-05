@@ -22,12 +22,11 @@ import { SPINNER_VERBS } from '../src/terminal-utils/spinnerVerbs.js'
 //   cmd-desc-*    src/commands.ts        tOr(`cmd-desc-${command.name}`)
 //   traj-sort-*   src/screens/TrajectoryScene.tsx  t(`traj-sort-${sort}`)
 //   traj-proj-*   src/screens/TrajectoryScene.tsx  t(`traj-proj-${projection}`)
-//   logo-drift-*  src/components/LogoV2.tsx        tOr(`logo-drift-${kind}`)
 //   spinner-verb-* src/components/WorkingSpinner.tsx tOr(`spinner-verb-${verb}`)
 //   tree-filter-* src/screens/SessionTree.tsx      t(`tree-filter-${filter}`)
 //   tree-kind-*   src/screens/SessionTree.tsx      t(`tree-kind-${entry.kind}`)
 //   preset-name-* / preset-desc-*   src/dsh-adapter/channel/model-actions.ts   tOr(`preset-name-${preset.id}`) — built-in preset display text
-const DYNAMIC_PREFIXES = ['cmd-desc-', 'traj-sort-', 'traj-proj-', 'logo-drift-', 'spinner-verb-', 'tree-filter-', 'tree-kind-', 'preset-name-', 'preset-desc-']
+const DYNAMIC_PREFIXES = ['cmd-desc-', 'traj-sort-', 'traj-proj-', 'spinner-verb-', 'tree-filter-', 'tree-kind-', 'preset-name-', 'preset-desc-']
 
 let failures = 0
 function fail(msg: string) {

@@ -1,28 +1,8 @@
-/**
- * Upstream compatibility contract.
- *
- * The TUI supports one validated upstream release: 0.2.0-rc.2.
- * Every official package this adapter touches is blessed here; anything
- * else must go through upstream channels or the adapter, never the UI.
- *
- * `upstreamDrift()` powers the CI gate (scripts/verify-upstream-contract.ts)
- * so a mismatched install fails in CI before it fails on a user's machine.
- * `upstreamDriftSummary()` collapses the per-package entries into the
- * single natural-language boot notice the logo header shows (see LogoV2).
- */
+/** Host dependency boundary. Release labels are diagnostic data, not an allowlist. */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-/** Primary validated upstream line (newest). */
-export const UPSTREAM_VALIDATED_VERSION = '0.2.0-rc.2'
-
-/** Update the baseline in place; older releases are unsupported. */
-export const UPSTREAM_VALIDATED_VERSIONS = [UPSTREAM_VALIDATED_VERSION] as const
-
-/**
- * Framework packages version on their own lines; the contract validates
- * their MAJOR (breaking surface), not the harness prerelease number.
- */
+/** Frameworks have independent, breaking major versions. */
 export const UPSTREAM_FRAMEWORK_MAJORS: Record<string, number> = {
   '@deepseek-ai/cordis': 4,
   '@deepseek-ai/schemastery': 3,
@@ -62,47 +42,6 @@ export const UPSTREAM_BLESSED_PACKAGES = [
   '@deepseek-ai/dsh-user-questions',
 ] as const
 
-export interface UpstreamDriftEntry {
-  package: string
-  installed: string | undefined
-  validated: string
-}
-
-// These capabilities are optional at runtime. CI requires the complete dev tree.
-const OPTIONAL_RUNTIME_PACKAGES = new Set<string>([
-  '@deepseek-ai/dsh-agent-preset-registry',
-  '@deepseek-ai/dsh-ptc-runtime-node',
-  '@deepseek-ai/dsh-web-app',
-])
-
-/** Supported upstream prerelease channels in ascending precedence order. */
-export type UpstreamPrereleaseChannel = 'alpha' | 'beta' | 'rc'
-
-/** A parsed upstream prerelease version, e.g. `0.1.2-alpha.1` → `[0, 1, 2, 'alpha', 1]`. */
-export type UpstreamVersionTuple = readonly [number, number, number, UpstreamPrereleaseChannel, number]
-
-/** Parse an upstream prerelease version; undefined when unparseable. */
-export function parseUpstreamVersion(version: string | undefined): UpstreamVersionTuple | undefined {
-  const match = /^(\d+)\.(\d+)\.(\d+)-(alpha|beta|rc)\.(\d+)$/u.exec(version ?? '')
-  return match === null
-    ? undefined
-    : [Number(match[1]), Number(match[2]), Number(match[3]), match[4] as UpstreamPrereleaseChannel, Number(match[5])]
-}
-
-/** Order two parsed versions: negative/positive/zero as a `<`/`>`/`=`. */
-export function compareVersions(a: UpstreamVersionTuple, b: UpstreamVersionTuple): number {
-  for (const index of [0, 1, 2] as const) {
-    if (a[index] > b[index]) return 1
-    if (a[index] < b[index]) return -1
-  }
-  const channelRank: Record<UpstreamPrereleaseChannel, number> = { alpha: 0, beta: 1, rc: 2 }
-  const channelOrder = channelRank[a[3]] - channelRank[b[3]]
-  return channelOrder !== 0 ? channelOrder : a[4] - b[4]
-}
-
-/** Human-readable supported release. */
-export const UPSTREAM_VALIDATED_LABEL = UPSTREAM_VALIDATED_VERSION
-
 function resolvePackageJson(packageName: string): string | undefined {
   try {
     const path = import.meta.resolve(`${packageName}/package.json`)
@@ -114,7 +53,7 @@ function resolvePackageJson(packageName: string): string | undefined {
 
 let cachedVersions: Record<string, string | undefined> | undefined
 export function installedUpstreamVersions(): Record<string, string | undefined> {
-  // Package manifests do not change mid-process; memoize the boot diagnosis.
+  // Package manifests do not change during one verification process.
   // Frozen so callers can
   // never corrupt the shared cache.
   if (cachedVersions !== undefined) return cachedVersions
@@ -124,8 +63,8 @@ export function installedUpstreamVersions(): Record<string, string | undefined> 
     const path = resolvePackageJson(packageName)
     if (path !== undefined) {
       try {
-        const manifest = JSON.parse(readFileSync(path, 'utf8')) as { version?: string }
-        version = manifest.version
+        const manifest = JSON.parse(readFileSync(path, 'utf8')) as { version?: unknown }
+        version = typeof manifest.version === 'string' ? manifest.version : undefined
       } catch {
         version = undefined
       }
@@ -136,104 +75,25 @@ export function installedUpstreamVersions(): Record<string, string | undefined> 
   return cachedVersions
 }
 
-/**
- * The distinct installed prerelease versions across the blessed harness
- * packages (framework packages excluded). One entry = coherent install;
- * several = a mixed tree, which the per-package drift check cannot see.
- * Empty when nothing (or no harness package) is installed.
- */
-export function installedUpstreamLines(
-  installedVersions: Readonly<Record<string, string | undefined>> = installedUpstreamVersions(),
-): string[] {
-  const lines = new Set<string>()
-  for (const packageName of UPSTREAM_BLESSED_PACKAGES) {
-    if (UPSTREAM_FRAMEWORK_MAJORS[packageName] !== undefined) continue
-    const version = installedVersions[packageName]
-    if (version !== undefined && parseUpstreamVersion(version) !== undefined) lines.add(version)
-  }
-  return [...lines].sort((a, b) => compareVersions(parseUpstreamVersion(a)!, parseUpstreamVersion(b)!))
+export interface UpstreamDependencyIssue {
+  package: string
+  installed: string | undefined
+  reason: string
 }
 
-/**
- * Report every blessed package whose installed version is NOT one of the
- * validated release lines. Empty array = the running install matches the
- * contract.
- */
-export function upstreamDrift(
+/** Require the development dependency surface without restricting DSH releases. */
+export function upstreamDependencyIssues(
   installedVersions: Readonly<Record<string, string | undefined>> = installedUpstreamVersions(),
-): UpstreamDriftEntry[] {
-  const validated = new Set<string>(UPSTREAM_VALIDATED_VERSIONS)
-  const drift: UpstreamDriftEntry[] = []
-  for (const [packageName, installed] of Object.entries(installedVersions)) {
-    const expected = UPSTREAM_BLESSED_PACKAGES.includes(packageName as never)
-    if (!expected) continue
-    let matches: boolean
-    const frameworkMajor = UPSTREAM_FRAMEWORK_MAJORS[packageName]
-    if (frameworkMajor !== undefined) {
-      const installedMajor = Number((installed ?? '').split('.')[0])
-      matches = installedMajor === frameworkMajor
-    } else {
-      matches = installed !== undefined && validated.has(installed)
-    }
-    if (!matches) {
-      drift.push({
-        package: packageName,
-        installed,
-        validated: frameworkMajor !== undefined ? `major ${frameworkMajor}` : UPSTREAM_VALIDATED_LABEL,
-      })
+): UpstreamDependencyIssue[] {
+  const issues: UpstreamDependencyIssue[] = []
+  for (const name of UPSTREAM_BLESSED_PACKAGES) {
+    const installed = installedVersions[name]
+    const major = UPSTREAM_FRAMEWORK_MAJORS[name]
+    if (typeof installed !== 'string' || installed.trim() === '') {
+      issues.push({ package: name, installed, reason: 'package manifest or version is missing' })
+    } else if (major !== undefined && !installed.startsWith(`${major}.`)) {
+      issues.push({ package: name, installed, reason: `requires framework major ${major}` })
     }
   }
-  return drift
-}
-
-/**
- * Classification of a drifted install for the one-line boot notice:
- * `newer` / `older` — every drifted harness package sits on a single
- * parseable version off one end of the validated window; `mixed` — several
- * distinct versions coexist (unstable tree); `broken` — something is
- * missing or unparseable and wording cannot get more specific.
- */
-export type UpstreamDriftKind = 'newer' | 'older' | 'mixed' | 'broken'
-
-/** Merged drift verdict consumed by the logo header notice (LogoV2). */
-export interface UpstreamDriftSummary {
-  kind: UpstreamDriftKind
-  /** Distinct installed versions among drifted packages ('missing' for absent ones). */
-  versions: string[]
-}
-
-/**
- * Collapse {@link upstreamDrift} into a single summary for the boot notice:
- * undefined when the install matches the contract. Only harness prerelease packages
- * decide newer/older/mixed; a framework-only drift (e.g. a cordis major
- * bump) reports `broken`, since its version line is not comparable.
- */
-export function upstreamDriftSummary(
-  installedVersions: Readonly<Record<string, string | undefined>> = installedUpstreamVersions(),
-): UpstreamDriftSummary | undefined {
-  const installedLines = installedUpstreamLines(installedVersions)
-  if (installedLines.length > 1) return { kind: 'mixed', versions: installedLines }
-  const drift = upstreamDrift(installedVersions).filter(entry =>
-    entry.installed !== undefined || !OPTIONAL_RUNTIME_PACKAGES.has(entry.package))
-  if (drift.length === 0) return undefined
-  const harness = drift.filter(entry => UPSTREAM_FRAMEWORK_MAJORS[entry.package] === undefined)
-  const versions = [...new Set(drift.map(entry => entry.installed ?? 'missing'))]
-  if (harness.some(entry => entry.installed === undefined)) {
-    return { kind: 'broken', versions }
-  }
-  const harnessVersions = [...new Set(harness.map(entry => entry.installed!))]
-  if (harnessVersions.length > 1) {
-    return { kind: 'mixed', versions }
-  }
-  const installed = parseUpstreamVersion(harnessVersions[0] ?? '')
-  const validated = parseUpstreamVersion(UPSTREAM_VALIDATED_VERSION)!
-  if (installed === undefined) {
-    return { kind: 'broken', versions }
-  }
-  const order = compareVersions(installed, validated)
-  if (order > 0) return { kind: 'newer', versions }
-  if (order < 0) return { kind: 'older', versions }
-  // Identical to the primary validated version — cannot happen (it would
-  // not be drift); report broken rather than staying silent.
-  return { kind: 'broken', versions }
+  return issues
 }

@@ -514,7 +514,7 @@ guide owns detailed contracts such as the toolchain and verification matrix.
 | User-facing documented behavior | Chinese and English READMEs, plus config comments/help text where applicable |
 | Contribution intake | `docs/contributing.md`, `docs/contributing.en.md`, `.github/ISSUE_TEMPLATE/`, `.github/workflows/ci.yml` |
 | Package version or dependency | `package.json`, `pnpm-lock.yaml`, generated/published artifacts as applicable; do not churn the legacy npm lock incidentally |
-| Upstream validated-line bump | `src/dsh-adapter/contract.ts`, both peer and dev ranges in `package.json`, bundled `dsh-auth/package.json` and `dsh-auth/pnpm-lock.yaml`, `pnpm-workspace.yaml`, the upstream SHA in the `upstream-contract` job of `.github/workflows/ci.yml`, the version constants in `scripts/verify-{upstream-source,patch-surface,web-coexistence,upstream-contract}`, `patch-surface.snapshot.json`, `ADAPTER.md`, `docs/user-guide.md`; steps in the upgrade section of [ADAPTER.md](../ADAPTER.md) |
+| Upstream API/dependency update | Refresh dependency lockfiles and run contract, manifest, patch/coexistence and source type checks. Do not add a release allowlist or fixed upstream SHA. Update `patch-surface.snapshot.json` only when the TUI-owned surface changes; see [ADAPTER.md](../ADAPTER.md). |
 
 ## Git And Release Safety
 

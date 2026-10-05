@@ -13,6 +13,8 @@
  *   - dsh-tui-standalone-darwin-x64.tar.gz (内含 dsh-tui)
  */
 import { execFileSync, execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { readRuntimeMetadata, ensureProfile } from '../standalone/runtime.cjs'
 import {
   chmodSync,
   copyFileSync,
@@ -44,11 +46,11 @@ const targets = argTargets >= 0 ? process.argv[argTargets + 1] : defaultTargets
 const temporaryDir = mkdtempSync(join(tmpdir(), 'dsh-cli-standalone-'))
 const standaloneDir = join(temporaryDir, 'standalone')
 mkdirSync(standaloneDir, { recursive: true })
-for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'entry.mjs', 'cacheGuard.cjs', 'pkg.config.json']) {
+for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs', 'pkg.config.json']) {
   copyFileSync(join(root, 'standalone', name), join(standaloneDir, name))
 }
 process.on('exit', () => rmSync(temporaryDir, { recursive: true, force: true }))
-const entryFile = join(standaloneDir, 'entry.mjs')
+const entryFile = join(standaloneDir, 'entry.cjs')
 const pkgConfig = join(standaloneDir, 'pkg.config.json')
 const runtimeTar = join(standaloneDir, 'runtime.tar.gz')
 
@@ -163,15 +165,6 @@ if (existsSync(standalonePkgPath)) {
   writeFileSync(standalonePkgPath, `${JSON.stringify(sPkg, null, 2)}\n`, 'utf8')
 }
 
-if (existsSync(entryFile)) {
-  let entryContent = readFileSync(entryFile, 'utf8')
-  entryContent = entryContent.replace(
-    /const TUI_VERSION = '.*?'/,
-    `const TUI_VERSION = '${version}'`,
-  )
-  writeFileSync(entryFile, entryContent, 'utf8')
-}
-
 // 2. 构建 runtime.tar.gz 运行时资源包
 console.log('==> 构建 runtime.tar.gz 运行时资源包…')
 rmSync(runtimeTar, { force: true })
@@ -194,14 +187,37 @@ console.log('    正在执行 pnpm install…')
 // 构建期静默重解析；上面的 lockfile-only 预同步保证 spec 与 lock 一致，
 // fork 本体使用本地 tarball，不需要 registry 年龄豁免。
 execSync('pnpm install --frozen-lockfile', { cwd: standaloneDir, stdio: 'inherit' })
+const metadata = readRuntimeMetadata(standaloneDir)
+const smokeHome = join(temporaryDir, 'smoke-home')
+ensureProfile({ home: smokeHome, runtimeRoot: standaloneDir, tuiVersion: metadata.tuiVersion })
+// Validate the real host graph before spending time archiving it. Keep resolved
+// config off stdout: a caller may have provider settings in the environment.
+const smokeEnv = {
+  PATH: process.env.PATH, SystemRoot: process.env.SystemRoot,
+  HOME: smokeHome, USERPROFILE: smokeHome, DSH_HOME: smokeHome,
+  DSH_TELEMETRY_MODE: 'DISABLED', NODE_ENV: 'production',
+}
+for (const args of [['--help'], ['--profile', 'dsh-cli', '--dump-config']]) {
+  const result = execFileSync(process.execPath, [join(standaloneDir, metadata.binPath), ...args], {
+    cwd: standaloneDir, env: smokeEnv, encoding: 'utf8', timeout: 60000,
+    maxBuffer: 16 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  if (result.trim() === '') throw new Error(`Bundled DSH did not execute ${args.join(' ')}`)
+}
+rmSync(smokeHome, { recursive: true, force: true })
 console.log('    正在打包 node_modules 到 runtime.tar.gz…')
 execFileSync('tar', ['-czf', runtimeTar, 'node_modules'], { cwd: standaloneDir, stdio: 'inherit' })
+const archiveDigest = createHash('sha256').update(readFileSync(runtimeTar)).digest('hex')
+metadata.bundleId = `tui-${metadata.tuiVersion}-dsh-${metadata.dshVersion}-${archiveDigest.slice(0, 16)}`
+writeFileSync(join(standaloneDir, 'runtime-meta.json'), `${JSON.stringify(metadata, null, 2)}\n`)
 const tarStat = statSync(runtimeTar)
 console.log(`    [OK] runtime.tar.gz (${(tarStat.size / 1024 / 1024).toFixed(2)} MB)`)
 
 if (process.argv.includes('--skip-pkg')) {
   mkdirSync(outDir, { recursive: true })
-  copyFileSync(runtimeTar, join(outDir, 'runtime.tar.gz'))
+  for (const name of ['runtime.tar.gz', 'runtime-meta.json', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs']) {
+    copyFileSync(join(standaloneDir, name), join(outDir, name))
+  }
   console.log('\n[OK] --skip-pkg 指定，跳过 pkg 二进制编译。')
   process.exit(0)
 }
@@ -214,9 +230,11 @@ mkdirSync(outDir, { recursive: true })
 
 // 4. 调用 pkg 编译
 console.log(`\n==> 编译 Standalone 二进制 (${targets})…`)
+const pkgManifestPath = fileURLToPath(import.meta.resolve('@yao-pkg/pkg/package.json'))
+const pkgManifest = JSON.parse(readFileSync(pkgManifestPath, 'utf8'))
+const pkgBin = join(dirname(pkgManifestPath), typeof pkgManifest.bin === 'string' ? pkgManifest.bin : pkgManifest.bin.pkg)
 const pkgArgs = [
-  '--yes',
-  '@yao-pkg/pkg@6.22.0',
+  pkgBin,
   entryFile,
   '--config',
   pkgConfig,
@@ -229,11 +247,12 @@ const pkgArgs = [
   '--no-bytecode',
   '--public',
 ]
-execFileSync('npx', pkgArgs, { cwd: root, stdio: 'inherit' })
+execFileSync(process.execPath, pkgArgs, { cwd: root, stdio: 'inherit' })
 
 // 5. 整理产物并归档压缩
 console.log(`\n==> 打包压缩各平台便携包…`)
 const stagedFiles = readdirSync(stageDir)
+if (stagedFiles.length === 0) throw new Error('Standalone builder produced no executable')
 
 const targetMap = [
   { match: /^entry-linux-arm64$/i, platform: 'linux-arm64', binary: 'dsh-tui', format: 'tar.gz' },
@@ -249,7 +268,14 @@ for (const stagedFile of stagedFiles) {
   if (!stat.isFile()) continue
 
   let matched = null
+  if (!targets.includes(',')) {
+    const target = /^node\d+-(linux|macos|win)-(x64|arm64)$/u.exec(targets)
+    if (!target) throw new Error(`Unsupported standalone target: ${targets}`)
+    const platform = `${target[1] === 'macos' ? 'darwin' : target[1]}-${target[2]}`
+    matched = { platform, binary: target[1] === 'win' ? 'dsh-tui.exe' : 'dsh-tui', format: target[1] === 'win' ? 'zip' : 'tar.gz' }
+  }
   for (const item of targetMap) {
+    if (matched) break
     if (item.match.test(stagedFile)) {
       matched = item
       break
@@ -257,8 +283,7 @@ for (const stagedFile of stagedFiles) {
   }
 
   if (!matched) {
-    console.warn(`    [WARN] 未知构建目标产物: ${stagedFile}，跳过打包`)
-    continue
+    throw new Error(`Unknown standalone build artifact: ${stagedFile}`)
   }
 
   const { platform, binary: binaryName, format } = matched

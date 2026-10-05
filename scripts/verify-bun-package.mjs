@@ -87,7 +87,7 @@ try {
   await writeFile(join(temporaryRoot, 'package.json'), '{"private":true,"type":"module"}\n')
   const bunCommand = await resolveBunCommand()
   // A real DSH host provides the optional framework peers. Model that host
-  // with the exact versions installed for this repository's validated line.
+  // with the exact dependency graph resolved in this repository's lockfile.
   const hostPeers = (await Promise.all(Object.keys(projectManifest.peerDependenciesMeta ?? {})
     .filter(name => name.startsWith('@deepseek-ai/'))
     .map(async name => {

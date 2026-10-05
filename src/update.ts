@@ -505,8 +505,8 @@ export interface ExtractedTreeCheck {
  * link; `../` members are also refused by tar/unzip themselves, but the
  * prefix check here keeps the guard local and future-proof against a
  * different extractor. The node-tar strict equivalent (preservePaths: false +
- * strict) is in standalone/entry.mjs — this covers the system-tool paths
- * entry.mjs cannot. Symlinks are rejected outright (defense in depth: a
+ * strict) is in standalone/entry.cjs — this covers the system-tool paths
+ * entry.cjs cannot. Symlinks are rejected outright (defense in depth: a
  * "harmless" in-tree link is still indistinguishable from a hostile one at
  * this layer), as are fifo/socket/device entries — and hard links (red-team
  * review): GNU tar refusing external linkname targets is extractor behavior,

@@ -1,5 +1,5 @@
 /**
- * dsh-tui plugin entry. The TUI implementation lives in `./plugin.tsx` (its
+ * dsh-tui plugin entry. The TUI implementation lives in `./plugin.ts` (its
  * render path is JSX); this module owns the plugin surface (`name`/`inject`/
  * `Config`/`apply`) at the package entry module and delegates
  * `apply` through a dynamic import so entry-scanning tooling and the Loader
@@ -232,26 +232,20 @@ export const Config: Schema<Config, RuntimeConfig<Config>> = editableConfig<Conf
 
 /**
  * Start the interactive TUI front door, delegating to the JSX implementation
- * in `./plugin.tsx` (see its module doc for the full contract).
+ * in `./plugin.ts` (see its module doc for the full contract).
  * @param ctx - the plugin context.
  * @param config - the validated dsh-tui configuration.
  * @returns a promise settling when the Loader entry has scheduled its runtime.
  */
 export async function apply(ctx: Context, config: RuntimeConfig<Config>): Promise<void> {
-  // Upstream drift is NO LONGER spammed to stderr here: per-package
-  // console.warn lines interleave with the TUI frame redraw and arrive
-  // garbled (typewriter animation repaints over them). The merged,
-  // natural-language notice now renders in the logo header under the
-  // startup tip (LogoV2 ← upstreamDriftSummary); CI keeps the hard gate
-  // via scripts/verify-upstream-contract.ts.
   const { apply: tuiApply, handleStartupError } = await import('./plugin.js')
   let disposed = false
   ctx.effect(() => () => { disposed = true })
-  // Registry diagnostics can await the whole Loader. Do not make this Host
-  // row await the runtime in return. Let Host providers settle before starting
-  // a Cordis-owned child; the original row still owns volatile Config.
-  const loader = ctx.get('loader') as { await(): Promise<unknown> } | undefined
-  void (loader?.await() ?? ctx.fiber.await()).then(() => {
+  // Entry injection already orders the required Host services. Waiting on the
+  // whole Loader here can capture this entry's own activation and never start
+  // the frontend. Wait for our owner to settle, then start its Cordis-owned
+  // child; the original row continues to own volatile Config.
+  void ctx.fiber.await().then(() => {
     if (disposed) return
     return ctx.plugin({
       name: 'dsh-tui-runtime',

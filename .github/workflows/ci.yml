@@ -177,8 +177,8 @@ jobs:
       - run: pnpm verify:bun-package
 
   # Type-check the adapter and compose both patches against the installed
-  # 0.2.0-rc.2 baseline's immutable upstream source SHA. Missing source
-  # is a hard failure.
+  # upstream default branch. Log the exact checkout for reproducibility.
+  # Missing source or incompatible APIs are hard failures.
   upstream-contract:
     needs: changes
     if: needs.changes.outputs.code == 'true'
@@ -194,11 +194,9 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
-      # deepseek-ai/deepseek-harness tag dsh-v0.2.0-rc.2
       - uses: actions/checkout@v7
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: 639ed015397290b3745d163aafe02ffee4aa3f84
           path: .upstream/deepseek-harness
           fetch-depth: 1
           persist-credentials: false
@@ -214,12 +212,14 @@ jobs:
             pnpm-lock.yaml
             .upstream/deepseek-harness/pnpm-lock.yaml
 
+      - name: Record upstream revision
+        run: git -C "$DSH_HARNESS_SOURCE_ROOT" rev-parse HEAD
+
       - run: pnpm --dir "$DSH_HARNESS_SOURCE_ROOT" install --frozen-lockfile --ignore-scripts
 
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
-      # Build validates the installed 0.2.0-rc.2 baseline and, with the required
-      # source env above, must also compose that release's base/web patch.
+      # Validate the lockfile install and the current upstream source patch.
       - run: pnpm build
         env:
           NODE_ENV: production
@@ -558,12 +558,52 @@ jobs:
       - name: Safe-mode launcher gate (cross-platform)
         run: node scripts/verify-safe-mode.mjs
 
+  # Execute each portable target on its own OS/CPU, using the compiled TUI artifact.
+  standalone-smoke:
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: node24-linux-x64
+          - os: ubuntu-24.04-arm
+            target: node24-linux-arm64
+          - os: macos-latest
+            target: node24-macos-arm64
+          - os: macos-15-intel
+            target: node24-macos-x64
+          - os: windows-latest
+            target: node24-win-x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - uses: actions/download-artifact@v8
+        with:
+          name: ci-build-${{ github.run_id }}
+          path: .
+      - run: node scripts/verify-standalone-runtime.mjs
+      - run: pnpm bundle:standalone --targets ${{ matrix.target }}
+      - run: node scripts/verify-standalone-artifact.mjs
+
   # CI 门禁：唯一的 required check 候选。汇总所有分组结果——任何一组失败
   # 或被取消，gate 显式失败并逐组报告状态。if: always() 保证上游失败时
   # gate 仍然运行（被跳过的 check 不会阻塞合并，失败才会）；后续 CI 内部
   # 再拆组、改名、加 matrix，branch protection 只需盯住这一个稳定名字。
   ci-gate:
-    needs: [changes, build, gates, upstream-contract, render-scroll, input-terminal, session-workspace, channel-ui]
+    needs: [changes, build, gates, upstream-contract, render-scroll, input-terminal, session-workspace, channel-ui, standalone-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -579,6 +619,7 @@ jobs:
           INPUT_TERMINAL: ${{ needs.input-terminal.result }}
           SESSION_WORKSPACE: ${{ needs.session-workspace.result }}
           CHANNEL_UI: ${{ needs.channel-ui.result }}
+          STANDALONE_SMOKE: ${{ needs.standalone-smoke.result }}
         run: |
           # 纯文档改动：期望每组都是 skipped。这里不能笼统地放行 skipped——
           # build 失败时下游同样是 skipped，那种情况必须判失败。因此只对明确的
@@ -599,7 +640,8 @@ jobs:
                       "render-scroll:${RENDER_SCROLL}" \
                       "input-terminal:${INPUT_TERMINAL}" \
                       "session-workspace:${SESSION_WORKSPACE}" \
-                      "channel-ui:${CHANNEL_UI}"; do
+                      "channel-ui:${CHANNEL_UI}" \
+                      "standalone-smoke:${STANDALONE_SMOKE}"; do
             name="${pair%%:*}"
             result="${pair#*:}"
             echo "${name}: ${result}"

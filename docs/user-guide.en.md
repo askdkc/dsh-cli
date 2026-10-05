@@ -30,7 +30,7 @@ dsh-tui
 - `dsh-tui safe`: safe mode — read-only environment view, lists profile plugins, suggests fixes, and can create a clean rescue profile (see §5.5).
 - `dsh --profile dsh-tui`: manual launch, equivalent to `dsh-tui` (`/update` only works this way).
 - Running a model needs `DEEPSEEK_API_KEY`. Run `/doctor` to check the environment.
-- Required DSH engine version: `0.2.0-rc.2`. Older hosts are unsupported; see `ADAPTER.md` for the current contract.
+- DSH release labels do not restrict execution. Compatibility is checked through actual APIs, types and patch ownership; see `ADAPTER.md`.
 - If the logo page shows a ⚠ version-drift warning, align the dsh engine:
   `npm i -g @deepseek-ai/dsh@<版本>`
 

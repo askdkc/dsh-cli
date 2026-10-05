@@ -1,5 +1,5 @@
 /**
- * 便携包运行时缓存完整性守卫回归（standalone/cacheGuard.cjs + entry.mjs）。
+ * 便携包运行时缓存完整性守卫回归（standalone/cacheGuard.cjs + entry.cjs）。
  *
  * 缓存清单扩容（红队 P-3）：旧 .complete 只存 bundleId 字符串，解压落
  * 盘后的启动链 JS 被篡改无感知（红队实测改 update.js 无感）——缓存是
@@ -61,19 +61,21 @@ function materializePattern(pattern) {
   const starIdx = pattern.indexOf('*')
   const prefix = pattern.slice(0, starIdx)
   const suffix = pattern.slice(starIdx + 1)
-  const full = `${join(srcRoot, prefix)}fakeh4sh${suffix}`
+  const full = join(srcRoot, `${prefix}fakeh4sh${suffix}`)
   mkdirSync(join(full, '..'), { recursive: true })
   writeFileSync(full, `content of ${pattern}\n`)
 }
 for (const pattern of MANIFEST_ENTRIES) materializePattern(pattern)
+materializePattern('node_modules/@deepseek-ai/dsh/lib/bin.js')
 // 清单外的旁路文件（边界确认用）
 mkdirSync(join(srcRoot, 'node_modules', 'other-pkg'), { recursive: true })
 writeFileSync(join(srcRoot, 'node_modules', 'other-pkg', 'side.js'), 'innocent\n')
 
+writeFileSync(join(srcRoot, 'node_modules/@deepseek-ai/dsh/lib/profile-boot.js'), 'original profile boot\n')
 const archivePath = join(scratch, 'runtime.tar.gz')
 execFileSync('tar', ['-czf', archivePath, '-C', srcRoot, 'node_modules'])
 
-// 与 entry.mjs 同款的解压注入（系统 tar，语义等价 node-tar 的 cwd/file）
+// 与 entry.cjs 同款的解压注入（系统 tar，语义等价 node-tar 的 cwd/file）
 const extract = options => execFileSync('tar', ['-xzf', options.file, '-C', options.cwd], { stdio: 'ignore' })
 const dshBinRel = 'node_modules/@deepseek-ai/dsh/lib/bin.js'
 const patchRel = 'node_modules/@askdkc/dsh-cli/cordis.patch.yml'
@@ -121,6 +123,14 @@ await scenario('tamper', async env => {
   await ensureRuntime(env)
   check('再次 ensureRuntime 自愈重建（update.js 恢复）', readFileSync(victim, 'utf8') === 'content of node_modules/@askdkc/dsh-cli/lib/types/update.js\n')
   check('重建后 ready', readyOf(env))
+})
+
+await scenario('named-cli-module', async env => {
+  const victim = join(env.runtimeRoot, 'node_modules/@deepseek-ai/dsh/lib/profile-boot.js')
+  writeFileSync(victim, 'changed profile boot\n')
+  check('named CLI module changes invalidate the cache', !readyOf(env))
+  await ensureRuntime(env)
+  check('named CLI module is restored', readFileSync(victim, 'utf8') === 'original profile boot\n')
 })
 
 await scenario('delete', async env => {
@@ -193,13 +203,13 @@ await scenario('perm-ready-path', async env => {
   try { rmSync(env.cacheBase, { recursive: true, force: true }) } catch { /* best effort */ }
 }
 
-// entry.mjs 集成确认：不再自带独立的 runtimeReady/ensureRuntime 定义，
+// entry.cjs 集成确认：不再自带独立的 runtimeReady/ensureRuntime 定义，
 // 改为 require cacheGuard（同一份守卫逻辑，测试直接覆盖它）。
 {
-  const entry = readFileSync(new URL('../standalone/entry.mjs', import.meta.url), 'utf8')
-  check('entry.mjs require 了 cacheGuard.cjs', /require\('\.\/cacheGuard\.cjs'\)/.test(entry))
+  const entry = readFileSync(new URL('../standalone/entry.cjs', import.meta.url), 'utf8')
+  check('entry.cjs require 了 cacheGuard.cjs', /require\('\.\/cacheGuard\.cjs'\)/.test(entry))
   check(
-    'entry.mjs 不再内联定义 ensureRuntime（逻辑唯一来源 cacheGuard）',
+    'entry.cjs 不再内联定义 ensureRuntime（逻辑唯一来源 cacheGuard）',
     !/function ensureRuntime\b/.test(entry.split("require('./cacheGuard.cjs')").pop()),
   )
   check(

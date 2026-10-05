@@ -43,7 +43,7 @@
 需要 [Node.js](https://nodejs.org/zh-cn) `^22.19 || >=24`、pnpm 11、
 已安装依赖的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 源码检出，以及 `DEEPSEEK_API_KEY`。目标是支持最新版本的 DSH。
-当前主要验证版本为 `0.2.0-rc.2`；旧版兼容列表见 [ADAPTER.md](ADAPTER.md)。
+兼容性通过已安装包和上游默认分支验证，不维护发布版本白名单；详见 [ADAPTER.md](ADAPTER.md)。
 
 请递归克隆以获取子模块；已有检出应在安装前运行
 `git submodule update --init --recursive`。

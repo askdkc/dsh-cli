@@ -42,8 +42,8 @@ This is dkc's independently developed fork of [dsh-TUI by chimney](https://githu
 Requires [Node.js](https://nodejs.org/en) `^22.19 || >=24`, pnpm 11, a
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) source
 checkout with dependencies installed, and `DEEPSEEK_API_KEY`. We aim to support
-the latest DSH release. The primary validated Harness version is `0.2.0-rc.2`;
-older supported versions are listed in [ADAPTER.md](ADAPTER.md).
+current DSH APIs. Compatibility is checked against installed packages and the
+upstream default branch, without a release allowlist; see [ADAPTER.md](ADAPTER.md).
 
 Clone recursively to fetch submodules. In an existing checkout, run
 `git submodule update --init --recursive` before installation.
