@@ -12,6 +12,8 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import assert from 'node:assert/strict'
+import { settled, viewportLines } from './lib/term-test.mjs'
 
 process.env.FORCE_COLOR = '3'
 process.env.DSH_TUI_LANG = 'zh'
@@ -23,13 +25,14 @@ process.env.HOME = fixtureHome
 process.env.USERPROFILE = fixtureHome
 process.env.GROK_HOME = join(fixtureHome, '.grok')
 
-const [{ PassThrough, Writable }, React, { render }, { Chat }, { QuestionStore }, { LOCAL_COMMANDS }] = await Promise.all([
+const [{ PassThrough, Writable }, React, { render }, { Chat }, { QuestionStore }, { LOCAL_COMMANDS }, { Terminal }] = await Promise.all([
   import('node:stream'),
   import('react'),
   import('../src/ui.js'),
   import('../src/screens/Chat.js'),
   import('../src/dsh-adapter/questions.js'),
   import('../src/commands.js'),
+  import('@xterm/headless'),
 ])
 
 class FakeStdout extends Writable {
@@ -37,9 +40,11 @@ class FakeStdout extends Writable {
   rows = 28
   isTTY = true
   frames: string[] = []
+  terminal = new Terminal({ cols: this.columns, rows: this.rows, scrollback: 100, allowProposedApi: true })
+  screen = () => viewportLines(this.terminal).join('\n')
   _write(chunk: unknown, _encoding: BufferEncoding, callback: () => void) {
     this.frames.push(String(chunk))
-    callback()
+    this.terminal.write(String(chunk), callback)
   }
 }
 
@@ -166,7 +171,7 @@ async function mountChat(): Promise<{
         await delay(220)
       }
     },
-    unmount: async () => { await instance.unmount() },
+    unmount: async () => { await instance.unmount(); stdout.terminal.dispose() },
   }
 }
 
@@ -238,18 +243,32 @@ const UNKNOWN = '未知迁移源'
 // 断言按下 Enter 后确认层列的到底是哪个源（行为，而非渲染细节）。
 {
   const chat = await mountChat()
-  await chat.run('/migrate')
-  await chat.keys(['\u001b[B', ' '])
-  await chat.keys([ESC])
-  await chat.run('/migrate claude-code')
-  await chat.keys([ESC])
-  const mark = chat.mark()
-  await chat.keys(['\r'])
-  const after = chat.since(mark)
-  check('6a. Esc 回 picker 后 Enter 导入的是刚确认的那个源', after.includes('Claude Code'),
-    after.replace(/\s+/gu, ' ').slice(0, 160))
-  check('6b. 早先勾的 Codex 不再残留', !after.includes('Codex'))
-  await chat.unmount()
+  const screen = chat.stdout.screen
+  // Wait for each observable transition before the next key. A fixed pause
+  // can expire before the lone-Esc parser timer on a busy CI runner, letting
+  // the following Enter act on the confirmation instead of the picker.
+  try {
+    await chat.run('/migrate')
+    assert.ok(await settled(() => screen().includes('[ ] Codex')), 'initial picker ready')
+    chat.stdin.write('\u001b[B')
+    assert.ok(await settled(() => screen().includes('❯ [ ] Codex')), 'Codex focused')
+    chat.stdin.write(' ')
+    assert.ok(await settled(() => screen().includes('[x] Codex')), 'Codex checked')
+    chat.stdin.write(ESC)
+    assert.ok(await settled(() => !screen().includes(PICKER_TITLE)), 'picker closed')
+    await chat.run('/migrate claude-code')
+    assert.ok(await settled(() => screen().includes(CONFIRM_TITLE)), 'direct confirmation ready')
+    chat.stdin.write(ESC)
+    assert.ok(await settled(() => screen().includes(PICKER_TITLE) && screen().includes('[x] Claude Code')
+      && !screen().includes(CONFIRM_TITLE)), 'returned picker preserves Claude selection')
+    chat.stdin.write('\r')
+    check('6a. Esc 回 picker 后 Enter 导入的是刚确认的那个源',
+      await settled(() => screen().includes(CONFIRM_TITLE) && screen().includes('Claude Code')), screen())
+    check('6b. 早先勾的 Codex 不再残留', !screen().includes('Codex'), screen())
+    assert.equal(chat.channel.localRows.length, 0, 'confirmation must not start the import')
+  } finally {
+    await chat.unmount()
+  }
 }
 
 rmSync(fixtureHome, { recursive: true, force: true })

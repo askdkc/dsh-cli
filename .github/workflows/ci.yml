@@ -488,19 +488,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  # 平台冒烟（non-blocking 观察档）：Windows（ConPTY/路径/行尾）与
-  # macOS（PTY/clang 工具链）上只有真实平台才能暴露的安装与编译差异。
+  # macOS 平台冒烟：验证 PTY/clang 工具链的安装与编译差异。
   # 最小链路：install → compile → 入口导入。结果只做观察（不接
   # ci-gate、不阻塞合并），探明各平台差异后再逐步扩测并提升为
-  # required。fail-fast: false 让两个平台都跑完。
+  # required。
   platform-smoke:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     timeout-minutes: 15
     env:
       DSH_TUI_LANG: zh
@@ -520,8 +515,7 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      # 与 build job 相同的显式编译语义；Windows 上 pnpm 脚本经 npm 转发，
-      # bash shell 保证 test/管道语法跨平台一致。
+      # 与 build job 相同的显式编译语义。
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
       - run: pnpm compile
@@ -538,7 +532,6 @@ jobs:
       # short-temp-root fix, verify-inject-channel would derive its fake HOME
       # from this path and eventually fail with EINVAL while binding the socket.
       - name: Injection channel with long macOS TMPDIR
-        if: runner.os == 'macOS'
         run: |
           LONG_TMPDIR="/tmp/dsh-tui-ci-$(printf 'x%.0s' {1..70})"
           mkdir -p "$LONG_TMPDIR"
@@ -546,16 +539,12 @@ jobs:
             node --import tsx/esm scripts/verify-inject-channel.mjs
 
       - name: CLI registration in a new zsh shell
-        if: runner.os == 'macOS'
         run: |
           command -v zsh
           node --import tsx/esm scripts/verify-cli-registration.ts
 
-      # 安全模式的启动器门禁在观察档里也跑一遍：脚本自带 POSIX/Windows 两套
-      # dsh 替身，本就不依赖 lib/ 产物。放进这里的理由是 required 的
-      # input-terminal 组只在 ubuntu 跑，而 bin/dsh-tui.js 有 Windows 专属
-      # 分支（旧二进制清理、shellQuote/cmd 拼串）——只靠 ubuntu 等于没测。
-      - name: Safe-mode launcher gate (cross-platform)
+      # 在 macOS 上验证安全模式启动器。
+      - name: Safe-mode launcher gate
         run: node scripts/verify-safe-mode.mjs
 
   # Execute each portable target on its own OS/CPU, using the compiled TUI artifact.
@@ -573,8 +562,6 @@ jobs:
             target: node24-macos-arm64
           - os: macos-15-intel
             target: node24-macos-x64
-          - os: windows-latest
-            target: node24-win-x64
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     defaults:
@@ -595,6 +582,8 @@ jobs:
           name: ci-build-${{ github.run_id }}
           path: .
       - run: node scripts/verify-standalone-archive.mjs
+      - run: node scripts/verify-standalone-layout.mjs
+      - run: node scripts/verify-standalone-extraction.mjs
       - run: node scripts/verify-standalone-runtime.mjs
       - run: pnpm bundle:standalone --targets ${{ matrix.target }}
       - run: node scripts/verify-standalone-artifact.mjs

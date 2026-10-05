@@ -17,7 +17,7 @@
  * 的完整性保证在构建/发布链（lockfile 锁死 + SHA256SUMS 资产）。
  *
  * CommonJS：entry.cjs 通过 require 引入（pkg 快照可静态收集），测试
- * 脚本直接 require；解压器由调用方注入（entry.cjs 注入 node-tar，测试
+ * 脚本直接 require；解压器由调用方注入（entry.cjs 注入 extractRuntime，测试
  * 注入系统 tar），本模块自身零第三方依赖。
  */
 const { createHash } = require('node:crypto')
@@ -162,7 +162,7 @@ const tightenCacheBase = cacheBase => {
  * @param {string} options.bundleId - bundle 标识（tui-<ver>-dsh-<ver>）
  * @param {string} options.archivePath - 内置 runtime.tar.gz 路径
  * @param {(opts: { cwd: string, file: string, preservePaths: boolean, strict: boolean }) => Promise<void>} options.extract
- *        解压器（entry.cjs 注入 node-tar 的 x()；测试注入系统 tar）
+ *        解压器（entry.cjs 注入带 node-tar 后备的原生解压器；测试注入系统 tar）
  * @param {string[]} [options.requiredPaths] - 必须存在的启动文件（相对 runtimeRoot）
  * @param {(text: string) => void} [options.log] - 进度输出（stderr）
  */

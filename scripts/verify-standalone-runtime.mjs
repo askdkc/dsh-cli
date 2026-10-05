@@ -81,7 +81,7 @@ try {
 
   const stage = join(scratch, 'stage')
   mkdirSync(stage)
-  for (const name of ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs']) copyFileSync(join(root, 'standalone', name), join(stage, name))
+  for (const name of ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs', 'extractRuntime.cjs']) copyFileSync(join(root, 'standalone', name), join(stage, name))
   link(join(root, 'node_modules'), join(stage, 'node_modules'))
   write(join(stage, 'runtime-meta.json'), { ...metadata, bundleId: 'fixture-alpha' })
   createStandaloneArchive(join(stage, 'runtime.tar.gz'), runtimeRoot, ['node_modules'])
