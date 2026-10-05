@@ -5,6 +5,9 @@ nodeLinker: hoisted
 # The official CLI owns its required peer graph; bundled TUI peers stay optional.
 autoInstallPeers: true
 
+# Keep local lockfile generation subject to the same release-age rule as CI.
+minimumReleaseAge: 1440
+
 supportedArchitectures:
   os:
     - linux

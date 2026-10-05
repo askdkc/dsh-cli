@@ -1,6 +1,7 @@
 /** Bootstrap, profile migration and CLI handoff through the actual standalone entry. */
 import assert from 'node:assert/strict'
-import { execFileSync, spawnSync } from 'node:child_process'
+import { spawnSync } from 'node:child_process'
+import { c as createTar } from 'tar'
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -83,9 +84,9 @@ try {
   for (const name of ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs']) copyFileSync(join(root, 'standalone', name), join(stage, name))
   link(join(root, 'node_modules'), join(stage, 'node_modules'))
   write(join(stage, 'runtime-meta.json'), { ...metadata, bundleId: 'fixture-alpha' })
-  execFileSync('tar', ['-czf', join(stage, 'runtime.tar.gz'), '-C', runtimeRoot, 'node_modules'])
+  await createTar({ file: join(stage, 'runtime.tar.gz'), cwd: runtimeRoot, gzip: true }, ['node_modules'])
   const cache = join(scratch, 'bootstrap-cache')
-  const env = { ...process.env, DSH_TUI_STANDALONE_CACHE: cache, DSH_TUI_STANDALONE_HOME: join(scratch, 'bootstrap-home') }
+  const env = { ...process.env, PATH: '', DSH_TUI_STANDALONE_CACHE: cache, DSH_TUI_STANDALONE_HOME: join(scratch, 'bootstrap-home') }
   const run = () => spawnSync(process.execPath, [join(stage, 'entry.cjs'), '--help'], { env, encoding: 'utf8', timeout: 30000 })
   for (let attempt = 0; attempt < 2; attempt++) {
     const result = run()
@@ -96,7 +97,7 @@ try {
   write(join(cache, 'fixture-alpha', metadata.binPath), 'throw new Error("tampered")\n')
   assert.equal(run().status, 0, 'manifest-derived entry must be hashed and restored')
   write(join(runtimeRoot, metadata.binPath), 'export const noCli = true\n')
-  execFileSync('tar', ['-czf', join(stage, 'runtime.tar.gz'), '-C', runtimeRoot, 'node_modules'])
+  await createTar({ file: join(stage, 'runtime.tar.gz'), cwd: runtimeRoot, gzip: true }, ['node_modules'])
   write(join(stage, 'runtime-meta.json'), { ...metadata, bundleId: 'fixture-missing-cli' })
   const missing = run()
   assert.notEqual(missing.status, 0)

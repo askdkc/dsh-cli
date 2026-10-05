@@ -14,6 +14,7 @@
  */
 import { execFileSync, execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
+import { c as createTar } from 'tar'
 import { readRuntimeMetadata, ensureProfile } from '../standalone/runtime.cjs'
 import {
   chmodSync,
@@ -162,6 +163,8 @@ if (existsSync(standalonePkgPath)) {
   }
   delete sPkg.dependencies['dsh-cli']
   sPkg.dependencies[pkg.name] = `file:${join(temporaryDir, packed.filename)}`
+  // Use the same package manager as CI, even in the temporary workspace.
+  sPkg.packageManager = pkg.packageManager
   writeFileSync(standalonePkgPath, `${JSON.stringify(sPkg, null, 2)}\n`, 'utf8')
 }
 
@@ -170,7 +173,7 @@ console.log('==> 构建 runtime.tar.gz 运行时资源包…')
 rmSync(runtimeTar, { force: true })
 console.log('    正在同步 lockfile（仅重解析改写的 spec）…')
 // 本地 tarball 改写了 fork 的依赖 spec；供应链年龄策略在解析时继续生效。
-execSync('pnpm install --lockfile-only', { cwd: standaloneDir, stdio: 'inherit' })
+execSync('pnpm install --lockfile-only --no-frozen-lockfile', { cwd: standaloneDir, stdio: 'inherit' })
 const firstParty = firstPartyLockfileVersions()
 if (syncReleaseAgeExcludes(firstParty)) {
   const described = [...firstParty.entries()]
@@ -206,7 +209,7 @@ for (const args of [['--help'], ['--profile', 'dsh-cli', '--dump-config']]) {
 }
 rmSync(smokeHome, { recursive: true, force: true })
 console.log('    正在打包 node_modules 到 runtime.tar.gz…')
-execFileSync('tar', ['-czf', runtimeTar, 'node_modules'], { cwd: standaloneDir, stdio: 'inherit' })
+await createTar({ file: runtimeTar, cwd: standaloneDir, gzip: true }, ['node_modules'])
 const archiveDigest = createHash('sha256').update(readFileSync(runtimeTar)).digest('hex')
 metadata.bundleId = `tui-${metadata.tuiVersion}-dsh-${metadata.dshVersion}-${archiveDigest.slice(0, 16)}`
 writeFileSync(join(standaloneDir, 'runtime-meta.json'), `${JSON.stringify(metadata, null, 2)}\n`)
@@ -310,14 +313,11 @@ for (const stagedFile of stagedFiles) {
       // shell、无注入面；tar 缺失才回退 Compress-Archive——路径含 `'`
       // 会闭合单引号字面量注入命令，必须按 PowerShell 约定把 ' 双写为 ''
       // （与 src/update.ts 的 escapePsSingleQuoted 同款）。
-      let tarOk = true
-      try {
-        execFileSync('tar', ['--version'], { stdio: 'ignore' })
-      } catch {
-        tarOk = false
-      }
-      if (tarOk) {
-        execFileSync('tar', ['-a', '-cf', archivePath, '-C', binDir, binaryName], { stdio: 'inherit' })
+      // Git Bash's GNU tar treats drive letters as remote hosts and cannot
+      // create ZIP files. Select Windows' own bsdtar independently of PATH.
+      const windowsTar = process.env.SystemRoot && join(process.env.SystemRoot, 'System32', 'tar.exe')
+      if (windowsTar && existsSync(windowsTar)) {
+        execFileSync(windowsTar, ['-a', '-cf', archivePath, '-C', binDir, binaryName], { stdio: 'inherit' })
       } else {
         const psQuote = (s) => `'${s.replace(/'/g, "''")}'`
         execFileSync('powershell', [
@@ -329,7 +329,7 @@ for (const stagedFile of stagedFiles) {
       execFileSync('zip', ['-j', archivePath, targetBinPath], { stdio: 'inherit' })
     }
   } else {
-    execFileSync('tar', ['-czf', archivePath, '-C', binDir, binaryName], { stdio: 'inherit' })
+    await createTar({ file: archivePath, cwd: binDir, gzip: true }, [binaryName])
   }
 
   const archStat = statSync(archivePath)

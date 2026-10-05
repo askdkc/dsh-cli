@@ -5,6 +5,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'n
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { createRequire } from 'node:module'
+import { x as extractTar } from 'tar'
 import xterm from '@xterm/headless'
 import { settled } from './lib/term-test.mjs'
 
@@ -19,8 +20,14 @@ const env = {
   DSH_TELEMETRY_MODE: 'DISABLED', NODE_ENV: 'production',
 }
 try {
-  const extract = spawnSync('tar', ['-xf', archive, '-C', scratch], { encoding: 'utf8' })
-  assert.equal(extract.status, 0, extract.stderr)
+  if (process.platform === 'win32') {
+    assert.ok(process.env.SystemRoot, 'SystemRoot is required to locate Windows ZIP extraction')
+    const windowsTar = join(process.env.SystemRoot, 'System32', 'tar.exe')
+    const extract = spawnSync(windowsTar, ['-xf', archive, '-C', scratch], { encoding: 'utf8' })
+    assert.equal(extract.status, 0, extract.stderr)
+  } else {
+    await extractTar({ file: archive, cwd: scratch, strict: true, preservePaths: false })
+  }
   const executable = join(scratch, process.platform === 'win32' ? 'dsh-tui.exe' : 'dsh-tui')
   const run = args => spawnSync(executable, args, { env: { ...env, PATH: '' }, encoding: 'utf8', timeout: 60000, maxBuffer: 16 * 1024 * 1024 })
   for (let attempt = 0; attempt < 2; attempt++) {
