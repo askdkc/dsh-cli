@@ -36,7 +36,7 @@ if (typeof Intl !== 'undefined') {
 const { homedir } = require('node:os')
 const { join, resolve } = require('node:path')
 const { pathToFileURL } = require('node:url')
-const { x: extractTar } = require('tar')
+const { extractRuntime } = require('./extractRuntime.cjs')
 
 const { existsSync, rmSync } = require('node:fs')
 const { ensureProfile } = require('./runtime.cjs')
@@ -69,7 +69,7 @@ async function ensureRuntimeReady() {
     runtimeRoot,
     bundleId: BUNDLE_ID,
     archivePath,
-    extract: extractTar,
+    extract: extractRuntime,
     requiredPaths: [
       metadata.binPath,
       'node_modules/@askdkc/dsh-cli/cordis.patch.yml',

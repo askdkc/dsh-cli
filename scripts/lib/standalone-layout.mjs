@@ -8,10 +8,10 @@ export function standaloneTarget(name) {
   return { name, os: { linux: 'linux', macos: 'darwin', win: 'win32' }[match[1]], cpu: match[2] }
 }
 
-/** The upstream postinstall repairs only the build host's PTY helper. */
+/** node-pty's macOS helper needs chmod when packaged on another build host. */
 export function prepareTargetPty(runtimeRoot, target) {
   const pty = join(runtimeRoot, 'node_modules/node-pty')
-  if (target.os !== 'win32') {
+  if (target.os === 'darwin') {
     const prebuilt = join(pty, 'prebuilds', `${target.os}-${target.cpu}`, 'spawn-helper')
     const helper = existsSync(prebuilt) ? prebuilt : join(pty, 'build/Release/spawn-helper')
     if (!existsSync(prebuilt) && (target.os !== process.platform || target.cpu !== process.arch)) {
@@ -50,7 +50,7 @@ export function pruneForeignPackages(modules, target) {
 /** pkg must see the bootstrap's dependencies, never the host's package manifest. */
 export function stageStandaloneLauncher(runtimeRoot, launcherRoot) {
   mkdirSync(launcherRoot, { recursive: true })
-  for (const name of ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs', 'runtime-meta.json', 'runtime.tar.gz', 'pkg.config.json']) {
+  for (const name of ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs', 'extractRuntime.cjs', 'runtime-meta.json', 'runtime.tar.gz', 'pkg.config.json']) {
     copyFileSync(join(runtimeRoot, name), join(launcherRoot, name))
   }
   const tarRoot = dirname(fileURLToPath(import.meta.resolve('tar/package.json')))

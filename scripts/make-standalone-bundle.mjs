@@ -60,7 +60,7 @@ const target = targetList[0]
 const temporaryDir = mkdtempSync(join(tmpdir(), 'dsh-cli-standalone-'))
 const standaloneDir = join(temporaryDir, 'standalone')
 mkdirSync(standaloneDir, { recursive: true })
-for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs', 'pkg.config.json']) {
+for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs', 'extractRuntime.cjs', 'pkg.config.json']) {
   copyFileSync(join(root, 'standalone', name), join(standaloneDir, name))
 }
 process.on('exit', () => rmSync(temporaryDir, { recursive: true, force: true }))
@@ -238,7 +238,7 @@ console.log(`    [OK] runtime.tar.gz (${(tarStat.size / 1024 / 1024).toFixed(2)}
 
 if (process.argv.includes('--skip-pkg')) {
   mkdirSync(outDir, { recursive: true })
-  for (const name of ['runtime.tar.gz', 'runtime-meta.json', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs']) {
+  for (const name of ['runtime.tar.gz', 'runtime-meta.json', 'entry.cjs', 'cacheGuard.cjs', 'runtime.cjs', 'extractRuntime.cjs']) {
     copyFileSync(join(standaloneDir, name), join(outDir, name))
   }
   console.log('\n[OK] --skip-pkg 指定，跳过 pkg 二进制编译。')

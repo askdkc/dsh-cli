@@ -19,7 +19,7 @@ try {
   const runtime = join(root, 'runtime')
   const launcher = join(root, 'launcher')
   mkdirSync(runtime)
-  const files = ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs', 'runtime-meta.json', 'runtime.tar.gz', 'pkg.config.json']
+  const files = ['entry.cjs', 'runtime.cjs', 'cacheGuard.cjs', 'extractRuntime.cjs', 'runtime-meta.json', 'runtime.tar.gz', 'pkg.config.json']
   for (const name of files) writeFileSync(join(runtime, name), name)
   writeFileSync(join(runtime, 'package.json'), JSON.stringify({ dependencies: { 'unexpected-runtime-dependency': '*' } }))
   stageStandaloneLauncher(runtime, launcher)
@@ -47,10 +47,14 @@ try {
   assert.deepEqual(readdirSync(join(modules, '@native')), ['linux'])
   assert.equal(JSON.parse(readFileSync(join(modules, 'universal/package.json'), 'utf8')).os, undefined)
   assert.equal(pruneForeignPackages(modules, standaloneTarget('node24-linux-x64')), 0)
-  const helper = join(modules, 'node-pty/prebuilds/linux-x64/spawn-helper')
-  mkdirSync(join(modules, 'node-pty/prebuilds/linux-x64'), { recursive: true })
-  writeFileSync(helper, 'fixture', { mode: 0o644 })
+  // Linux and Windows distributions have no spawn-helper and must still build.
   prepareTargetPty(runtime, standaloneTarget('node24-linux-x64'))
+  prepareTargetPty(runtime, standaloneTarget('node24-linux-arm64'))
+  prepareTargetPty(runtime, standaloneTarget('node24-win-x64'))
+  const helper = join(modules, 'node-pty/prebuilds/darwin-arm64/spawn-helper')
+  mkdirSync(join(modules, 'node-pty/prebuilds/darwin-arm64'), { recursive: true })
+  writeFileSync(helper, 'fixture', { mode: 0o644 })
+  prepareTargetPty(runtime, standaloneTarget('node24-macos-arm64'))
   if (process.platform !== 'win32') assert.equal(statSync(helper).mode & 0o777, 0o755)
   assert.throws(() => prepareTargetPty(runtime, standaloneTarget('node24-macos-x64')))
   const external = join(root, 'external')
