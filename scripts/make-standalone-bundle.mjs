@@ -32,6 +32,8 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import YAML from 'yaml'
+import { standaloneTarget, stageStandaloneLauncher, pruneForeignPackages, prepareTargetPty } from './lib/standalone-layout.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
@@ -43,6 +45,17 @@ const outDir = resolve(argOut >= 0 ? process.argv[argOut + 1] : join(root, 'dist
 const argTargets = process.argv.indexOf('--targets')
 const defaultTargets = 'node24-linux-x64,node24-linux-arm64,node24-win-x64,node24-macos-arm64,node24-macos-x64'
 const targets = argTargets >= 0 ? process.argv[argTargets + 1] : defaultTargets
+const targetList = targets.split(',').map(standaloneTarget)
+// Each executable carries only its own native dependency graph.
+if (targetList.length > 1) {
+  for (const target of targetList) {
+    const args = [fileURLToPath(import.meta.url), '--targets', target.name, '--out', process.argv.includes('--skip-pkg') ? join(outDir, target.name) : outDir]
+    if (process.argv.includes('--skip-pkg')) args.push('--skip-pkg')
+    execFileSync(process.execPath, args, { stdio: 'inherit' })
+  }
+  process.exit(0)
+}
+const target = targetList[0]
 
 const temporaryDir = mkdtempSync(join(tmpdir(), 'dsh-cli-standalone-'))
 const standaloneDir = join(temporaryDir, 'standalone')
@@ -51,8 +64,6 @@ for (const name of ['package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml', 'en
   copyFileSync(join(root, 'standalone', name), join(standaloneDir, name))
 }
 process.on('exit', () => rmSync(temporaryDir, { recursive: true, force: true }))
-const entryFile = join(standaloneDir, 'entry.cjs')
-const pkgConfig = join(standaloneDir, 'pkg.config.json')
 const runtimeTar = join(standaloneDir, 'runtime.tar.gz')
 
 // ── 发布自助同步（一劳永逸）──────────────────────────────────────────
@@ -64,6 +75,13 @@ const FIRST_PARTY_PACKAGES = ['dsh-working-activity']
 const workspaceYamlPath = join(standaloneDir, 'pnpm-workspace.yaml')
 const lockfilePath = join(standaloneDir, 'pnpm-lock.yaml')
 const standalonePkgPath = join(standaloneDir, 'package.json')
+const workspaceConfig = YAML.parse(readFileSync(workspaceYamlPath, 'utf8'))
+// Lifecycle scripts run on the build host, including when cross-packaging.
+// Keep its prebuilds available during install, then remove foreign packages.
+workspaceConfig.supportedArchitectures = {
+  os: [...new Set([target.os, process.platform])], cpu: [...new Set([target.cpu, process.arch])], libc: ['glibc'],
+}
+writeFileSync(workspaceYamlPath, YAML.stringify(workspaceConfig))
 
 /**
  * Distinct resolved versions of each first-party package in the lockfile —
@@ -208,6 +226,8 @@ for (const args of [['--help'], ['--profile', 'dsh-cli', '--dump-config']]) {
   if (result.trim() === '') throw new Error(`Bundled DSH did not execute ${args.join(' ')}`)
 }
 rmSync(smokeHome, { recursive: true, force: true })
+console.log(`    Removed ${pruneForeignPackages(join(standaloneDir, 'node_modules'), target)} foreign platform packages for ${target.name}`)
+prepareTargetPty(standaloneDir, target)
 console.log('    正在打包 node_modules 到 runtime.tar.gz…')
 createStandaloneArchive(runtimeTar, standaloneDir, ['node_modules'])
 const archiveDigest = createHash('sha256').update(readFileSync(runtimeTar)).digest('hex')
@@ -233,6 +253,10 @@ mkdirSync(outDir, { recursive: true })
 
 // 4. 调用 pkg 编译
 console.log(`\n==> 编译 Standalone 二进制 (${targets})…`)
+const launcherDir = join(temporaryDir, 'launcher')
+stageStandaloneLauncher(standaloneDir, launcherDir)
+const entryFile = join(launcherDir, 'entry.cjs')
+const pkgConfig = join(launcherDir, 'pkg.config.json')
 const pkgManifestPath = fileURLToPath(import.meta.resolve('@yao-pkg/pkg/package.json'))
 const pkgManifest = JSON.parse(readFileSync(pkgManifestPath, 'utf8'))
 const pkgBin = join(dirname(pkgManifestPath), typeof pkgManifest.bin === 'string' ? pkgManifest.bin : pkgManifest.bin.pkg)
@@ -251,6 +275,8 @@ const pkgArgs = [
   'None',
   '--no-bytecode',
   '--public',
+  '--public-packages',
+  '*',
 ]
 execFileSync(process.execPath, pkgArgs, { cwd: root, stdio: 'inherit' })
 

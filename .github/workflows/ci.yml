@@ -595,6 +595,7 @@ jobs:
           name: ci-build-${{ github.run_id }}
           path: .
       - run: node scripts/verify-standalone-archive.mjs
+      - run: node scripts/verify-standalone-layout.mjs
       - run: node scripts/verify-standalone-runtime.mjs
       - run: pnpm bundle:standalone --targets ${{ matrix.target }}
       - run: node scripts/verify-standalone-artifact.mjs
