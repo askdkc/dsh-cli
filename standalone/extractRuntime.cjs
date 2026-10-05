@@ -1,5 +1,6 @@
 'use strict'
 const { execFileSync } = require('node:child_process')
+const { existsSync } = require('node:fs')
 const { win32 } = require('node:path')
 const { x: extractTar } = require('tar')
 
@@ -12,14 +13,20 @@ function nativeTarPath(platform, systemRoot) {
 
 /** Extract our generated archive using the OS tool, with a self-contained fallback. */
 async function extractRuntime(options, dependencies = {}) {
-  const executable = nativeTarPath(dependencies.platform ?? process.platform, dependencies.systemRoot ?? process.env.SystemRoot)
+  const platform = dependencies.platform ?? process.platform
+  const executable = nativeTarPath(platform, dependencies.systemRoot ?? process.env.SystemRoot)
   const execute = dependencies.execute ?? execFileSync
   const fallback = dependencies.fallback ?? extractTar
-  if (executable) {
+  const exists = dependencies.exists ?? existsSync
+  const hasCompressionHelper = platform !== 'linux' || exists('/usr/bin/gzip') || exists('/bin/gzip')
+  if (executable && hasCompressionHelper) {
     try {
       // Never resolve tar via PATH: Git Bash tar misreads Windows drive letters.
       execute(executable, ['-xzf', options.file, '-C', options.cwd, '--no-same-owner'], {
         stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true,
+        // GNU tar launches gzip separately. Use OS directories only, even when
+        // the launcher has an empty PATH; never inherit caller-provided tools.
+        ...(platform === 'linux' ? { env: { ...process.env, PATH: '/usr/bin:/bin' } } : {}),
       })
       return
     } catch (error) {

@@ -600,6 +600,11 @@ jobs:
       - run: node scripts/verify-standalone-runtime.mjs
       - run: pnpm bundle:standalone --targets ${{ matrix.target }}
       - run: node scripts/verify-standalone-artifact.mjs
+      - name: Measure Windows extraction after a smoke failure
+        if: failure() && runner.os == 'Windows'
+        run: node scripts/verify-standalone-artifact.mjs
+        env:
+          DSH_STANDALONE_DIAGNOSTIC: '1'
 
   # CI 门禁：唯一的 required check 候选。汇总所有分组结果——任何一组失败
   # 或被取消，gate 显式失败并逐组报告状态。if: always() 保证上游失败时

@@ -21,11 +21,27 @@ await extractRuntime(options, {
   fallback() { fallbackCalled = true },
 })
 assert.equal(fallbackCalled, false)
+const originalPath = process.env.PATH
+await extractRuntime(options, {
+  platform: 'linux',
+  exists: () => true,
+  execute(executable, _args, childOptions) {
+    assert.equal(executable, '/bin/tar')
+    assert.equal(childOptions.env.PATH, '/usr/bin:/bin', 'GNU tar must find its OS gzip helper')
+  },
+})
+assert.equal(process.env.PATH, originalPath, 'the caller environment is unchanged')
 await assert.rejects(extractRuntime(options, {
-  platform: 'linux', execute() { throw Object.assign(new Error('bad archive'), { status: 2 }) },
+  platform: 'linux', exists: () => true, execute() { throw Object.assign(new Error('bad archive'), { status: 2 }) },
   fallback() { fallbackCalled = true },
 }), /bad archive/)
 assert.equal(fallbackCalled, false, 'real extraction errors must propagate')
+await extractRuntime(options, {
+  platform: 'linux', exists: () => false,
+  execute() { assert.fail('tar cannot run without its gzip helper') },
+  fallback() { fallbackCalled = true },
+})
+assert.equal(fallbackCalled, true, 'missing gzip uses the bundled extractor')
 
 const root = mkdtempSync(join(tmpdir(), 'dsh-extraction-'))
 try {
@@ -37,7 +53,7 @@ try {
     const cwd = join(root, String(fallback))
     mkdirSync(cwd)
     await extractRuntime({ file, cwd, strict: true, preservePaths: false }, fallback ? {
-      platform: 'linux', execute() { throw Object.assign(new Error('tool missing'), { code: 'ENOENT' }) },
+      platform: 'linux', exists: () => true, execute() { throw Object.assign(new Error('tool missing'), { code: 'ENOENT' }) },
     } : {})
     assert.equal(readFileSync(join(cwd, 'file.txt'), 'utf8'), 'runtime contents')
   }
