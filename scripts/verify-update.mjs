@@ -70,6 +70,7 @@ const repoRoot = fileURLToPath(new URL('..', import.meta.url))
 function copyUpdateModule(dstDir) {
   mkdirSync(join(dstDir, 'utils'), { recursive: true })
   cpSync(compiledModulePath, join(dstDir, 'update.js'))
+  cpSync(join(repoRoot, 'lib/types/package-version.js'), join(dstDir, 'package-version.js'))
   cpSync(compiledShellQuotePath, join(dstDir, 'utils', 'shellQuote.js'))
   cpSync(compiledPathsPath, join(dstDir, 'utils', 'paths.js'))
 }

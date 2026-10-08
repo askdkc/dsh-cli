@@ -6,19 +6,10 @@ allowBuilds:
 
 autoInstallPeers: false
 
-# Preserve the independent provider catalog override; DSH follows the manifest channel.
-overrides:
-  # OpenCode model list: force the pi-ai catalog past dsh-llm-pi-ai's
-  # ^0.87.1 pin to the latest verified list (0.99.1). Mirrors the parent
-  # repo override; dsh-auth installs from its own directory.
-  '@earendil-works/pi-ai': 0.99.1
-
 # Prereleases can be younger than pnpm 11 default 24h minimumReleaseAge;
 # exempt the whole scope (name patterns cannot carry a version spec).
-# @earendil-works/* covers pi-ai plus its pi-telemetry companion pin.
 minimumReleaseAgeExclude:
   - '@deepseek-ai/*'
-  - '@earendil-works/*'
   # Exact SDK versions selected and fixture-tested for the owned OpenCode
   # transports, including their lockfile-pinned provider-utils dependency.
   # Keep the default 24h gate for every other version; do not exempt @ai-sdk/*.

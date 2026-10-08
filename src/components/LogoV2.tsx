@@ -1,9 +1,7 @@
 import React from 'react'
 import { getLang, t as tr } from '../i18n.js'
 import { pickRandomTip, type Tip } from '../tips.js'
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { installedTuiVersion } from '../package-version.js'
 import { Box, Text, useAnimationFrame, useTerminalSize } from '../ui.js'
 import { getTheme } from '../theme.js'
 import { useTheme } from './design-system/ThemeProvider.js'
@@ -26,19 +24,8 @@ const INTRO_HEART_PASS: readonly number[] = [
   WHALE_FRAME_INDEX.heart1, WHALE_FRAME_INDEX.heart2, WHALE_FRAME_INDEX.heart3,
 ]
 
-/**
- * Header badge version, read from the installed package.json so the display
- * never drifts from the published version. Falls back to a literal when the
- * package metadata is unreadable (unusual layouts).
- */
-const VERSION = (() => {
-  try {
-    const pkgPath = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'package.json')
-    return (JSON.parse(readFileSync(pkgPath, 'utf8')) as { version?: string }).version ?? '0.1.0'
-  } catch {
-    return '0.1.0'
-  }
-})()
+// Cache only the splash badge; update checks must reread package metadata.
+const VERSION = installedTuiVersion()
 
 /**
  * Center of the whale art's bounding box: sprite columns 3..34 (center
@@ -285,7 +272,7 @@ export function LogoV2({
         {(showBigTitle || showPlainTitle) && <Box flexDirection="column" flexShrink={1}>
           <Text wrap="truncate-end">
             {sweep('✦ dsh-CLI', t, wordmarkRGB, wordmarkShimmerRGB, 60)}
-            <Text dimColor>{'  v' + VERSION}</Text>
+            {VERSION !== undefined && <Text dimColor>{'  v' + VERSION}</Text>}
           </Text>
           {showBigTitle ? <>
             {bigDeepSeek.map((row, index) => (

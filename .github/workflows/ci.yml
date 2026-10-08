@@ -173,6 +173,7 @@ jobs:
 
       # Keep every main/types/bin/exports target inside the published tarball
       # and smoke-import the two runtime entry points.
+      - run: pnpm test:compatibility
       - run: pnpm verify:package
       - run: pnpm verify:bun-package
 
@@ -215,8 +216,6 @@ jobs:
       - name: Record upstream revision
         run: git -C "$DSH_HARNESS_SOURCE_ROOT" rev-parse HEAD
 
-      - run: pnpm --dir "$DSH_HARNESS_SOURCE_ROOT" install --frozen-lockfile --ignore-scripts
-
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
       # Validate the lockfile install and the current upstream source patch.
@@ -224,17 +223,15 @@ jobs:
         env:
           NODE_ENV: production
 
-      - run: pnpm verify:upstream-source
-
-      # Verify exact seed ownership with a real current-host Session.
-      - run: TSX_TSCONFIG_PATH="$DSH_HARNESS_SOURCE_ROOT/tsconfig.base.json" pnpm verify:live-session -- --real-upstream
-
+      # Type and Session probes share one disposable source/dependency tree.
+      - run: pnpm verify:upstream-source --live-session
       # dsh-auth 的 provider 回归此前无任何 lane 执行（build 链只
       # 构建 dsh-auth 不跑其测试）。build:dsh-auth 已装好依赖与产物，
       # verify 零额外装配。（勘误：minimal-preset-tools 本就在
       # verify:build 聚合链里，原 PR 草稿里加的那步是重复执行，已移除。）
       - run: pnpm --dir dsh-auth verify
       - run: pnpm verify:profile-sync
+      - run: pnpm verify:opencode-profile --host-default
       - run: pnpm verify:opencode-profile
         env:
           DSH_AUTH_TEST_PI: 0.87.1

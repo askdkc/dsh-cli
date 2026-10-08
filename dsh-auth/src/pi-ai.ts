@@ -1,8 +1,6 @@
 /**
  * The pi-ai instance owned by the installed dsh-llm-pi-ai adapter.
  *
- * dsh-llm-pi-ai 0.2.0-rc.2 declares pi-ai ^0.87.1; the workspace override
- * pins @earendil-works/pi-ai to the latest verified catalog (0.99.1).
  * Loading a second catalog from dsh-auth and handing its Provider objects to
  * the adapter crosses package instances and is neither type- nor runtime-safe.
  * Resolve the adapter's own dependency instead, and derive every public type

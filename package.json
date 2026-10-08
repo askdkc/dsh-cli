@@ -237,7 +237,8 @@
     "verify:opencode-profile": "node scripts/verify-opencode-profile.mjs",
     "verify:upstream-source": "node scripts/verify-upstream-source.mjs",
     "update:dsh": "pnpm update '@deepseek-ai/dsh-*'",
-    "verify:tui-startup-lifecycle": "node --import tsx/esm scripts/verify-tui-startup-lifecycle.mjs"
+    "verify:tui-startup-lifecycle": "node --import tsx/esm scripts/verify-tui-startup-lifecycle.mjs",
+    "test:compatibility": "node scripts/verify-compatibility.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",

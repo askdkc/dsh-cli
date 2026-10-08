@@ -41,11 +41,6 @@ overrides:
   '@dsh-tui-dev/sqlite-island>@deepseek-ai/dsh-scope': 0.1.1-rc.2
   '@dsh-tui-dev/sqlite-island>@deepseek-ai/dsh-typert-protocol': 0.1.1-rc.2
   '@dsh-tui-dev/sqlite-island>@deepseek-ai/dsh-attachment': 0.1.1-rc.2
-  # OpenCode model list: force the pi-ai catalog past dsh-llm-pi-ai's
-  # ^0.87.1 pin to the latest verified list (0.99.1: 77 chat models +
-  # classifiers, clean IDs — the `chat:`/`classifier:` prefixes live only
-  # in JSON keys and are stripped from model.id).
-  '@earendil-works/pi-ai': 0.99.1
 
 allowBuilds:
   # Optional postinstall-only (pi-ai transitive deps): nothing at runtime
@@ -66,8 +61,3 @@ minimumReleaseAgeExclude:
   - '@deepseek-ai/cosmokit@1.8.2'
   - '@deepseek-ai/schemastery@3.18.1'
   - dsh-working-activity@0.2.6 || 0.3.0 || 0.3.2 || 0.3.3 || 0.4.0 || 0.5.0
-  # pi-ai 0.99.1 rides with @earendil-works/pi-telemetry@0.99.1, which trips
-  # the default 24h minimumReleaseAge until 2026-09-30T18:17Z; exempt the
-  # whole (tiny, exact-pinned) scope like @deepseek-ai/* above so future
-  # pi-ai bumps do not need a paired exemption each time.
-  - '@earendil-works/*'

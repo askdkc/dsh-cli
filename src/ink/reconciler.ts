@@ -1,6 +1,7 @@
 /* eslint-disable custom-rules/no-top-level-side-effects */
 
 import { appendFileSync } from 'fs'
+import React from 'react'
 import createReconciler from 'react-reconciler'
 import { getYogaCounters } from '../native-ts/yoga-layout/index.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
@@ -266,6 +267,8 @@ const reconciler = createReconciler<
   -1,
   null
 >({
+  // Runtime metadata is absent from the published HostConfig definition.
+  ...{ rendererVersion: React.version, rendererPackageName: 'ink' },
   getRootHostContext: () => ({ isInsideText: false }),
   prepareForCommit: () => {
     if (COMMIT_LOG) _prepareAt = performance.now()

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
-import {writeFile,mkdir,readFile} from 'node:fs/promises'
+import {writeFile,mkdir,readFile,realpath} from 'node:fs/promises'
 import {createRequire} from 'node:module'
 import {dirname,join} from 'node:path'
-import {fileURLToPath} from 'node:url'
+import {pathToFileURL} from 'node:url'
 import {attributionHeaders} from '@deepseek-ai/dsh-llm'
 import {loadProfile,composeEntries,loadLayeredEnv} from '@deepseek-ai/dsh-app-boot'
 import {runProfile} from './node_modules/@deepseek-ai/dsh/lib/profile-boot.js'
@@ -40,13 +40,13 @@ if(process.env.DSH_AUTH_TEST_PHASE!=='independent') {
   // pi exposes only ESM entry points and does not export its manifest.
   // Read the first installed dependency manifest in this disposable host.
   let pi
-  const host=dirname(fileURLToPath(import.meta.url))
   for(const root of adapterRequire.resolve.paths('@earendil-works/pi-ai')??[]) {
-    if(!root.startsWith(host+'/')) continue
     try {pi=JSON.parse(await readFile(join(root,'@earendil-works/pi-ai/package.json'),'utf8'));break}
     catch(error) {if(error.code!=='ENOENT') throw error}
   }
-  assert.equal(pi?.version,process.env.DSH_AUTH_TEST_PI)
+  assert(pi?.version, 'host pi manifest must resolve')
+  if(process.env.DSH_AUTH_TEST_PI) assert.equal(pi.version,process.env.DSH_AUTH_TEST_PI)
+  console.log('host-owned pi', pi.version)
 }
 const profile=loadProfile('probe','dsh-cli',new URL('./node_modules/@deepseek-ai/dsh/package.json',import.meta.url).pathname,process.env.DSH_HOME)
 const kept=new Set(['llm','commands','dsh-tui-auth'])
@@ -56,8 +56,8 @@ if(process.env.DSH_AUTH_TEST_PHASE==='independent') patches.find(entry=>entry.id
 await writeFile(overlay,JSON.stringify(patches))
 const timeout=setTimeout(()=>{console.error('profile boot timeout');process.exit(2)},30000)
 try {
-const app=await runProfile({profile:'dsh-cli',environment:loadLayeredEnv('probe'),args:[],patchFiles:[overlay]})
 if(fixtureFetch) globalThis.fetch=fixtureFetch
+const app=await runProfile({profile:'dsh-cli',environment:loadLayeredEnv('probe'),args:[],patchFiles:[overlay]})
 const api=app.ctx.get('dshAuth')?.api
 if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
   if(process.env.DSH_AUTH_TEST_PI==='0.87.1') assert.equal(api,undefined)
@@ -69,7 +69,52 @@ if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
     const chunks=[];for await(const chunk of llm.stream({provider,model:id,sessionId:'fixture-session',reasoningEffort:'high',messages:[{role:'user',content:[{type:'text',text:'test'}]}]})) chunks.push(chunk)
     assert(chunks.some(chunk=>chunk.type==='text-delta'&&chunk.text==='installed'), JSON.stringify(chunks));assert.equal(chunks.at(-1).reason.kind,'stop')
   }
-  assert.equal((await api.providers()).length,process.env.DSH_AUTH_TEST_PHASE==='independent'?2:9)
+  const providers=await api.providers()
+  const authRoot=join(process.env.DSH_HOME,'profiles/dsh-cli/node_modules/@askdkc/dsh-cli/node_modules/@askdkc/dsh-auth')
+  const {AUTH_PROVIDER_IDS}=await import(pathToFileURL(join(authRoot,'lib/routes.js')).href)
+  const expectedProviders=process.env.DSH_AUTH_TEST_PHASE==='independent'?['opencode','opencode-go']:[...AUTH_PROVIDER_IDS]
+  assert.deepEqual(providers.map(row=>row.provider).sort(),expectedProviders.sort())
+  for(const provider of providers) {
+    assert.equal(typeof provider.label,'string')
+    assert(provider.authMethods.length>0,provider.provider)
+  }
+  if(process.env.DSH_AUTH_TEST_PHASE==='updated') {
+    const carrier=join(process.env.DSH_HOME,'profiles/dsh-cli/node_modules/@askdkc/dsh-cli')
+    const installed=JSON.parse(await readFile(join(carrier,'package.json'),'utf8'))
+    const {installedTuiVersion}=await import(pathToFileURL(join(carrier,'lib/types/package-version.js')).href)
+    assert.equal(installedTuiVersion(),installed.version,'actual tarball metadata must match its own manifest')
+    const authModule=join(authRoot,'lib/pi-ai.js')
+    const {adapterBuiltinProviders}=await import(pathToFileURL(authModule).href)
+    const authRequire=createRequire(authModule)
+    const adapterRequire=createRequire(authRequire.resolve('@deepseek-ai/dsh-llm-pi-ai/package.json'))
+    let catalogPath
+    for(const root of adapterRequire.resolve.paths('@earendil-works/pi-ai')??[]) {
+      try {catalogPath=await realpath(join(root,'@earendil-works/pi-ai/dist/providers/all.js'));break}
+      catch(error) {if(error.code!=='ENOENT') throw error}
+    }
+    assert(catalogPath,'installed adapter catalog must resolve')
+    const {builtinProviders}=await import(pathToFileURL(catalogPath).href)
+    assert.equal(adapterBuiltinProviders,builtinProviders,'auth and its adapter must use one pi module')
+    const manifest=JSON.parse(await readFile(join(dirname(catalogPath),'../../package.json'),'utf8'))
+    if(process.env.DSH_AUTH_TEST_PI) assert.equal(manifest.version,process.env.DSH_AUTH_TEST_PI,'comparison must exercise the installed auth adapter too')
+    const {buildOAuthProfile,CATALOG_PROVIDER_IDS}=await import(pathToFileURL(join(authRoot,'lib/profiles.js')).href)
+    for(const id of CATALOG_PROVIDER_IDS.filter(id=>!id.startsWith('opencode'))) {
+      const native=builtinProviders().find(provider=>provider.id===id)
+      assert(native,id)
+      const profile=buildOAuthProfile(id)
+      assert.deepEqual(Object.keys(profile.piProvider.auth),Object.keys(native.auth))
+      if(native.auth.oauth) {
+        for(const method of ['login','refresh','getApiKey']) assert.equal(typeof profile.piProvider.auth.oauth[method],typeof native.auth.oauth[method])
+      }
+      assert.deepEqual(profile.piProvider.getModels(),native.getModels())
+      const model=native.getModels()[0]
+      assert(model,id)
+      assert.equal((await llm.resolveModelInfo(id,model.id)).id,model.id)
+    }
+    console.log(`installed auth pi=${manifest.version} catalog=${catalogPath}; catalog models, auth interfaces and export identity OK`)
+    await import(pathToFileURL(join(authRoot,'scripts/smoke.mjs')).href)
+    await import(pathToFileURL(join(authRoot,'scripts/verify-provider-wire.mjs')).href)
+  }
 }
 await app.shutdown.shutdown(0)
 console.log('profile '+process.env.DSH_AUTH_TEST_PHASE+' ready')

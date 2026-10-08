@@ -1,25 +1,33 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type Schema from '@deepseek-ai/schemastery'
 
+const VOLATILE_REQUIRED = 'dsh-tui: profile-backed settings require Schemastery volatile Config support. Update DSH and reinstall the current profile dependencies before starting the TUI.'
+
 /** Volatile Config fields are refs; ordinary fields retain plain values. */
 export type RuntimeConfig<T> = { [K in keyof T]: T[K] | { get(): T[K] } }
 
 /** Declare only UI preferences as live fields, never the agent/session route. */
 export function editableConfig<T>(schema: Schema<T>, keys: readonly (keyof T)[]): Schema<T, RuntimeConfig<T>> {
-  for (const key of keys) {
-    const field = schema.dict?.[String(key)]
-    if (field !== undefined) schema.dict![String(key)] = field.volatile()
+  const fields = keys.map(String).filter(key => schema.dict?.[key] !== undefined)
+  for (const key of fields) {
+    if (typeof schema.dict![key]?.volatile !== 'function') throw new Error(VOLATILE_REQUIRED)
   }
+  // Stage conversions so a later rejection cannot partially rewrite Config.
+  const replacements = new Map<string, Schema>()
+  for (const key of fields) {
+    replacements.set(key, (replacements.get(key) ?? schema.dict![key]).volatile())
+  }
+  for (const [key, field] of replacements) schema.dict![key] = field
   return schema as Schema<T, RuntimeConfig<T>>
 }
 
 /** Settings forms use the Config owner's Loader ID, not the plugin name. */
 export function resolveSettingsNamespace(ctx: Context, schema: Pick<Schema, 'dict'>): string {
   if (!Object.values(schema.dict ?? {}).some(field => field.meta.volatile === true)) {
-    throw new Error('dsh-tui: profile-backed settings require @deepseek-ai/schemastery >= 3.18.3 with volatile Config support. Update DSH and reinstall the current profile dependencies before starting the TUI.')
+    throw new Error(VOLATILE_REQUIRED)
   }
   const owner = ctx.fiber as typeof ctx.fiber & { entry?: { options: { id?: string } } }
-  const ns = owner.entry?.options.id
+  const ns = owner?.entry?.options?.id
   if (!ns) throw new Error('dsh-tui: profile-backed settings require a Loader entry for the Config owner.')
   return ns
 }
