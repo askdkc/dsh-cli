@@ -7,12 +7,13 @@ import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 import { satisfies, rcompare } from 'semver'
 import { randomUUID } from 'node:crypto'
+import { createRequire } from 'node:module'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const baselinePlugin = '@askdkc/dsh-cli@0.12.3'
 const hostDefault = process.argv.includes('--host-default')
 const freshInstall = hostDefault || process.argv.includes('--fresh-install')
-const piVersion = process.env.DSH_AUTH_TEST_PI ?? '0.87.1'
-assert(['0.87.1', '0.99.1'].includes(piVersion))
+const baselinePiVersion = process.env.DSH_AUTH_TEST_PI ?? '0.87.1'
+assert(['0.87.1', '0.99.1'].includes(baselinePiVersion))
 const directory = await mkdtemp(join(tmpdir(), 'dsh-opencode-profile-'))
 const probes = []
 const providedHost = process.env.DSH_AUTH_TEST_HOST ? resolve(process.env.DSH_AUTH_TEST_HOST) : undefined
@@ -34,10 +35,22 @@ try {
     await writeFile(join(host, 'package.json'), await readFile(join(providedHost, 'package.json')))
     await symlink(join(providedHost, 'node_modules'), join(host, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
   } else {
-    await writeFile(join(host, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': 'alpha' }, ...(hostDefault ? {} : { overrides: { '@earendil-works/pi-ai': piVersion } }) }))
+    await writeFile(join(host, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': 'alpha' } }))
     run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'])
   }
   const hostPackage = JSON.parse(await readFile(join(host, 'node_modules/@deepseek-ai/dsh/package.json')))
+  const hostRequire = createRequire(join(host, 'package.json'))
+  const adapterManifestPath = hostRequire.resolve('@deepseek-ai/dsh-llm-pi-ai/package.json')
+  const adapterManifest = JSON.parse(await readFile(adapterManifestPath))
+  const adapterRequire = createRequire(adapterManifestPath)
+  let nativePi
+  for (const path of adapterRequire.resolve.paths('@earendil-works/pi-ai') ?? []) {
+    try { nativePi = JSON.parse(await readFile(join(path, '@earendil-works/pi-ai/package.json'))); break }
+    catch (error) { if (error.code !== 'ENOENT') throw error }
+  }
+  assert(nativePi?.version, 'current host must own a pi dependency')
+  assert(satisfies(nativePi.version, adapterManifest.dependencies['@earendil-works/pi-ai']), 'current host pi must satisfy its native adapter dependency')
+  console.log(`current host: DSH ${hostPackage.version}, native pi ${nativePi.version}`)
   const cli = join(host, 'node_modules/@deepseek-ai/dsh', hostPackage.bin.dsh)
   const manifest = JSON.parse(await readFile(join(root, 'package.json')))
   const authManifest = JSON.parse(await readFile(join(root, 'dsh-auth', 'package.json')))
@@ -56,34 +69,35 @@ try {
       .filter(([name]) => name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
       .map(([, range]) => range)
     const supportsBaseline = version => ranges.every(range => satisfies(version, range, { includePrerelease: true }))
-    let baselineHost = host
-    let baselineCli = cli
-    if (!supportsBaseline(hostPackage.version)) {
+    let baselineVersion = hostPackage.version
+    if (!supportsBaseline(baselineVersion)) {
       const versions = JSON.parse(run('npm', ['view', '@deepseek-ai/dsh', 'versions', '--json']))
-      const baselineVersion = versions.filter(supportsBaseline).sort(rcompare)[0]
+      baselineVersion = versions.filter(supportsBaseline).sort(rcompare)[0]
       assert.ok(baselineVersion, 'the historical fixture needs a compatible published host')
-      baselineHost = join(directory, 'baseline-host')
-      await mkdir(baselineHost)
-      await writeFile(join(baselineHost, 'package.json'), JSON.stringify({
-        private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': baselineVersion },
-        ...(hostDefault ? {} : { overrides: { '@earendil-works/pi-ai': piVersion } }),
-      }))
-      run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], baselineHost)
-      const previous = JSON.parse(await readFile(join(baselineHost, 'node_modules/@deepseek-ai/dsh/package.json')))
-      baselineCli = join(baselineHost, 'node_modules/@deepseek-ai/dsh', previous.bin.dsh)
     }
+    // Legacy pi belongs only to the historical host. Forcing it into the
+    // current host invalidates the native adapter's dependency contract.
+    const baselineHost = join(directory, 'baseline-host')
+    await mkdir(baselineHost)
+    await writeFile(join(baselineHost, 'package.json'), JSON.stringify({
+      private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': baselineVersion },
+      overrides: { '@earendil-works/pi-ai': baselinePiVersion },
+    }))
+    run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'], baselineHost)
+    const previous = JSON.parse(await readFile(join(baselineHost, 'node_modules/@deepseek-ai/dsh/package.json')))
+    const baselineCli = join(baselineHost, 'node_modules/@deepseek-ai/dsh', previous.bin.dsh)
     run(node, [baselineCli, 'plugin', '--profile', 'dsh-cli', 'add', baselinePlugin], baselineHost)
     // Real profile boot with only the registry, commands and auth enabled. TUI
     // rendering, shells and live API keys are deliberately separate acceptance.
     const baselineProbe = join(baselineHost, `baseline-probe-${randomUUID()}.mjs`)
     await writeFile(baselineProbe, await readFile(new URL('./opencode-profile-probe.mjs', import.meta.url), 'utf8'), { flag: 'wx' })
     probes.push(baselineProbe)
-    const baseline = run(node, [baselineProbe], baselineHost, { DSH_AUTH_TEST_PHASE: 'baseline', DSH_AUTH_TEST_PI: piVersion })
-    if (piVersion === '0.87.1') assert.match(baseline, /snapshot opencode\/claude-sonnet-5-5.*neither metadata nor a fallback marker/)
+    const baseline = run(node, [baselineProbe], baselineHost, { DSH_AUTH_TEST_PHASE: 'baseline', DSH_AUTH_TEST_PI: baselinePiVersion })
+    if (baselinePiVersion === '0.87.1') assert.match(baseline, /snapshot opencode\/claude-sonnet-5-5.*neither metadata nor a fallback marker/)
     // A current-package probe must reject this historical profile before boot,
     // rather than silently disabling auth and treating its absence as success.
     const mismatched = spawnSync(node, [baselineProbe], {
-      cwd: baselineHost, env: { ...env, DSH_AUTH_TEST_PHASE: 'updated', DSH_AUTH_TEST_PI: piVersion },
+      cwd: baselineHost, env: { ...env, DSH_AUTH_TEST_PHASE: 'updated', DSH_AUTH_TEST_PI: baselinePiVersion },
       encoding: 'utf8', timeout: 30000, maxBuffer: 16 * 1024 * 1024,
     })
     assert.equal(mismatched.status, 1, 'a profile with the wrong auth row must fail')
@@ -106,11 +120,11 @@ try {
   assert(smoke.includes(terminal), 'installed smoke wrapper requires its known CLI exit')
   await writeFile(installedSmoke, smoke.replace(terminal, "if (failed !== 0) throw new Error('installed auth fixtures failed')"))
   await writeFile(join(auth, 'scripts/verify-provider-wire.mjs'), await readFile(join(root, 'dsh-auth/scripts/verify-provider-wire.mjs')))
-  const updated = run(node, [probe], host, { DSH_AUTH_TEST_PHASE: 'updated', DSH_AUTH_TEST_PI: hostDefault ? '' : piVersion })
+  const updated = run(node, [probe], host, { DSH_AUTH_TEST_PHASE: 'updated', DSH_AUTH_TEST_PI: nativePi.version })
   assert.doesNotMatch(updated, /did not activate/)
   console.log(updated.split('\n').filter(line => /host-owned pi|installed auth pi|profile updated ready|passed|failed|FAIL|fixture transport OK/.test(line)).join('\n'))
   run(node, ['--loader', join(root, 'dsh-auth/scripts/reject-pi-loader.mjs'), probe], host, { DSH_AUTH_TEST_PHASE: 'independent' })
-  console.log(`DSH ${hostPackage.version} / pi ${hostDefault ? 'host-owned' : piVersion}: ${freshInstall ? 'fresh install' : 'public baseline, formal upgrade'} to cli ${manifest.version}/auth ${authManifest.version}, 9 routes, pi-free profile and installed wire fixture OK`)
+  console.log(`DSH ${hostPackage.version} / native pi ${nativePi.version}: ${freshInstall ? 'fresh install' : `public baseline with pi ${baselinePiVersion}, formal upgrade`} to cli ${manifest.version}/auth ${authManifest.version}, 9 routes, pi-free profile and installed wire fixture OK`)
 } finally {
   for (const probe of probes) await rm(probe, { force: true })
   await rm(directory, { recursive: true, force: true })
