@@ -97,6 +97,9 @@ type MethodPolicy =
   | { kind: 'exempt'; reason: string }
 
 const METHOD_POLICY: Record<string, Record<string, MethodPolicy>> = {
+  ExecutionFenceRuntime: {
+    attach: { kind: 'capability', capability: 'host.execution-fences.attach' },
+  },
   TuiPluginHostRuntime: {
     generationId: { kind: 'exempt', reason: 'read-only scalar accessor; no effect' },
     grants: { kind: 'exempt', reason: 'read-only facade accessor; underlying grant evaluation is guarded in GrantStore' },
@@ -435,6 +438,8 @@ const RETURNED_HANDLE_POLICY: ReadonlyArray<{
   handle: string
   capability: string
 }> = Object.freeze([
+  { ownerClass: 'ExecutionFenceRuntime', ownerMethod: 'attach', handle: 'protect', capability: 'host.execution-fences.protect' },
+  { ownerClass: 'ExecutionFenceRuntime', ownerMethod: 'attach', handle: 'release', capability: 'host.execution-fences.release' },
   { ownerClass: 'TuiPluginStorageRuntime', ownerMethod: 'open', handle: 'get', capability: 'host.storage.read' },
   { ownerClass: 'TuiPluginStorageRuntime', ownerMethod: 'open', handle: 'set', capability: 'host.storage.write' },
   { ownerClass: 'TuiPluginStorageRuntime', ownerMethod: 'open', handle: 'delete', capability: 'host.storage.write' },
@@ -470,6 +475,7 @@ function returnedHandleHasGuard(method: { source: string }, handle: string, capa
 }
 
 const CLASS_SOURCE_FILES: Readonly<Record<string, string>> = Object.freeze({
+  ExecutionFenceRuntime: 'dsh-adapter/execution-fences.ts',
   TuiPluginStorageRuntime: 'dsh-adapter/plugin-storage.ts',
   TuiPluginHostRuntime: 'dsh-adapter/plugin-host.ts',
 })

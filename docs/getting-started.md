@@ -64,6 +64,48 @@ sh install.sh
 `install.sh` 只封装 profile 插件命令并检查 `dsh`、`pnpm` 是否可用；它不会
 复制源码，也不需要本地构建。
 
+## 可选的 Kiokuko Lisp 工作流
+
+将 Kiokuko 安装到与 dsh-cli **相同**的 profile：
+
+```sh
+dsh plugin --profile dsh-cli add github:askdkc/kiokuko-dsh
+```
+
+在 profile 的 patch 中配置现有的 `kiokuko-dsh` 条目，然后重启：
+
+```yaml
+- id: kiokuko-dsh
+  config:
+    enabled: true
+    lisp:
+      enabled: true
+      sbclPath: sbcl
+    typedDecisions:
+      mode: auto
+      provider: typesafe
+      typesafe:
+        model: jev-latest
+```
+
+需要可工作的 SBCL；Linux 还需要启用命名空间的 Bubblewrap。通过 Kiokuko 配置
+Jev 凭据，或按[决策指南](https://github.com/askdkc/kiokuko-dsh/blob/main/docs/typed-decisions.md)
+选择并配置已运行的 Laya worker。不会自动安装运行时或启动 worker。
+
+输入普通请求，例如 `検索機能を実装して`。Jev/Laya 接受编程分类后，现有问题面板
+会询问是否使用 Lisp。选择 **Lispモードを使う（通常実行）**、
+**Lispモードを使わない** 或 **取消・作業を保持**。回答后且启动成功才开始编程。
+自由输入用于讨论或纠正。启用或拒绝的选择在会话内保留，不会每轮重复询问。
+意图不明确时保留原有任务确认流程。
+
+模型运行时，`/kioku-lisp`（状态）、`status`、`diagnostics`、`hot`、`cancel` 和
+`recover` 仍直接交给命令处理器。用 `/kioku-lisp cancel` 停止 Lisp 操作，再用
+`/kioku-lisp recover` 显式恢复。`enable`、`enable-task`、`disable`、`abandon` 和
+`restore` 需等待当前轮结束；输入保留供编辑。键盘发送、补全点击和展开编辑器遵循
+相同规则。也可手动执行 `/kioku-lisp enable`。文件变更仍需 Kiokuko 的批准。
+
+两个包都必须包含此集成修改。GitHub 安装读取已提交的源码，无法安装本地未提交的修改。
+
 ## 从旧包迁移
 
 早期版本使用无 scope 包 `dsh-cc-tui` 和 `cc-tui` profile：

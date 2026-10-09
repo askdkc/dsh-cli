@@ -379,6 +379,8 @@ const GROUPS = {
 // 不发送、Ctrl+Enter 发送并收起、Esc 分层（选区→收起）、点击定位/拖选、
 // 行号渲染、多行窗口跟随 + onWheel 滚轮自由滚动、折叠块互斥（展开清块/
 // 展开态粘贴纯文本）、设置开关（expandEditor=false 入口消失）。
+    ["verify-kioku-lisp-input", ['node', '--import', 'tsx/esm', 'scripts/verify-kioku-lisp-input.tsx']],
+    ["verify-execution-fences", ['node', '--import', 'tsx/esm', 'scripts/verify-execution-fences.ts']],
     ["verify-expand-editor", ['node', '--import', 'tsx/esm', 'scripts/verify-expand-editor.tsx']],
 // 三合一会话管理界面回归（issue #879）：/resume、/agentview、/home 合并为
 // 同一个 SessionSupervisor 后的两条硬性质——它确实是一个界面（工作区栏 +

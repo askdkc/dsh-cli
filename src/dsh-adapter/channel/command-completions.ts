@@ -40,6 +40,19 @@ export function createCommandCompletions(deps: {
       if ('effort'.startsWith(head)) model.warmEffortLevels()
     }
     return completeCommands(input, state.commandList, path => {
+      if (path.length === 1 && path[0] === 'kioku-lisp'
+        && state.commandList.some(command => command.name === 'kioku-lisp' && command.external === true)) return [
+        { name: 'status', description: 'Show Lisp mode and operation status' },
+        { name: 'diagnostics', description: 'Show Lisp runtime diagnostics' },
+        { name: 'hot', description: 'Show Lisp runtime health' },
+        { name: 'cancel', description: 'Stop the current Lisp operation' },
+        { name: 'recover', description: 'Recover after a stopped Lisp operation' },
+        { name: 'enable', description: 'Enable Lisp mode after the current turn finishes' },
+        { name: 'enable-task', description: 'Enable Lisp task mode after the current turn finishes' },
+        { name: 'disable', description: 'Disable Lisp mode after the current turn finishes' },
+        { name: 'abandon', description: 'Abandon retained Lisp work after the current turn finishes' },
+        { name: 'restore', description: 'Restore Lisp work after the current turn finishes' },
+      ]
       if (path.length === 1 && path[0] === 'model') {
         model.warmModelNodes()
         return model.modelNodes()

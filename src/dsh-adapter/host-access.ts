@@ -24,6 +24,7 @@ const executingFibers = new WeakSet<object>()
 const wrappedRunners = new WeakSet<object>()
 const wrappedRestarts = new WeakSet<object>()
 const canonicalRunners = new WeakMap<object, object>()
+const pluginCallbacks = new WeakMap<object, Function>()
 const activationGenerations = new WeakMap<object, number>()
 const activationTokens = new WeakMap<object, ActivationToken>()
 const activationStorage = new AsyncLocalStorage<ActivationToken>()
@@ -70,6 +71,9 @@ function rememberFiber(value: unknown, root?: Context): object | undefined {
     canonicalContexts.set(actual, canonical ?? owner)
     contextFibers.set(owner as object, actual)
     trustedFibers.add(actual)
+    if (!pluginCallbacks.has(actual) && actual.runtime !== null) {
+      pluginCallbacks.set(actual, actual.runtime.callback)
+    }
     if (root !== undefined) fiberRoots.set(actual, root)
     activationGenerations.set(actual, activationGenerations.get(actual) ?? 0)
     const runner = (actual as unknown as {
@@ -457,6 +461,26 @@ export function activationContext(ctx: Context): Context | undefined {
   const fiber = activationFiber(ctx)
   if (fiber === undefined) return undefined
   return canonicalContexts.get(fiber)
+}
+
+/** Host-only lifetime receipt. Unlike caller authentication, this check may
+ * run from another activation's tool pipeline; it never grants that caller
+ * authority to mutate the original owner's effects. */
+export function captureActivation(ctx: Context): { owner: Function; current(): boolean } {
+  const fiber = assertLiveContext(ctx, 'execution fence') as Context['fiber']
+  const owner = pluginCallbacks.get(fiber)
+  const context = canonicalContexts.get(fiber)
+  const generation = activationGenerations.get(fiber)
+  if (owner === undefined || context === undefined) throw new Error('dsh-cli: execution fence requires a plugin activation')
+  return {
+    owner,
+    current: () => fiber.uid !== null && (fiber.state === 1 || fiber.state === 2)
+      && fiber.ctx === context && context.fiber === fiber
+      && ((!restartPendingFibers.has(fiber) && !restartingFibers.has(fiber)) || executingFibers.has(fiber))
+      && activationGenerations.get(fiber) === generation
+      && canonicalRunners.get(fiber) === (fiber as unknown as { _runner: object })._runner
+      && (fiber as unknown as { _runner: { epoch?: unknown } })._runner.epoch !== '__INACTIVE__',
+  }
 }
 
 /** Resolve a service's composition root once.  Service methods are invoked

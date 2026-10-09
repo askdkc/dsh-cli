@@ -62,6 +62,41 @@ Theme extensions follow the same rule: plugins register complete semantic palett
 through `ctx.tuiThemes`. The host owns validation, ordering, rendering,
 and lifecycle; plugins never rewrite the theme directory or host palette.
 
+### Persistent execution denial
+
+Plugins that must keep a session protected after unload can probe
+`ctx.get('executionFences', false)`. The host owns the tool guard and step
+gate; the plugin receives only a lease for its own fence. Types are exported
+from `@askdkc/dsh-cli/plugin-host`.
+
+```ts
+const service = ctx.get('executionFences', false)
+if (!service) throw new Error('This host cannot retain execution protection')
+const fence = service.attach({
+  id: 'example.execution.v1',
+  tools: ['example_eval'],
+  check: execution => isAdmitted(execution) ? undefined : 'Recovery required',
+  beforeStep: async agent => await prepareProtectedAgent(agent),
+})
+fence.protect(sessionId)
+// Only after the plugin has safely disabled its protected mode:
+fence.release(sessionId)
+```
+
+`undefined` adds no denial. It never grants permission or overrides another
+tool guard. Protected sessions and their children remain denied when the
+plugin or service unloads, during restart, and after callback failure. A
+registered tool name is denied outside protected sessions. Sessions and
+agents must be the current native registry objects; child sessions cannot
+execute protected tools. The optional step callback must return `true`.
+
+Only the same captured Cordis plugin callback can reattach the same ID with
+the same tool names. Old leases, root-context calls and other plugin owners
+cannot release it. A changed module callback cannot adopt an earlier owner's
+fence within that process. These gates protect the current host process;
+plugins still own restoring persisted mode state before admitting execution
+on a new process. The API exposes no root effects or approval controls.
+
 Protocol parsing and external connections belong entirely to the plugin.
 Removing a plugin must leave local workspaces and session flows free of
 missing configuration, placeholders, or fallback branches.

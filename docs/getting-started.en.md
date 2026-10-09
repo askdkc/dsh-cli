@@ -52,6 +52,55 @@ sh install.sh
 `install.sh` checks for `dsh` and `pnpm` and then runs the profile plugin
 command. It does not copy source files and does not require a local build.
 
+## Optional Kiokuko Lisp workflow
+
+Install Kiokuko into the **same** profile as dsh-cli:
+
+```sh
+dsh plugin --profile dsh-cli add github:askdkc/kiokuko-dsh
+```
+
+In the profile's patch, configure the existing `kiokuko-dsh` row, then restart:
+
+```yaml
+- id: kiokuko-dsh
+  config:
+    enabled: true
+    lisp:
+      enabled: true
+      sbclPath: sbcl
+    typedDecisions:
+      mode: auto
+      provider: typesafe
+      typesafe:
+        model: jev-latest
+```
+
+A working SBCL is required; Linux also requires Bubblewrap with namespaces
+available. Configure Jev's credentials through Kiokuko, or select and configure
+an already-running Laya worker as described in
+[Kiokuko's decision guide](https://github.com/askdkc/kiokuko-dsh/blob/main/docs/typed-decisions.md).
+No runtime or worker is installed automatically.
+
+Enter a normal request such as `検索機能を実装して`. When Jev/Laya accepts a
+coding classification, the existing question panel asks whether to use Lisp.
+Choose **Lispモードを使う（通常実行）**, **Lispモードを使わない**, or
+**取消・作業を保持**. Coding starts only after an answered choice and successful
+startup. Free text is a discussion or correction. Enable/decline is retained
+within the session; later turns do not repeat the question. Ambiguous requests
+retain the ordinary intake questions.
+
+`/kioku-lisp` (status), `status`, `diagnostics`, `hot`, `cancel`, and `recover`
+run through the command handler even while the model is working. To stop a Lisp
+operation, enter `/kioku-lisp cancel`; recover explicitly with `/kioku-lisp recover`.
+`enable`, `enable-task`, `disable`, `abandon`, and `restore` wait until the current
+turn finishes; their drafts remain editable. Keyboard send, completion click,
+and the expanded editor follow the same rules. Manual `/kioku-lisp enable` is
+also available. File changes still require Kiokuko's approval flow.
+
+Both packages must contain this integration change. A GitHub install reads
+committed source; it cannot install uncommitted local edits.
+
 ## Migrate from the former package
 
 Earlier releases used the unscoped `dsh-cc-tui` package and a `cc-tui` profile:

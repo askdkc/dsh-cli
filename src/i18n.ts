@@ -621,6 +621,10 @@ const dict = {
     zh: '命令仍在执行，请等待本次结果',
     en: 'The command is still running; wait for this attempt to settle',
   },
+  'kioku-lisp-idle-required': {
+    zh: '等待当前任务结束，或用 /kioku-lisp cancel 停止 Lisp 操作并等待任务结束后再切换模式。输入已保留；可立即使用 status、diagnostics、hot、cancel、recover。',
+    en: 'Wait for the current turn to finish before changing Lisp mode. Use /kioku-lisp cancel to stop a Lisp operation, then wait for the turn to settle. Draft preserved; status, diagnostics, hot, cancel and recover are available now.',
+  },
   'command-changed': {
     zh: '/{{name}} 在图片准备期间发生变化；未执行，草稿已保留',
     en: '/{{name}} changed while its images were prepared; it was not run and the draft was preserved',

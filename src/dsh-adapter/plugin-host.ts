@@ -57,6 +57,7 @@ import { buildHostDescriptor, buildLegacyHostDescriptor, HOST_SUPPORTED_CONTRACT
 import { TuiEffectLedgerRuntime } from './effect-ledger.js'
 import { TuiPluginStorageRuntime } from './plugin-storage.js'
 import { TuiMessageObserverRuntime } from './message-observer.js'
+import { ExecutionFenceRuntime } from './execution-fences.js'
 import { stampCommandOwner, unstampCommandOwner } from './command-attribution.js'
 import { hasCommandErrorCode, mapCommandError } from './command-errors.js'
 import {
@@ -968,6 +969,7 @@ function assertActivationContext(hostCtx: Context, pluginCtx: Context): Context 
 export const name = 'dsh-cli-plugin-host'
 
 export function apply(ctx: Context): void {
+  ctx.plugin(ExecutionFenceRuntime)
   // The plugin-host service first — the contract surfaces mounted below
   // read its grant store (they fall back to a private read only when mounted
   // standalone, e.g. in tests).

@@ -1461,6 +1461,10 @@ export function PromptInput({
    * model stops what it is doing and starts on this message right away.
    */
   const interruptSend = () => {
+    if (isRegisteredLispCommand(valueRef.current)) {
+      tryRunCommand(valueRef.current)
+      return
+    }
     const trimmed = value.trim()
     if (!trimmed) {
       channel.notify(t('input-empty'), { color: 'warning' })
@@ -1481,6 +1485,10 @@ export function PromptInput({
     channel.notify(t('input-interrupt-immediate'), { timeoutMs: 2500 })
   }
 
+  const isRegisteredLispCommand = (text: string): boolean =>
+    parseCommandName(text)?.name === 'kioku-lisp'
+    && channel.commandList.some(command => command.name === 'kioku-lisp' && command.external === true)
+
   /**
    * Execute a slash command (built-in, plugin-registered, or hidden) when
    * the input resolves to one: the name parses as the first token so
@@ -1496,6 +1504,13 @@ export function PromptInput({
     const command = channel.commandList.find(entry => entry.name === parsed.name)
     const known = command !== undefined || isHiddenCommandName(parsed.name)
     if (!known) return false
+    if (isRegisteredLispCommand(text) && channel.working) {
+      const action = parsed.rawInput.trim().split(/\s+/u)[0] || 'status'
+      if (!['status', 'diagnostics', 'hot', 'cancel', 'recover'].includes(action)) {
+        channel.notify(t('kioku-lisp-idle-required'), { color: 'warning', timeoutMs: 5000 })
+        return true
+      }
+    }
     const generation = syncImageGeneration()
     const revision = draftRevisionRef.current
     const editSequence = inputEditSequenceRef.current
@@ -1560,7 +1575,7 @@ export function PromptInput({
         if (pendingCommandRef.current?.token === attempt.token) pendingCommandRef.current = null
       })
     }
-    return handled !== false
+    return handled !== false || isRegisteredLispCommand(text)
   }
 
   /**
@@ -1605,7 +1620,8 @@ export function PromptInput({
       // /model etc. stay idle-only.
       const parsed = value.startsWith('/') ? parseCommandName(value) : undefined
       if (parsed !== undefined && (
-        ((parsed.name === 'btw' || parsed.name === 'skills')
+        isRegisteredLispCommand(value)
+        || ((parsed.name === 'btw' || parsed.name === 'skills')
           && channel.commandList.some(c => c.name === parsed.name))
         || isHiddenCommandName(parsed.name)
       )) {
@@ -2170,6 +2186,8 @@ export function PromptInput({
         return
       }
       const line = (value + input).trim()
+      // Complete piped command lines must also remain editable on rejection.
+      if (isRegisteredLispCommand(line)) setInput(line)
       if (line.startsWith('/')) {
         const matches = channel.commandCompletions(line)
         if (matches.length === 1) {

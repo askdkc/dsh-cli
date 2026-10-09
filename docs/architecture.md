@@ -59,6 +59,23 @@ service、registry 或 channel seam 接入。
 主题扩展同样只通过 `ctx.tuiThemes` 注册完整语义色板。宿主负责校验、排序、
 渲染与生命周期；插件不能直接改写主题目录或宿主 palette。
 
+### 卸载后保留执行保护
+
+插件可通过 `ctx.get('executionFences', false)` 探测宿主提供的执行保护服务；
+接口类型从 `@askdkc/dsh-cli/plugin-host` 导出。`attach({ id, tools, check,
+beforeStep })` 返回只属于当前插件的 `protect(sessionId)` / `release(sessionId)`
+句柄。用法示例见 [英文文档](architecture.en.md#persistent-execution-denial)。
+
+此接口只能追加拒绝。`check` 返回 `undefined` 不代表授权，也不能覆盖已有
+工具权限。保护中的会话及子会话在插件或服务卸载、重启期间、回调失败时仍被
+拒绝；声明的工具不能在未保护的会话使用。必须使用宿主注册表中的当前 Agent
+和 session 对象；子会话不能运行受保护的工具。`beforeStep` 必须返回 `true`。
+
+只有同一个 Cordis 插件回调可以用相同 ID 和工具列表重新连接。过期句柄、根
+Context 和其他插件不能解除保护；代码更新后不同的回调也不能在同一进程接管
+旧保护。宿主保留进程内保护，插件仍负责在新进程恢复保存的模式。成功、安全地
+关闭模式后才应调用 `release`。此接口不暴露根 Context 的副作用或审批控制。
+
 协议解析与外部连接全部属于插件。删除插件后，本地工作区和会话路径不应出现
 缺失配置、占位文案或降级分支。
 
