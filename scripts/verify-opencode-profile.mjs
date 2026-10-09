@@ -80,6 +80,15 @@ try {
     probes.push(baselineProbe)
     const baseline = run(node, [baselineProbe], baselineHost, { DSH_AUTH_TEST_PHASE: 'baseline', DSH_AUTH_TEST_PI: piVersion })
     if (piVersion === '0.87.1') assert.match(baseline, /snapshot opencode\/claude-sonnet-5-5.*neither metadata nor a fallback marker/)
+    // A current-package probe must reject this historical profile before boot,
+    // rather than silently disabling auth and treating its absence as success.
+    const mismatched = spawnSync(node, [baselineProbe], {
+      cwd: baselineHost, env: { ...env, DSH_AUTH_TEST_PHASE: 'updated', DSH_AUTH_TEST_PI: piVersion },
+      encoding: 'utf8', timeout: 30000, maxBuffer: 16 * 1024 * 1024,
+    })
+    assert.equal(mismatched.status, 1, 'a profile with the wrong auth row must fail')
+    assert.match(mismatched.stderr, /profile updated must contain auth row dsh-cli-auth/)
+    console.log('historical auth row active; mismatched profile rejected before boot')
   }
   run(node, [cli, 'plugin', '--profile', 'dsh-cli', 'add', `@askdkc/dsh-cli@file:${tarball}`])
   const carrier = join(home, 'profiles', 'dsh-cli', 'node_modules', '@askdkc/dsh-cli')

@@ -49,10 +49,15 @@ if(process.env.DSH_AUTH_TEST_PHASE!=='independent') {
   console.log('host-owned pi', pi.version)
 }
 const profile=loadProfile('probe','dsh-cli',new URL('./node_modules/@deepseek-ai/dsh/package.json',import.meta.url).pathname,process.env.DSH_HOME)
-const kept=new Set(['llm','commands','dsh-cli-auth'])
+// The published 0.12.3 baseline retains its original Loader row ID.
+const authEntryId=process.env.DSH_AUTH_TEST_PHASE==='baseline'?'dsh-tui-auth':'dsh-cli-auth'
+const kept=new Set(['llm','commands',authEntryId])
 const overlay=new URL('./probe-'+process.env.DSH_AUTH_TEST_PHASE+'.yml',import.meta.url).pathname
 const patches=composeEntries(profile.layers.map(layer=>layer.patches)).map(entry=>({id:entry.id,disabled:!kept.has(entry.id)}))
-if(process.env.DSH_AUTH_TEST_PHASE==='independent') patches.find(entry=>entry.id==='dsh-cli-auth').config={providers:['opencode','opencode-go']}
+const authEntry=patches.find(entry=>entry.id===authEntryId)
+assert(authEntry, `profile ${process.env.DSH_AUTH_TEST_PHASE} must contain auth row ${authEntryId}`)
+assert.equal(authEntry.disabled,false, 'profile probe must enable the installed auth row')
+if(process.env.DSH_AUTH_TEST_PHASE==='independent') authEntry.config={providers:['opencode','opencode-go']}
 await writeFile(overlay,JSON.stringify(patches))
 const timeout=setTimeout(()=>{console.error('profile boot timeout');process.exit(2)},30000)
 try {

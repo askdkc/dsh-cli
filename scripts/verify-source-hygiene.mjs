@@ -36,7 +36,7 @@ const codeFiles = ['src', 'scripts'].flatMap(name => collect(resolve(root, name)
 codeFiles.push(...['bin/dsh-cli.js', 'dsh-cli.cmd', 'cordis.yml', 'cordis.patch.yml'].map(name => resolve(root, name)))
 const retiredNaming = /\b(?:CC_TUI_[A-Z_]+|DSH_CC_[A-Z_]+)\b/
 const failures = []
-// Exact external contracts and deliberate legacy-negative tests only.
+// Exact external contracts, legacy-negative tests and published historical fixtures only.
 const namingExceptions = new Map([
   ['src/adapter/standard/descriptor.ts', /urn:dsh-tui:host-descriptor:0\.15/],
   ['src/adapter/standard/types.ts', /urn:dsh-tui:host-descriptor:0\.15|authority: 'dsh-tui'/],
@@ -46,6 +46,8 @@ const namingExceptions = new Map([
   ['scripts/verify-protocol-single-source.ts', /'dsh-tui-v0\.15\.md'/],
   ['scripts/verify-package.mjs', /packed.has\('bin\/dsh-tui\.js'\)/],
   ['scripts/verify-cli-naming.mjs', /dsh-tui|DSH_TUI_/],
+  // Only the immutable 0.12.3 baseline's auth row selector may use this ID.
+  ['scripts/opencode-profile-probe.mjs', /^const authEntryId=process\.env\.DSH_AUTH_TEST_PHASE==='baseline'\?'dsh-tui-auth':'dsh-cli-auth'$/],
 ])
 for (const file of [...codeFiles, ...collect(resolve(root, 'standalone')).filter(p => /\.(?:cjs|json)$/.test(p))]) {
   const name = relative(root, file)
