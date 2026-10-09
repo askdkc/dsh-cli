@@ -6,6 +6,10 @@ import {pathToFileURL} from 'node:url'
 import {attributionHeaders} from '@deepseek-ai/dsh-llm'
 import {loadProfile,composeEntries,loadLayeredEnv} from '@deepseek-ai/dsh-app-boot'
 import {runProfile} from './node_modules/@deepseek-ai/dsh/lib/profile-boot.js'
+const carrier=join(process.env.DSH_HOME,'profiles/dsh-cli/node_modules/@askdkc/dsh-cli')
+const installed=JSON.parse(await readFile(join(carrier,'package.json'),'utf8'))
+assert(process.env.DSH_AUTH_TEST_EXPECT_CLI,'profile probe requires the requested artifact version')
+assert.equal(installed.version,process.env.DSH_AUTH_TEST_EXPECT_CLI,`profile ${process.env.DSH_AUTH_TEST_PHASE} package version must match requested artifact`)
 let fixtureFetch
 if(process.env.DSH_AUTH_TEST_PHASE!=='baseline') {
   await mkdir(new URL('./dsh-auth/', 'file://'+process.env.DSH_HOME+'/'),{recursive:true})
@@ -45,15 +49,18 @@ if(process.env.DSH_AUTH_TEST_PHASE!=='independent') {
     catch(error) {if(error.code!=='ENOENT') throw error}
   }
   assert(pi?.version, 'host pi manifest must resolve')
-  if(process.env.DSH_AUTH_TEST_PI) assert.equal(pi.version,process.env.DSH_AUTH_TEST_PI)
+  if(process.env.DSH_AUTH_TEST_EXPECT_PI) assert.equal(pi.version,process.env.DSH_AUTH_TEST_EXPECT_PI)
   console.log('host-owned pi', pi.version)
 }
 const profile=loadProfile('probe','dsh-cli',new URL('./node_modules/@deepseek-ai/dsh/package.json',import.meta.url).pathname,process.env.DSH_HOME)
-// The published 0.12.3 baseline retains its original Loader row ID.
-const authEntryId=process.env.DSH_AUTH_TEST_PHASE==='baseline'?'dsh-tui-auth':'dsh-cli-auth'
+const entries=composeEntries(profile.layers.map(layer=>layer.patches))
+  .filter(entry=>process.env.DSH_AUTH_TEST_PHASE!=='missing-auth'||entry.name!==`${installed.name}/oauth`)
+const authEntries=entries.filter(entry=>entry.name===`${installed.name}/oauth`)
+assert.equal(authEntries.length,1,`profile ${process.env.DSH_AUTH_TEST_PHASE} must contain exactly one registered auth module`)
+const authEntryId=authEntries[0].id
 const kept=new Set(['llm','commands',authEntryId])
 const overlay=new URL('./probe-'+process.env.DSH_AUTH_TEST_PHASE+'.yml',import.meta.url).pathname
-const patches=composeEntries(profile.layers.map(layer=>layer.patches)).map(entry=>({id:entry.id,disabled:!kept.has(entry.id)}))
+const patches=entries.map(entry=>({id:entry.id,disabled:!kept.has(entry.id)}))
 const authEntry=patches.find(entry=>entry.id===authEntryId)
 assert(authEntry, `profile ${process.env.DSH_AUTH_TEST_PHASE} must contain auth row ${authEntryId}`)
 assert.equal(authEntry.disabled,false, 'profile probe must enable the installed auth row')
@@ -65,8 +72,8 @@ if(fixtureFetch) globalThis.fetch=fixtureFetch
 const app=await runProfile({profile:'dsh-cli',environment:loadLayeredEnv('probe'),args:[],patchFiles:[overlay]})
 const api=app.ctx.get('dshAuth')?.api
 if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
-  if(process.env.DSH_AUTH_TEST_PI==='0.87.1') assert.equal(api,undefined)
-  else assert(api)
+  assert(api,'published baseline auth must activate with its host-owned dependencies')
+  assert((await api.providers()).length>0,'published baseline must register providers')
 } else {
   assert(api);const llm=app.ctx.get('llm');const models=[['opencode','claude-sonnet-5-5'],['opencode-go','gpt-6-luna']]
   for(const [provider,id] of models) {
@@ -84,8 +91,6 @@ if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
     assert(provider.authMethods.length>0,provider.provider)
   }
   if(process.env.DSH_AUTH_TEST_PHASE==='updated') {
-    const carrier=join(process.env.DSH_HOME,'profiles/dsh-cli/node_modules/@askdkc/dsh-cli')
-    const installed=JSON.parse(await readFile(join(carrier,'package.json'),'utf8'))
     const {installedCliVersion}=await import(pathToFileURL(join(carrier,'lib/types/package-version.js')).href)
     assert.equal(installedCliVersion(),installed.version,'actual tarball metadata must match its own manifest')
     const authModule=join(authRoot,'lib/pi-ai.js')
@@ -101,7 +106,7 @@ if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
     const {builtinProviders}=await import(pathToFileURL(catalogPath).href)
     assert.equal(adapterBuiltinProviders,builtinProviders,'auth and its adapter must use one pi module')
     const manifest=JSON.parse(await readFile(join(dirname(catalogPath),'../../package.json'),'utf8'))
-    if(process.env.DSH_AUTH_TEST_PI) assert.equal(manifest.version,process.env.DSH_AUTH_TEST_PI,'comparison must exercise the installed auth adapter too')
+    if(process.env.DSH_AUTH_TEST_EXPECT_PI) assert.equal(manifest.version,process.env.DSH_AUTH_TEST_EXPECT_PI,'comparison must exercise the installed auth adapter too')
     const {buildOAuthProfile,CATALOG_PROVIDER_IDS}=await import(pathToFileURL(join(authRoot,'lib/profiles.js')).href)
     for(const id of CATALOG_PROVIDER_IDS.filter(id=>!id.startsWith('opencode'))) {
       const native=builtinProviders().find(provider=>provider.id===id)

@@ -232,14 +232,9 @@ jobs:
       - run: pnpm --dir dsh-auth verify
       - run: pnpm verify:profile-sync
       - run: pnpm verify:opencode-profile --host-default
-      # Legacy pi versions reproduce the old profile; the upgraded host keeps
-      # its own native adapter dependencies and must expose all nine routes.
+      # Upgrade the previous published CLI release with each host's native
+      # dependencies. Provider expectations come from the installed package.
       - run: pnpm verify:opencode-profile
-        env:
-          DSH_AUTH_TEST_PI: 0.87.1
-      - run: pnpm verify:opencode-profile
-        env:
-          DSH_AUTH_TEST_PI: 0.99.1
 
   # 渲染 · 滚动 · resize · 子代理 · picker——与其余组并行；失败互不遮蔽。
   # needs: build：编译只在 build job 发生一次，本组经 artifact 复用产物。
