@@ -46,6 +46,8 @@ interface WebBaseline {
   version: string
   baseUrl: string
   patch: ParsedPatch
+  /** Present only when the baseline's base and Web declarations are known. */
+  declaredIds?: ReadonlySet<string>
 }
 
 function parsePatch(text: string): ParsedPatch {
@@ -109,7 +111,25 @@ function disabledIds(patch: ParsedPatch, baseUrl: string): Set<string> {
   }).map(row => row.id))
 }
 
-function comparison(tui: ParsedPatch, webApp: WebBaseline): WebComparison {
+function declaredIds(text: string): Set<string> {
+  const doc = parseYaml(text) as unknown
+  if (!Array.isArray(doc)) throw new Error('patch root is not a list')
+  const ids = new Set<string>()
+  const visit = (rows: unknown[]) => {
+    for (const row of rows) {
+      if (row === null || typeof row !== 'object') continue
+      const record = row as Record<string, unknown>
+      if (typeof record.id === 'string') ids.add(record.id)
+      if (record.group === true && Array.isArray(record.config)) visit(record.config)
+    }
+  }
+  for (const patch of doc) {
+    if (patch !== null && typeof patch === 'object' && Array.isArray(patch.insert)) visit(patch.insert)
+  }
+  return ids
+}
+
+function comparison(tui: ParsedPatch, webApp: WebBaseline, officialDisabledIds: ReadonlySet<string>): WebComparison {
   const tuiDisableSet = disabledIds(tui, webApp.baseUrl)
   const webDisableSet = disabledIds(webApp.patch, webApp.baseUrl)
   const webAppPatch = webApp.patch
@@ -117,6 +137,9 @@ function comparison(tui: ParsedPatch, webApp: WebBaseline): WebComparison {
   return {
     disablesBeyondWebApp: tui.overrides
       .filter(row => tuiDisableSet.has(row.id) && !webDisableSet.has(row.id))
+      // A legacy official disable is inert only when this source generation
+      // declares no target in either base or Web. Unknown overrides still fail.
+      .filter(row => !officialDisabledIds.has(row.id) || webApp.declaredIds === undefined || webApp.declaredIds.has(row.id))
       .map(row => row.id),
     webAppDisablesBeyondTui: webAppPatch.overrides
       .filter(row => webDisableSet.has(row.id) && !tuiDisableSet.has(row.id))
@@ -150,9 +173,16 @@ if (installedManifest !== undefined) {
 const sourceRoot = resolve(process.env.DSH_HARNESS_SOURCE_ROOT ?? resolve(root, '../deepseek-harness'))
 const sourceManifest = join(sourceRoot, 'packages/bundle/web-app/package.json')
 const sourcePatch = join(sourceRoot, 'packages/bundle/web-app/cordis.patch.yml')
+const sourceBasePatch = join(sourceRoot, 'packages/bundle/base/cordis.patch.yml')
 const requireSourceBaseline = process.env.DSH_REQUIRE_UPSTREAM_BASELINE === '1'
-if (existsSync(sourceManifest) && existsSync(sourcePatch)) {
-  baselines.push(baseline('source', sourceManifest, sourcePatch))
+if (existsSync(sourceManifest) && existsSync(sourcePatch) && existsSync(sourceBasePatch)) {
+  baselines.push({
+    ...baseline('source', sourceManifest, sourcePatch),
+    declaredIds: new Set([
+      ...declaredIds(readFileSync(sourceBasePatch, 'utf8')),
+      ...declaredIds(readFileSync(sourcePatch, 'utf8')),
+    ]),
+  })
 } else if (requireSourceBaseline || process.env.DSH_HARNESS_SOURCE_ROOT !== undefined) {
   throw new Error(`required source baseline missing under ${sourceRoot}`)
 }
@@ -168,8 +198,9 @@ const expectedComparison: WebComparison = {
   insertsSharedWithWebApp: [],
 }
 if (baselines.length === 0) throw new Error('patch-surface requires a Web baseline')
+const officialDisabledIds = new Set(baselines.flatMap(webApp => [...disabledIds(webApp.patch, webApp.baseUrl)]))
 for (const webApp of baselines) {
-  const actual = comparison(tui, webApp)
+  const actual = comparison(tui, webApp, officialDisabledIds)
   for (const key of Object.keys(expectedComparison) as Array<keyof WebComparison>) {
     if (JSON.stringify([...actual[key]].sort()) !== JSON.stringify([...expectedComparison[key]].sort())) {
       throw new Error(`patch-surface: ${webApp.label} web-app ${webApp.version} ${key}: `

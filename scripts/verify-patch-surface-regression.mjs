@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
+import { parseDocument, stringify } from 'yaml'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const scratch = mkdtempSync(join(tmpdir(), 'dsh-patch-regression-'))
@@ -38,6 +39,35 @@ try {
     check('verify-patch-surface.ts', true)
     check('verify-web-coexistence.mjs', true)
   }
+  // New upstream bundles removed Ralph from both base and Web. The legacy
+  // disable remains necessary for installed bundles, but has no source target.
+  const retiredPatch = parseDocument(installedPatch, { logLevel: 'silent' })
+  retiredPatch.contents.items = retiredPatch.contents.items.filter(row => row.get('id') !== 'tool-ralph')
+  const withoutRalph = retiredPatch.toString()
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph)
+  check('verify-patch-surface.ts', true)
+  check('verify-web-coexistence.mjs', true)
+  // A still-declared host row is not retired, even when Web stops disabling it.
+  for (const row of [
+    { id: 'tool-ralph', name: 'test-ralph' },
+    { id: 'host-tools', group: true, config: [{ id: 'tool-ralph', name: 'test-ralph' }] },
+  ]) {
+    writeFileSync(join(base, 'cordis.patch.yml'), stringify([{ insert: [row] }]))
+    check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)
+  }
+  writeFileSync(join(base, 'cordis.patch.yml'), '[]\n')
+  // Being declared by Web also prevents the legacy override exemption.
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph + stringify([{ insert: [{ id: 'tool-ralph', name: 'test-ralph' }] }]))
+  check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph)
+  const originalTuiPatch = readFileSync(join(root, 'cordis.patch.yml'), 'utf8')
+  writeFileSync(join(tui, 'cordis.patch.yml'), `${originalTuiPatch}\n- id: unexpected-tui-disable\n  disabled: true\n`)
+  check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)
+  writeFileSync(join(tui, 'cordis.patch.yml'), originalTuiPatch)
+  rmSync(join(base, 'cordis.patch.yml'))
+  check('verify-patch-surface.ts', false, /required source baseline missing/)
+  writeFileSync(join(base, 'cordis.patch.yml'), '[]\n')
+  writeFileSync(join(web, 'cordis.patch.yml'), installedPatch)
   // Same release label may describe different harmless Web-only additions.
   writeFileSync(join(web, 'cordis.patch.yml'), `${installedPatch}\n- insert:\n    - id: web-only-future-feature\n      name: test-feature\n`)
   check('verify-patch-surface.ts', true)
@@ -64,7 +94,7 @@ try {
     check(script, false, /required source baseline missing/, { DSH_REQUIRE_UPSTREAM_BASELINE: '0' })
     check(script, true, undefined, { DSH_HARNESS_SOURCE_ROOT: undefined, DSH_REQUIRE_UPSTREAM_BASELINE: '0' })
   }
-  console.log('patch-surface regression OK (release labels, ownership failures, snapshot guard, source presence)')
+  console.log('patch-surface regression OK (release labels, retired overrides, ownership failures, snapshot guard, source presence)')
 } finally {
   rmSync(scratch, { recursive: true, force: true })
 }
