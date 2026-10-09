@@ -5,7 +5,14 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+
+/** Compatibility boundary for hosts that still load invariant companions. */
+type InvariantFailure = (message: string) => never
+type InvariantContext = Context & {
+  invariants: {
+    register(packageName: string, installer: typeof install): () => void
+  }
+}
 
 /** Cordis companion plugin name. */
 export const name = 'working-activity-invariant'
@@ -77,7 +84,7 @@ function loadedEvents(session: LoadedSession): readonly SessionEvent[] {
 }
 
 /** Install validation for loaded and newly appended activity snapshots. */
-const install: InvariantInstaller = Object.assign((ctx: Context, fail: InvariantFailure) => {
+const install = Object.assign((ctx: Context, fail: InvariantFailure) => {
   for (const session of ctx.sessions.list()) {
     for (const event of loadedEvents(session)) validateEvent(event, fail)
   }
@@ -94,5 +101,5 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
  * @param ctx - Cordis context carrying the invariant service.
  * @returns the installed registration's disposer after setup succeeds.
  */
-export const apply = (ctx: Context): Promise<() => void> =>
+export const apply = (ctx: InvariantContext): Promise<() => void> =>
   Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install))

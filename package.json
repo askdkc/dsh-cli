@@ -247,7 +247,6 @@
     "@deepseek-ai/dsh-atomic-write": "*",
     "@deepseek-ai/dsh-commands": "*",
     "@deepseek-ai/dsh-cordis-host-runner": "*",
-    "@deepseek-ai/dsh-invariants": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-llm-pi-ai": "*",
     "@deepseek-ai/dsh-persona": "*",
@@ -294,9 +293,6 @@
       "optional": true
     },
     "@deepseek-ai/dsh-cordis-host-runner": {
-      "optional": true
-    },
-    "@deepseek-ai/dsh-invariants": {
       "optional": true
     },
     "@deepseek-ai/dsh-llm": {
@@ -438,7 +434,6 @@
     "@deepseek-ai/dsh-fs": "alpha",
     "@deepseek-ai/dsh-fs-local": "alpha",
     "@deepseek-ai/dsh-home-paths": "alpha",
-    "@deepseek-ai/dsh-invariants": "alpha",
     "@deepseek-ai/dsh-llm": "alpha",
     "@deepseek-ai/dsh-llm-pi-ai": "alpha",
     "@deepseek-ai/dsh-persona": "alpha",

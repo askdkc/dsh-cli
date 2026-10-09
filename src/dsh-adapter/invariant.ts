@@ -9,7 +9,13 @@
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+
+/** Older hosts expose this registry; current hosts no longer load companions. */
+type InvariantContext = Context & {
+  invariants: {
+    register(packageName: string, installer: () => void): () => void
+  }
+}
 
 const PACKAGE_NAME = '@askdkc/dsh-cli'
 
@@ -23,13 +29,13 @@ export const inject = ['invariants']
  * lifecycle stream; state relations are owned by the agent/session seams it
  * renders.
  */
-const install: InvariantInstaller = () => {}
+const install = () => {}
 
 /**
  * Register this package's invariant companion.
  * @param ctx - Cordis context carrying the invariant service.
  * @returns the installed registration's disposer after setup succeeds.
  */
-export const apply = (ctx: Context): Promise<() => void> =>
+export const apply = (ctx: InvariantContext): Promise<() => void> =>
   Promise.resolve(ctx.invariants.register(PACKAGE_NAME, install))
 /* jscpd:ignore-end */

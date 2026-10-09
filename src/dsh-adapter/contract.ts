@@ -12,7 +12,6 @@ export const UPSTREAM_FRAMEWORK_MAJORS: Record<string, number> = {
 export const UPSTREAM_BLESSED_PACKAGES = [
   '@deepseek-ai/cordis',
   '@deepseek-ai/schemastery',
-  '@deepseek-ai/dsh-invariants',
   '@deepseek-ai/dsh-agent',
   '@deepseek-ai/dsh-agent-instructions',
   '@deepseek-ai/dsh-agent-preset-registry',

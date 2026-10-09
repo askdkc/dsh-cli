@@ -110,6 +110,7 @@ try {
   const projects = [
     { label: 'dsh-cli', config: join(tuiRoot, 'tsconfig.json') },
     { label: 'dsh-auth', config: join(tuiRoot, 'dsh-auth/tsconfig.json') },
+    { label: 'dsh-working-activity', config: join(tuiRoot, 'vendor/dsh-working-activity/tsconfig.json') },
   ]
   const failures = []
   for (const project of projects) {
