@@ -91,7 +91,7 @@ export const KNOWN_DSH_EVENT_TYPES = new Set<string>([
   // here so the conformance sweep over that file stays total; it folds to no
   // row like every other non-transcript type.
   'session/not-found',
-  // Known dsh-tui / ecosystem plugin event types (exact, not prefix-based)
+  // Known dsh-cli / ecosystem plugin event types (exact, not prefix-based)
   'session/created',
   'session/disposed',
   'session/flush',
@@ -144,8 +144,8 @@ export const KNOWN_DSH_EVENT_TYPES = new Set<string>([
   'tool/ptc-dispatch',
   'tool/ptc-dispatch-start',
   'web/deepseek-search-llm-request',
-  'dsh-tui/btw',
-  'dsh-tui/recap',
+  'dsh-cli/btw',
+  'dsh-cli/recap',
   'dsh-working-activity/config',
   'dsh-working-activity/status',
   'activity/status',

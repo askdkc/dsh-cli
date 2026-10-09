@@ -249,7 +249,7 @@ export default class App extends PureComponent<Props, State> {
 	/**
 	 * Bitmask of currently held mouse buttons (bit 0 = left, 1 = middle,
 	 * 2 = right). Updated in the transport layer of handleMouseEvent BEFORE
-	 * the click-disabled gate, so DSH_TUI_DISABLE_MOUSE=1 still maintains
+	 * the click-disabled gate, so DSH_CLI_DISABLE_MOUSE=1 still maintains
 	 * the physical latch. X10's generic release (low bits 3) cannot identify
 	 * which button ended and conservatively clears the entire set — a
 	 * no-button motion or focus-out is the reliable termination signal.
@@ -434,7 +434,7 @@ export default class App extends PureComponent<Props, State> {
 		// In accessibility mode, keep the native cursor visible for screen magnifiers and other tools
 		if (
 			this.props.stdout.isTTY &&
-			!isEnvTruthy(process.env.DSH_TUI_ACCESSIBILITY)
+			!isEnvTruthy(process.env.DSH_CLI_ACCESSIBILITY)
 		) {
 			this.props.stdout.write(HIDE_CURSOR);
 		}
@@ -772,7 +772,7 @@ export default class App extends PureComponent<Props, State> {
 
 			// Hide cursor (unless in accessibility mode) and re-enable focus reporting after resuming
 			if (this.props.stdout.isTTY) {
-				if (!isEnvTruthy(process.env.DSH_TUI_ACCESSIBILITY)) {
+				if (!isEnvTruthy(process.env.DSH_CLI_ACCESSIBILITY)) {
 					this.props.stdout.write(HIDE_CURSOR);
 				}
 				// Re-enable focus reporting to restore terminal state
@@ -799,7 +799,7 @@ function processKeysInBatch(
 	// Mouse-chain diagnostics: the single choke point every parsed mouse and
 	// wheel event passes through. Empty log here = the terminal never sent
 	// the sequences (tracking modes, ConPTY) rather than an in-app loss.
-	if (process.env.DSH_TUI_DEBUG_MOUSE) {
+	if (process.env.DSH_CLI_DEBUG_MOUSE) {
 		for (const item of items) {
 			if (item.kind === "mouse") {
 				logMouseDebug("mouse arrive", {
@@ -1000,7 +1000,7 @@ export function handleMouseEvent(app: App, m: ParsedMouse): void {
 	const baseButton = m.button & 0x03;
 
 	// Transport-layer button state: track held buttons BEFORE the
-	// click-disabled gate, so DSH_TUI_DISABLE_MOUSE=1 still maintains the
+	// click-disabled gate, so DSH_CLI_DISABLE_MOUSE=1 still maintains the
 	// physical latch (probe must not write while a button is held even if
 	// clicks are disabled). SGR encodes button identity in the low 2 bits;
 	// X10's generic release (low bits 3) cannot identify which button ended,

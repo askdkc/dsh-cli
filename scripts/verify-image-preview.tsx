@@ -6,17 +6,17 @@
  * Run: node --import tsx/esm scripts/verify-image-preview.tsx
  */
 import { fileURLToPath } from 'node:url'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '0'
 // The channel-level cases below drive a REAL `/new` session switch, which
-// persists resume/last-used markers — keep them out of the user's ~/.dsh-tui.
+// persists resume/last-used markers — keep them out of the user's ~/.dsh-cli.
 // fileURLToPath (not URL.pathname) keeps the drive letter intact on Windows.
-const imagePreviewHome = fileURLToPath(new URL('../node_modules/.cache/dsh-tui-image-preview-home', import.meta.url))
+const imagePreviewHome = fileURLToPath(new URL('../node_modules/.cache/dsh-cli-image-preview-home', import.meta.url))
 process.env.HOME = imagePreviewHome
 process.env.USERPROFILE = imagePreviewHome
 // Force the deterministic text fallback everywhere: Kitty transport has its
 // own regression (verify-terminal-images); THIS script pins interaction.
-process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
 
 import assert from 'node:assert/strict'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -645,7 +645,7 @@ function screenOf(terminal: InstanceType<typeof XTerm>, rows: number): Screen {
   const terminal = new XTerm({ cols: COLS, rows: ROWS, scrollback: 0, allowProposedApi: true })
   const stdout = new FakeStdout(terminal)
   const longName = 'screenshot-2026-09-03-at-12.34.56.png'
-  const longPath = `/var/folders/zz/zyxvpxvq6csfxvn_n0000000000000/T/dsh-tui-paste-Ab12Cd/${longName}`
+  const longPath = `/var/folders/zz/zyxvpxvq6csfxvn_n0000000000000/T/dsh-cli-paste-Ab12Cd/${longName}`
   const small = { ...fakeImage('sha256:small', longName), bytes: 2048, path: longPath }
   const app = await render(
     <Box width={COLS} height={ROWS}>
@@ -668,7 +668,7 @@ function screenOf(terminal: InstanceType<typeof XTerm>, rows: number): Screen {
     JSON.stringify({ pathIndex, imageIndex, bottom }))
   check('overlay: a long path keeps its head and tail and elides the middle',
     pathLine.includes('Open original: /var/folders/zz/') && pathLine.includes('…')
-      && pathLine.includes('12.34.56.png') && !pathLine.includes('dsh-tui-paste'),
+      && pathLine.includes('12.34.56.png') && !pathLine.includes('dsh-cli-paste'),
     pathLine)
   await app.unmount()
   terminal.dispose()
@@ -877,8 +877,8 @@ function makeChannel() {
 // Needs terminal graphics: the loop only closes through the inspection
 // request path, so this block answers the Kitty/cell-size probes itself.
 {
-  const disabled = process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
-  delete process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
+  const disabled = process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
+  delete process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
   const terminal = new XTerm({ cols: COLS, rows: ROWS, scrollback: 0, allowProposedApi: true })
   const stdin = new FakeStdin()
   const stdout = new (class extends FakeStdout {
@@ -922,7 +922,7 @@ function makeChannel() {
     stdout.isTTY = false
     await app.unmount()
     terminal.dispose()
-    if (disabled !== undefined) process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = disabled
+    if (disabled !== undefined) process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = disabled
   }
 }
 

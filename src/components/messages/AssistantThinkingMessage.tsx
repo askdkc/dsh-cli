@@ -55,7 +55,7 @@ type Props = {
  * text on click. The live leading mark is a rotating braille spinner
  * (`⠋⠙⠹…`, Kimi Code style), settling back to the static anchor (`⚓`). When
  * the channel records the reasoning duration, the label carries it
- * (`⚓ Thinking · 12s …`) — dsh-tui's take on making thinking time visible in
+ * (`⚓ Thinking · 12s …`) — dsh-cli's take on making thinking time visible in
  * the transcript.
  */
 export function AssistantThinkingMessage({

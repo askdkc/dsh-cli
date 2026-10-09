@@ -47,7 +47,7 @@ function clampChalkLevelForTmux(): boolean {
   // A terminal wrapper may set terminal-overrides :Tc so truecolor passes
   // through — skip the clamp. General escape hatch for anyone who's
   // configured their tmux correctly.
-  if (process.env.DSH_TUI_TMUX_TRUECOLOR) return false
+  if (process.env.DSH_CLI_TMUX_TRUECOLOR) return false
   if (process.env.TMUX && chalk.level > 2) {
     chalk.level = 2
     return true

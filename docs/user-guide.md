@@ -1,4 +1,4 @@
-# dsh-TUI 使用说明
+# dsh-CLI 使用说明
 
 [文档索引](README.md) · [English](user-guide.en.md)
 
@@ -19,23 +19,23 @@
 ### 1.1 安装与启动
 
 ```sh
-# 全局安装 CLI + 本插件（插件自带 dsh-tui 直达命令）
-npm install -g @deepseek-ai/dsh dsh-cli
+# 全局安装 CLI + 本插件（插件自带 dsh-cli 直达命令）
+npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
 
-# 启动（首次运行自动初始化 dsh-tui profile，需 pnpm）
-dsh-tui
+# 启动（首次运行自动初始化 dsh-cli profile，需 pnpm）
+dsh-cli
 ```
 
-- `dsh-tui --resume`：恢复上次会话；Windows 可用仓库里的 `dsh-tui.cmd`（等价）。
-- `dsh-tui safe`：安全模式——只读查看环境、列出 profile 插件并给出修复建议，还能创建干净的救援 profile（见 §5.5）。
-- `dsh --profile dsh-tui`：与 `dsh-tui` 等价的手工启动方式（`/update` 仅此方式可用）。
+- `dsh-cli --resume`：恢复上次会话；Windows 可用仓库里的 `dsh-cli.cmd`（等价）。
+- `dsh-cli safe`：安全模式——只读查看环境、列出 profile 插件并给出修复建议，还能创建干净的救援 profile（见 §5.5）。
+- `dsh --profile dsh-cli`：与 `dsh-cli` 等价的手工启动方式（`/update` 仅此方式可用）。
 - 运行模型需要 `DEEPSEEK_API_KEY`；环境自检用 `/doctor`。
 - 不按 DSH 发布版本号限制运行；通过实际 API、类型和 patch 所有权验证兼容性。
 - 如果 logo 页出现 ⚠ 版本漂移警告，按提示执行 `npm i -g @deepseek-ai/dsh@<版本>` 对齐 dsh 引擎。
 
 ### 1.2 首次启动你会看到
 
-1. **像素鲸鱼顶栏**（约 3.4 秒开场动画，之后定格）：`✦ dsh-TUI` 版本号、`DEEPSEEK / HARNESS` 大字、
+1. **像素鲸鱼顶栏**（约 3.4 秒开场动画，之后定格）：`✦ dsh-CLI` 版本号、`DEEPSEEK / HARNESS` 大字、
    当前模型与 effort、工作目录，及一行**启动提示**（`/model` · `/help` · `Tab` 补全）；窄终端会逐档简化标题布局。
    dsh 引擎版本不在验证范围时会出现 **⚠ 版本漂移警告** 及对齐命令。
 2. **底部状态栏**：工作状态行、上下文进度条、TPS 仪表与各类实时指标（见
@@ -43,7 +43,7 @@ dsh-tui
 3. **启动提示行**：Logo 下方固定一行 `提示：<随机小技巧> · /tips 更多技巧`，每次启动随机换一条；
    `/tips` 打开完整技巧面板（`↑/↓` 滚动、`Esc` 关闭）。
 4. **第一次普通启动**（没带 `--resume`、没指定工作区、也没带首条提示词）进入**会话管理界面**先挑工作区，
-   离开后 `~/.dsh-tui/home.json` 记下"已看过"，以后启动直接进对话；
+   离开后 `~/.dsh-cli/home.json` 记下"已看过"，以后启动直接进对话；
    界面随时可用 `/resume`、`/home`、`/agentview`、`/bg` 或输入框行首 `⌸` 打开。
 5. 输入 `/` 看命令菜单，按 `?` 看快捷键帮助。
 
@@ -160,7 +160,7 @@ dsh-tui
 - 输入框空着按 `←`（或 `/bg`）= 转后台并打开本界面，会话继续跑。
 
 切换会话只是**停放**——正在跑的回合继续跑；被其他终端占用的会话标红写 `占用 pid <pid>`、点不动，对方退出后恢复。
-固定项存到 `~/.dsh-tui/session-pins.json`。
+固定项存到 `~/.dsh-cli/session-pins.json`。
 工作区菜单四项：编辑 / 在此新建 / 重命名 / 从列表移除（**只删登记**，目录与会话日志都保留）。
 
 **大图预览**（点输入框里的 `[Image #N]` 或转录缩略图打开）
@@ -221,7 +221,7 @@ dsh-tui
 | `/fork` | 无 | 把当前会话复制成可恢复的副本（原会话不受影响） |
 | `/restart` | 无 | 重启进程并恢复本会话（回合运行中会被拒绝，先 `Ctrl+C`） |
 | `/rename` | `<新名称>` | 重命名当前会话（无参时显示当前标题与用法） |
-| `/recap` | 无 | 最近活动摘要（一行）+ 建议标题；面板内 `a` 键或点击一键应用标题。设置 `dsh-tui.recapOnOpen`（默认开）开启时，打开/恢复会话自动在底部显示一条分隔线 + `回顾：` 摘要行，悬停可查看操作、点击展开，发送新消息后自动消失 |
+| `/recap` | 无 | 最近活动摘要（一行）+ 建议标题；面板内 `a` 键或点击一键应用标题。设置 `dsh-cli.recapOnOpen`（默认开）开启时，打开/恢复会话自动在底部显示一条分隔线 + `回顾：` 摘要行，悬停可查看操作、点击展开，发送新消息后自动消失 |
 | `/workspace` | `resume` / `rename <名称>` / `open <路径或URI>` | 管理工作区；`open` 支持绝对路径、file URI、插件 scheme |
 | `/clear` | 无 | 清空当前会话视图（重置展开/选择状态） |
 | `/compact` | 无 | 压缩会话历史（无可压缩内容时会提示） |
@@ -229,7 +229,7 @@ dsh-tui
 | `/btw` | `<问题>` | 侧问：单轮、无工具、不打断主回合、不写历史 |
 | `/trace` | 无 | 打开轨迹场景（同 `Ctrl+T`） |
 | `/rewind` | 无 | 回退选择器（同空输入双击 Esc 的时间回溯） |
-| `/exit`（别名 `/quit` `/q`） | 无 | 退出 dsh-tui |
+| `/exit`（别名 `/quit` `/q`） | 无 | 退出 dsh-cli |
 
 ### 3.2 状态与诊断
 
@@ -252,15 +252,15 @@ dsh-tui
 
 | 命令 | 参数 | 作用 |
 |---|---|---|
-| `/model` | 无 | 模型选择器；**切换 = fork 会话续聊**（历史保留、仅换路由），选择持久化到 `~/.dsh-tui/model.json` |
-| `/effort` | `status` / `<id>` | 推理强度：无参滑杆（`←/→` 实时调整）；`status` 当前档位；`<id>` 直接设定。持久化 `~/.dsh-tui/effort.json`；新会话起始档看 /settings 的 `effortDefault`（§5.3） |
+| `/model` | 无 | 模型选择器；**切换 = fork 会话续聊**（历史保留、仅换路由），选择持久化到 `~/.dsh-cli/model.json` |
+| `/effort` | `status` / `<id>` | 推理强度：无参滑杆（`←/→` 实时调整）；`status` 当前档位；`<id>` 直接设定。持久化 `~/.dsh-cli/effort.json`；新会话起始档看 /settings 的 `effortDefault`（§5.3） |
 | `/thinking` | 无 | 扩展思考显示开关（流式时思考逐条展开） |
 | `/tokens` | 无 | token 用量 + 上下文百分比 |
-| `/activity` | `frames <名>` / `status` | 工作状态行动画：无参选择器浏览，`frames <名>` 直接设置（含 `random`），默认 `moon8`。持久化 `~/.dsh-tui/working-activity.json` |
-| `/preset` | `<id>` / `status` | Agent 预设切换：`standard` / `ptc`/ `minimal` / `cordis` / **梁神模式 `liangshen`**；**已开始的会话不可切换**。持久化 `~/.dsh-tui/agent-preset.json` |
-| `/theme` | `<名字>` / `status` | 主题：无参选择器；`<名字>` 直接切换；`status` 当前主题（auto 时附 OSC 11 解析结果）。持久化 `~/.dsh-tui/theme.json` |
+| `/activity` | `frames <名>` / `status` | 工作状态行动画：无参选择器浏览，`frames <名>` 直接设置（含 `random`），默认 `moon8`。持久化 `~/.dsh-cli/working-activity.json` |
+| `/preset` | `<id>` / `status` | Agent 预设切换：`standard` / `ptc`/ `minimal` / `cordis` / **梁神模式 `liangshen`**；**已开始的会话不可切换**。持久化 `~/.dsh-cli/agent-preset.json` |
+| `/theme` | `<名字>` / `status` | 主题：无参选择器；`<名字>` 直接切换；`status` 当前主题（auto 时附 OSC 11 解析结果）。持久化 `~/.dsh-cli/theme.json` |
 | `/color` | 无参 / `<名>` / `status` / `reset` | 会话强调色：无参打开调色板（`↑/↓` 选、`Enter` 应用）；`<名>` 直设；`reset` 恢复默认。颜色 `red/orange/yellow/green/blue/purple/pink/cyan`，按会话保存 |
-| `/lang` | `en` / `zh` / `status` | 界面语言热切换。优先级：`DSH_TUI_LANG` > profile 配置> 持久化 |
+| `/lang` | `en` / `zh` / `status` | 界面语言热切换。优先级：`DSH_CLI_LANG` > profile 配置> 持久化 |
 | `/vim` | 无 | **vim 编辑模式开关**（见 §2.4）：输入框切到 vim 键位编辑，会话级、不持久化 |
 
 ### 3.4 账号 / 策略 / 扩展
@@ -282,7 +282,7 @@ dsh-tui
 
 ### 3.5 技能
 
-dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调技能以 `/name` 加入命令菜单（详见 §4.8）。
+dsh-CLI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调技能以 `/name` 加入命令菜单（详见 §4.8）。
 
 ### 3.6 占位命令
 
@@ -309,12 +309,12 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 | 恢复 | `/resume`（同 `/home` `/agentview` `/bg` 与输入框行首 `⌸`） | 三合一**会话管理界面**：`←/→` 切栏、打字筛选、`Enter` 进入、`Ctrl+N` 新建、`Ctrl+X` 停后台会话、行内 ★/☆ 固定。切换只是**停放**，回合继续跑；被其他终端占用的会话标红进不去（详见 §2.7） |
 | 重命名 | `/rename <标题>` | 立即改名并持久化（写入 session/title 事件，会话管理界面里能读回） |
 | 压缩 | `/compact` | 手动触发 compaction；**回合运行中拒绝**；minimal preset 下不可用；压缩点以 Divider 摘要行呈现 |
-| 导出 | `/export` | 从完整 session log 导出 Markdown（含 thinking 与工具调用分节），文件 `dsh-tui-export-<时间戳>.md` 落在当前会话 cwd |
+| 导出 | `/export` | 从完整 session log 导出 Markdown（含 thinking 与工具调用分节），文件 `dsh-cli-export-<时间戳>.md` 落在当前会话 cwd |
 | 清屏 | `/clear` | 只清视图，不动会话日志 |
 | 停止 | 会话管理界面 `Ctrl+X` | 停止光标所在的**后台**会话；当前终端正在用的会话停不了（想退出整个 TUI 用 `/exit` 或双击 `Ctrl+C`） |
 | 退出 | `/exit`（或 `/quit` `/q`） | 空闲 `Ctrl+C` 双击或 `Ctrl+D` 双击也可退出；工作中中断迟迟不收敛时再按 `Ctrl+C`/`Ctrl+D` 强制退出 |
 
-命令行恢复：`dsh-tui --resume`（最近会话）/ `dsh-tui --resume <id>`（指定会话）。
+命令行恢复：`dsh-cli --resume`（最近会话）/ `dsh-cli --resume <id>`（指定会话）。
 `-c` / `--continue` 等价。
 
 ### 4.2 时间回溯 rewind（双击 Esc）
@@ -350,7 +350,7 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 ### 4.6 模型切换与预设
 
 - `/model`：打开可用模型列表并直接搜索；关键词顺序不限（例如 `seek deep` 可匹配 DeepSeek），`Tab` 切换到提供方分组。**切换 = fork 会话续聊**（历史保留、仅换路由，旧会话留在 `/resume`）；
-  持久化 `~/.dsh-tui/model.json`。
+  持久化 `~/.dsh-cli/model.json`。
   输入空格分隔的关键词可按模型/提供方名称或 ID 筛选，忽略大小写和词序。
   默认列表搜索全部可用模型；进入提供方或最近使用后仅搜索当前列表。
   Backspace 编辑搜索词，Esc 返回提供方分组或关闭选择器。
@@ -372,7 +372,7 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 
 ### 4.8 技能 / 注册表 / Goals-Todos
 
-- `/skills` 浏览技能目录，可直调技能以 `/name` 加入命令菜单（dsh-TUI 不自带通用技能）。
+- `/skills` 浏览技能目录，可直调技能以 `/name` 加入命令菜单（dsh-CLI 不自带通用技能）。
 - `/plan` `/goal` `/feedback` `/permission` 来自 DSH 注册表，随组合并入 `/` 菜单。
 - **Goals/Todos 面板自动出现**：模型写入 goal/todo 时在输入框上方实时渲染（🎯 目标 + phase 徽章 + 树形 todo），
   无需操作。
@@ -381,7 +381,7 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 
 - `/mcp`：按服务器分组列出 `mcp__服务器__工具`；未配置时给出 `cordis.patch.yml` 插入示例。
 - `/workspace`：`resume` / `rename <名>` / `open <路径|file:// URI>`（打开并新建会话）。
-- `dsh-tui <路径>` 同样接受工作区目标。
+- `dsh-cli <路径>` 同样接受工作区目标。
 - `/doctor` 自检：Node/平台、API key、模型路由、cwd、上下文窗口、会话存储、插件宿主。
 - `/provider` 交互向导管理模型提供方：添加 / 编辑 / 删除。
   - 捆绑 dsh-auth 时可认证 ChatGPT / Claude / Grok（OAuth）、OpenCode Zen / Go、OrcaRouter、Infron（API key）、OpenRouter（OAuth PKCE 或 API key）以及 Nous（设备码 OAuth 或手动 Bearer 兼容连接）。凭据保存在 dsh-auth；登录不自动切换当前模型。
@@ -399,7 +399,7 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 - **开场动画**（约 3.4 秒，每次启动三选一，`/deepseek` 彩蛋重掷）：经典 / 爱心 / 睡觉。
 - **欢迎期闲置动画**（`whaleIdle`，默认开）：摆鱼鳍、眨眼、拍尾巴，空闲 10 秒入睡冒 Z；**点击冒爱心唤醒**。
 - 开始第一个 agent 任务后定格为静态帧（`/new` 重新进入欢迎期）。
-- 鲸鱼右侧文字列：`✦ dsh-TUI v版本号` → 块体大字 `DEEPSEEK / HARNESS` → 当前模型 + effort → 工作目录 →
+- 鲸鱼右侧文字列：`✦ dsh-CLI v版本号` → 块体大字 `DEEPSEEK / HARNESS` → 当前模型 + effort → 工作目录 →
   启动提示行。
 - 版本不在验证范围时多出 **⚠ 版本漂移警告**（附对齐命令）。
 - 鲸鱼下方居中欢迎语：`探索未至之境！`。
@@ -443,12 +443,12 @@ dsh-TUI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 ### 5.3 /settings 设置编辑器
 
 `/settings` 打开插件设置编辑器；**改动自动保存**，`Esc` 直接退出。
-dsh-tui 自身区块写入当前 profile 的 `cordis.patch.yml`。多数设置实时生效；全屏和图片预览开关需 `/restart`。
+dsh-cli 自身区块写入当前 profile 的 `cordis.patch.yml`。多数设置实时生效；全屏和图片预览开关需 `/restart`。
 下表为常用项，完整列表见 /settings 屏：
 
 | 字段 | 说明 |
 |---|---|
-| lang | 界面语言 zh/en（DSH_TUI_LANG 钉死时不可改） |
+| lang | 界面语言 zh/en（DSH_CLI_LANG 钉死时不可改） |
 | fullscreen | 全屏模式（默认开）；保存后用 `/restart` 生效 |
 | terminalImages | 终端图片预览（默认开，需终端支持）；保存后用 `/restart` 生效。关闭后只显示文字信息并跳过预览解码，不影响向模型发送图片 |
 | whale | 开屏头部像素鲸鱼娘（默认开）；每次启动随机三选一开场动画（经典/爱心/睡觉），`/deepseek` 彩蛋重掷 |
@@ -473,7 +473,7 @@ dsh-tui 自身区块写入当前 profile 的 `cordis.patch.yml`。多数设置�
 **pageMargin**：自定义 `NxM` = 左右 `N` 列、上下 `M` 行（上限 8x4）；只填 `N` 则上下 1 行。
 
 未声明 TUI 区块的命名空间以只读形式列出，需手工编辑 profile 配置。
-以下设置**不在 /settings 内**，改 `$DSH_HOME/profiles/dsh-tui/cordis.patch.yml`：
+以下设置**不在 /settings 内**，改 `$DSH_HOME/profiles/dsh-cli/cordis.patch.yml`：
 provider / model / cwd / preset / workspace / sessionId / modes，
 以及启动级 `effort` 键。
 
@@ -483,53 +483,53 @@ provider / model / cwd / preset / workspace / sessionId / modes，
 - macOS 的 ⌘ 修饰键需要扩展键盘协议（iTerm2 / kitty / WezTerm / ghostty / tmux）。
 - Terminal.app 用 Ctrl。
 - VS Code：装 companion 扩展 `dsh-tui-vscode`（拿到 **IDE 选区通道**，需 ≥ 0.7.0）。
-- 或直接在集成终端运行 `dsh-tui`。
+- 或直接在集成终端运行 `dsh-cli`。
 - **图片**：缩略图与大图预览需要 Kitty graphics 或 Sixel（自动探测，Kitty 优先）。
-  - `DSH_TUI_IMAGE_PROTOCOL=auto|kitty|sixel|none` 覆盖协议。
-- `DSH_TUI_DISABLE_TERMINAL_IMAGES=1` 强制关闭。
+  - `DSH_CLI_IMAGE_PROTOCOL=auto|kitty|sixel|none` 覆盖协议。
+- `DSH_CLI_DISABLE_TERMINAL_IMAGES=1` 强制关闭。
   - tmux/screen、非 TTY、无障碍模式下只显示文字，不影响把图片发给模型。
 - 环境自检：`/doctor`。
 
-### 5.5 安全模式与救援 profile（`dsh-tui safe`）
+### 5.5 安全模式与救援 profile（`dsh-cli safe`）
 
 dsh 意外退出时，安全模式给出**只读**的环境诊断、profile 插件清单和修复指引。
 
-- **两个入口**：手动跑 `dsh-tui safe`；或 dsh 非零退出后按屏幕提示进入（非交互环境只打一行提示）。
+- **两个入口**：手动跑 `dsh-cli safe`；或 dsh 非零退出后按屏幕提示进入（非交互环境只打一行提示）。
 - **只读范围**：诊断/清单/指引都不改状态。
-- 例外：重试正常启动、创建/复用空白救援 profile（只写 `$DSH_HOME/profiles/dsh-tui-safe/`）。
+- 例外：重试正常启动、创建/复用空白救援 profile（只写 `$DSH_HOME/profiles/dsh-cli-safe/`）。
 - **救援 profile 先要证明干净**（无第三方插件、无 `cordis.patch.yml` 条目），证不出就拒绝并打印处理方法。
-- **非交互**：`dsh-tui safe --rescue` 只报告结论（就绪退出 0，被拒绝退出 1）。
+- **非交互**：`dsh-cli safe --rescue` 只报告结论（就绪退出 0，被拒绝退出 1）。
 - **修复命令要自己执行**（安全模式只列出）：
-  - `dsh plugin --profile dsh-tui remove <第三方插件>` 移除可疑插件。
-  - `dsh plugin --profile dsh-tui add dsh-cli@<版本>` 重装对齐。
-  - `dsh-tui doctor` 环境诊断。
+  - `dsh plugin --profile dsh-cli remove <第三方插件>` 移除可疑插件。
+  - `dsh plugin --profile dsh-cli add @askdkc/dsh-cli@<版本>` 重装对齐。
+  - `dsh-cli doctor` 环境诊断。
 
 ## 6. 模型 / 预设 / 主题 / 语言
 
 | 项 | 命令 | 说明 |
 |---|---|---|
-| 模型 | `/model` | 选择器；**切换 = fork 会话续聊**（历史保留、仅换路由）；持久化 `~/.dsh-tui/model.json`，重启与 `/new` 沿用。从没选过的话，用内置默认模型（当前为 `deepseek-flash`） |
+| 模型 | `/model` | 选择器；**切换 = fork 会话续聊**（历史保留、仅换路由）；持久化 `~/.dsh-cli/model.json`，重启与 `/new` 沿用。从没选过的话，用内置默认模型（当前为 `deepseek-flash`） |
 | 推理强度 | `/effort` | 滑杆（←/→ 实时）或 `/effort <id>`；`/effort status` 看当前；新会话默认档在 /settings → 默认推理强度 |
 | Agent 预设 | `/preset` | `standard` / `ptc`/ `minimal` / `cordis` / **梁神模式 `liangshen`**；**已开始会话不可切换** |
 | 主题 | `/theme` | `auto`（OSC 11 跟随终端背景）/ `light` / `dark` / `dark-ansi`；`/theme <名>` 直接切；`/theme status` 看解析结果 |
-| 自定义主题 | 手动 | `~/.dsh-tui/themes/<名>.json`，`{base, colors}` 格式，选中即热切换；命名为 `auto` 会被内置遮蔽 |
-| 语言 | `/lang` | `en` / `zh` 热切换；优先级 `DSH_TUI_LANG` > profile 配置> 持久化 |
+| 自定义主题 | 手动 | `~/.dsh-cli/themes/<名>.json`，`{base, colors}` 格式，选中即热切换；命名为 `auto` 会被内置遮蔽 |
+| 语言 | `/lang` | `en` / `zh` 热切换；优先级 `DSH_CLI_LANG` > profile 配置> 持久化 |
 | 状态行动画 | `/activity` | 选择器或 `/activity frames <名>`；默认 `moon8`，`random` 随机 |
 
-**主题优先级**：`DSH_TUI_THEME` > `~/.dsh-tui/theme.json` > OSC 11 终端背景检测 > dark 回退。
+**主题优先级**：`DSH_CLI_THEME` > `~/.dsh-cli/theme.json` > OSC 11 终端背景检测 > dark 回退。
 
-**~/.dsh-tui/ 偏好文件**（均 best-effort，坏文件回退默认）：
+**~/.dsh-cli/ 偏好文件**（均 best-effort，坏文件回退默认）：
 
 - `theme.json`、`model.json`、`agent-preset.json`、`effort.json`、`working-activity.json`、`lang.json`、
   `trajectory.json`、`resume.txt` / `last-used.json`、`themes/<名>.json`
 
 **常用环境变量**：
 
-- `DSH_TUI_LANG`、`DSH_TUI_THEME`、`DSH_TUI_PRESET`、`DSH_TUI_PERSONA`
-- `DSH_TUI_DISABLE_MOUSE`、`DSH_TUI_DISABLE_TERMINAL_IMAGES`、`DSH_TUI_IMAGE_PROTOCOL`、
-  `DSH_TUI_ACCESSIBILITY`（无障碍：关动画/图形预览）
-- `DSH_TUI_RESUME_SESSION`、`DSH_TUI_WORKSPACE_TARGET`、`DSH_TUI_SESSION_ROOT`、`DSH_TUI_DEBUG`、
-  `DSH_TUI_RENDER_LOG`（帧取证）
+- `DSH_CLI_LANG`、`DSH_CLI_THEME`、`DSH_CLI_PRESET`、`DSH_CLI_PERSONA`
+- `DSH_CLI_DISABLE_MOUSE`、`DSH_CLI_DISABLE_TERMINAL_IMAGES`、`DSH_CLI_IMAGE_PROTOCOL`、
+  `DSH_CLI_ACCESSIBILITY`（无障碍：关动画/图形预览）
+- `DSH_CLI_RESUME_SESSION`、`DSH_CLI_WORKSPACE_TARGET`、`DSH_CLI_SESSION_ROOT`、`DSH_CLI_DEBUG`、
+  `DSH_CLI_RENDER_LOG`（帧取证）
 - `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`VISUAL`/`EDITOR`（`Ctrl+G` 外部编辑器）、
   `DSH_PERMISSION_MODE`
 

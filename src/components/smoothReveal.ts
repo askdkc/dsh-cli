@@ -17,7 +17,7 @@
  * roughly 1.5s; genuinely streaming text (small backlogs) paces at a steady
  * per-frame rate. The reveal never runs ahead of what has arrived.
  *
- * ARCHITECTURE — module-level cursors, not component state. dsh-tui's
+ * ARCHITECTURE — module-level cursors, not component state. dsh-cli's
  * transcript virtualization feeds on MemoRow prop changes (flattened
  * primitives) and re-measures mounted rows after every MessageList commit;
  * a reveal living in child-component state would change row heights without
@@ -202,7 +202,7 @@ export function snapReveal(key: string): void {
 // ---------------------------------------------------------------------------
 
 export type RevealReadOptions = {
-  /** Master switch (settings `dsh-tui.smoothStreaming`); false = full text. */
+  /** Master switch (settings `dsh-cli.smoothStreaming`); false = full text. */
   enabled: boolean
   /**
    * Whether this content arrived "just now" (live streaming row, freshly

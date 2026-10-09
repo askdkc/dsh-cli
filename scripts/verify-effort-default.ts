@@ -51,7 +51,7 @@ function check(name: string, ok: boolean, extra = ''): void {
 }
 
 // ── 2. effort.json best-effort 文件语义 ─────────────────────────────────
-const dir = mkdtempSync(join(tmpdir(), 'dsh-tui-effort-default-'))
+const dir = mkdtempSync(join(tmpdir(), 'dsh-cli-effort-default-'))
 try {
   {
     check('缺文件 → undefined', readEffortPref(dir) === undefined)
@@ -84,7 +84,7 @@ try {
 }
 
 // ── 3. resolveEffortDefault 与文件链的组合 ───────────────────────────────
-const dir2 = mkdtempSync(join(tmpdir(), 'dsh-tui-effort-default2-'))
+const dir2 = mkdtempSync(join(tmpdir(), 'dsh-cli-effort-default2-'))
 try {
   writeEffortPref('off', dir2)
   check(

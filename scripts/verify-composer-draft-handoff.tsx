@@ -28,11 +28,11 @@
  * Run: node --import tsx/esm scripts/verify-composer-draft-handoff.tsx
  */
 import { fileURLToPath } from 'node:url'
-process.env.DSH_TUI_LANG = 'en'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+process.env.DSH_CLI_LANG = 'en'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
 // fileURLToPath (not URL.pathname) keeps the drive letter intact on Windows.
-const home = fileURLToPath(new URL('../node_modules/.cache/dsh-tui-draft-handoff-home', import.meta.url))
+const home = fileURLToPath(new URL('../node_modules/.cache/dsh-cli-draft-handoff-home', import.meta.url))
 process.env.HOME = home
 process.env.USERPROFILE = home
 

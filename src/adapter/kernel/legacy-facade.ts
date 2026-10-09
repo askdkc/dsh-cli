@@ -10,7 +10,7 @@
  *
  * `facadeFromLegacy` is a retained long-term compatibility fallback for
  * bare/test compositions and is explicitly outside the P6 removal scope.
- * OWNER: dsh-tui adapter. UNTIL: no scheduled removal.
+ * OWNER: dsh-cli adapter. UNTIL: no scheduled removal.
  */
 
 import type { HostDescriptorSnapshot, HostDescriptorPort } from '../ports/descriptor.js'

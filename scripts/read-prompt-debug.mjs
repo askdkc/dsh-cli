@@ -72,7 +72,7 @@ async function main() {
   } catch (error) {
     const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
     if (code === 'ENOENT') {
-      throw new Error(`prompt debug file not found: ${input}\nRun /debug-prompt in dsh-tui first.`)
+      throw new Error(`prompt debug file not found: ${input}\nRun /debug-prompt in dsh-cli first.`)
     }
     throw new Error(`cannot read prompt debug file ${input}: ${error instanceof Error ? error.message : String(error)}`)
   }

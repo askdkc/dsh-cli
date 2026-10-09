@@ -6,8 +6,8 @@
  * Run: node --import tsx/esm scripts/verify-scroll-jumps.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'en'
 
 import type { ChatRow } from '../src/dsh-adapter/channel.js'
 import type { DOMElement } from '../src/ink/dom.js'

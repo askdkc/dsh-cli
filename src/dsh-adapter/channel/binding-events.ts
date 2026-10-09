@@ -39,7 +39,7 @@ export function createBindingEvents(ctx: Context, deps: {
 }) {
   const reconcileRetiredProjection = (status: 'idle' | 'disposed'): void => {
     if (!deps.state.working) return
-    ctx.logger.warn(`dsh-tui: agent became ${status} while the channel still projected an open turn; releasing volatile UI gates`)
+    ctx.logger.warn(`dsh-cli: agent became ${status} while the channel still projected an open turn; releasing volatile UI gates`)
     deps.inputConvergence.cancelInFlight = false
     deps.state.cancelPending = false
     deps.state.working = false

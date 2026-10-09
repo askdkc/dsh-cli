@@ -10,7 +10,7 @@ import Jsonl from '@deepseek-ai/dsh-session-persistence-jsonl'
 import { settled } from './lib/term-test.mjs'
 
 const root = mkdtempSync(join(tmpdir(), 'dsh-current-storage-'))
-process.env.DSH_TUI_SESSION_ROOT = root
+process.env.DSH_CLI_SESSION_ROOT = root
 process.env.HOME = root
 process.env.USERPROFILE = root
 const { readPersistedSession } = await import('../lib/types/dsh-adapter/compat/persistence.js')

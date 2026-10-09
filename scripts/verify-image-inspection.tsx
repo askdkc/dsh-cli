@@ -2,13 +2,13 @@
  * Run: node --import tsx/esm scripts/verify-image-inspection.tsx
  * Uses generated images and headless streams; never launches a native viewer.
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '0'
-delete process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
-delete process.env.DSH_TUI_IMAGE_PROTOCOL
+delete process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
+delete process.env.DSH_CLI_IMAGE_PROTOCOL
 delete process.env.TMUX
 delete process.env.STY
-delete process.env.DSH_TUI_ACCESSIBILITY
+delete process.env.DSH_CLI_ACCESSIBILITY
 
 import assert from 'node:assert/strict'
 import { readFile, unlink } from 'node:fs/promises'

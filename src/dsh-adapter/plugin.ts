@@ -36,9 +36,9 @@ import { registerTuiSessionEventTypes, snapshotLiveSessionEvents } from './compa
 import { clearResumeTarget, resumeCommand, resumeTargetFromArgv, writeResumeTarget } from '../sessionHistory.js'
 import { readHomePrefs } from '../homePrefs.js'
 import { resolveSessionCwd } from '../utils/workspaceRoot.js'
-import { beginRestartAttempt, checkForTuiUpdate, installedTuiVersion, isBootDeadlockTarget, isStandaloneRuntime, isVersionNewer, logRestartEvent, resolveDshProfileName, resolveTuiUpdateTarget, restartTui, updateTuiAndRestart, writeHandoffNotice } from '../update.js'
+import { beginRestartAttempt, checkForCliUpdate, installedCliVersion, isBootDeadlockTarget, isStandaloneRuntime, isVersionNewer, logRestartEvent, resolveDshProfileName, resolveCliUpdateTarget, restartCli, updateCliAndRestart, writeHandoffNotice } from '../update.js'
 import { getLang, isLang, resolveStartupLang, setLang, t, writeLangPref } from '../i18n.js'
-import { DEFAULT_PAGE_MARGIN, DEFAULT_STATUS_BAR, applyMermaidDiagrams, applyPageMargin, isPageMarginMode, normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, parsePageMarginSpec, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../tuiDisplayPrefs.js'
+import { DEFAULT_PAGE_MARGIN, DEFAULT_STATUS_BAR, applyMermaidDiagrams, applyPageMargin, isPageMarginMode, normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, parsePageMarginSpec, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../cliDisplayPrefs.js'
 import {
   draftComboConflicts,
   effectiveComboString,
@@ -120,13 +120,13 @@ export function initialPromptFromCmdlineArgs(args: readonly string[] | undefined
  * How this process should treat the TUI frontend, given the terminal it runs on.
  *
  * Three startup identities exist:
- *  1. `dsh-tui` / standalone — the user explicitly asked for the terminal UI;
- *  2. Web / Tauri / other GUI hosts — the profile merely has dsh-tui installed
- *     and the current process is NOT a dsh-tui frontend. stdout is a pipe or
+ *  1. `dsh-cli` / standalone — the user explicitly asked for the terminal UI;
+ *  2. Web / Tauri / other GUI hosts — the profile merely has dsh-cli installed
+ *     and the current process is NOT a dsh-cli frontend. stdout is a pipe or
  *     null there, and mounting a TUI would fail the whole composition.
  *
  * The official launcher (and the standalone runtime) mark explicit launches,
- * so an explicit `dsh-tui` run without a TTY keeps failing loudly, while
+ * so an explicit `dsh-cli` run without a TTY keeps failing loudly, while
  * foreign hosts skip the plugin and let the host boot.
  */
 export type TuiHostMode = 'interactive' | 'invalid-explicit-launch' | 'headless-host'
@@ -140,7 +140,7 @@ export function resolveTuiHostMode(
   }
 
   const explicitTuiLaunch =
-    env.DSH_TUI_LAUNCHER_VERSION !== undefined || isStandaloneRuntime()
+    env.DSH_CLI_LAUNCHER_VERSION !== undefined || isStandaloneRuntime()
 
   return explicitTuiLaunch ? 'invalid-explicit-launch' : 'headless-host'
 }
@@ -148,9 +148,9 @@ export function resolveTuiHostMode(
 export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, configOwner: Context = ctx): Promise<void> {
   const config = configValues<Config>(runtimeConfig)
   // /restart handoff diagnosis: the replacement process is marked by env and
-  // logs its boot progress to ~/.dsh-tui/restart.log (ordinary launches stay
+  // logs its boot progress to ~/.dsh-cli/restart.log (ordinary launches stay
   // silent). First line lands before anything in this function can throw.
-  if (process.env.DSH_TUI_RESTART_CHILD === '1') {
+  if (process.env.DSH_CLI_RESTART_CHILD === '1') {
     logRestartEvent('boot: plugin apply', {
       stdoutTty: process.stdout.isTTY === true,
       stdinTty: process.stdin.isTTY === true,
@@ -204,19 +204,19 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   }
   const hostMode = resolveTuiHostMode()
   if (hostMode === 'invalid-explicit-launch') {
-    if (process.env.DSH_TUI_RESTART_CHILD === '1') {
+    if (process.env.DSH_CLI_RESTART_CHILD === '1') {
       logRestartEvent('boot: TTY gate failed - stdout is not a TTY')
     }
-    throw new Error('dsh-tui requires an interactive terminal (stdout must be a TTY).')
+    throw new Error('dsh-cli requires an interactive terminal (stdout must be a TTY).')
   }
   if (hostMode === 'headless-host') {
     // Web / Tauri / GUI hosts load the plugin from the profile without being
-    // a dsh-tui frontend (stdout is a pipe or null). Mounting a TUI there
+    // a dsh-cli frontend (stdout is a pipe or null). Mounting a TUI there
     // would fail the whole composition, so skip quietly and let the host
-    // boot. The launcher marker above keeps explicit `dsh-tui` launches
+    // boot. The launcher marker above keeps explicit `dsh-cli` launches
     // failing loudly instead of silently producing no UI.
     ctx.logger.info(
-      'dsh-tui: non-interactive host detected (stdout is not a TTY); skipping the TUI frontend',
+      'dsh-cli: non-interactive host detected (stdout is not a TTY); skipping the TUI frontend',
     )
     return
   }
@@ -227,23 +227,23 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   registerResponseLanguage(ctx)
   await registerBundledPresets(ctx)
 
-  // UI language resolution: DSH_TUI_LANG env var wins, then the
-  // active profile `dsh-tui.lang` configuration (applied once the settings
+  // UI language resolution: DSH_CLI_LANG env var wins, then the
+  // active profile `dsh-cli.lang` configuration (applied once the settings
   // namespace registers below), then cordis.yml `lang`, then the
   // persisted `/lang` choice, then the locale, falling back to `en`. Must settle before the first
   // render so every module resolves strings in the same language.
-  const envLang = process.env.DSH_TUI_LANG
+  const envLang = process.env.DSH_CLI_LANG
   setLang(isLang(envLang) ? envLang : isLang(config.lang) ? config.lang : resolveStartupLang())
   if (resolveDshProfileName() === 'dsh-cli'
     && !isStandaloneRuntime()
     && !process.env.CI
-    && process.env.DSH_TUI_AUTO_REGISTER_CLI !== '0') {
+    && process.env.DSH_CLI_AUTO_REGISTER_CLI !== '0') {
     try {
       const result = ensureCliRegistered()
-      if (result.startsWith('Registered ') || result.startsWith('Kept ')) ctx.logger.info(`dsh-tui: ${result}`)
-      else if (result.startsWith('Existing ')) ctx.logger.warn(`dsh-tui: ${result} Remove the conflicting command or adjust PATH, then restart the TUI.`)
+      if (result.startsWith('Registered ') || result.startsWith('Kept ')) ctx.logger.info(`dsh-cli: ${result}`)
+      else if (result.startsWith('Existing ')) ctx.logger.warn(`dsh-cli: ${result} Remove the conflicting command or adjust PATH, then restart the TUI.`)
     } catch (error) {
-      ctx.logger.warn(`dsh-tui: dsh-cli command registration failed: ${error instanceof Error ? error.message : String(error)}. Resolve the reported path or permission issue, then restart the TUI; set DSH_TUI_AUTO_REGISTER_CLI=0 to disable registration.`)
+      ctx.logger.warn(`dsh-cli: dsh-cli command registration failed: ${error instanceof Error ? error.message : String(error)}. Resolve the reported path or permission issue, then restart the TUI; set DSH_CLI_AUTO_REGISTER_CLI=0 to disable registration.`)
     }
   }
 
@@ -253,37 +253,37 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // lag, cached manifest, wrong profile). Say so instead of silently
   // pretending the update landed.
   {
-    const updatedFrom = process.env.DSH_TUI_UPDATED_FROM
+    const updatedFrom = process.env.DSH_CLI_UPDATED_FROM
     if (updatedFrom !== undefined) {
       // Assigning undefined would stringify to "undefined" and leak the
       // marker into every child process; remove it for real.
-      delete process.env.DSH_TUI_UPDATED_FROM
-      const now = installedTuiVersion()
+      delete process.env.DSH_CLI_UPDATED_FROM
+      const now = installedCliVersion()
       if (now === undefined || !isVersionNewer(now, updatedFrom)) {
         ctx.logger.warn(
-          `dsh-tui: /update restarted but the version did not advance (still ${now ?? 'unknown'}, was ${updatedFrom})`,
+          `dsh-cli: /update restarted but the version did not advance (still ${now ?? 'unknown'}, was ${updatedFrom})`,
         )
         if (process.stderr.isTTY) {
           process.stderr.write(
-            `\ndsh-tui: 更新后版本未变化（仍为 ${now ?? 'unknown'}，原为 ${updatedFrom}）；` +
+            `\ndsh-cli: 更新后版本未变化（仍为 ${now ?? 'unknown'}，原为 ${updatedFrom}）；` +
               `可能是镜像 registry 未同步，请稍后重试或检查 registry 配置。\n`,
           )
         }
       } else if (process.stderr.isTTY) {
         // Launcher alignment bridge (0.8.3): /update only replaces the
-        // package inside the DSH profile; a globally installed `dsh-tui`
+        // package inside the DSH profile; a globally installed `dsh-cli`
         // launcher is a separate copy that keeps its old version. Launchers
-        // >=0.8.3 export DSH_TUI_LAUNCHER_VERSION so we can tell whether
+        // >=0.8.3 export DSH_CLI_LAUNCHER_VERSION so we can tell whether
         // the outer launcher lags the freshly installed profile. Launchers
         // <=0.8.2 never set the marker — the generic branch below is
-        // intentionally one-shot: DSH_TUI_UPDATED_FROM exists only on the
+        // intentionally one-shot: DSH_CLI_UPDATED_FROM exists only on the
         // replacement process immediately after /update.
-        const launcherVersion = process.env.DSH_TUI_LAUNCHER_VERSION
+        const launcherVersion = process.env.DSH_CLI_LAUNCHER_VERSION
         if (launcherVersion === undefined) {
-          process.stderr.write(`\n[dsh-tui] ${t('update-launcher-align-unknown', { version: now })}\n`)
+          process.stderr.write(`\n[dsh-cli] ${t('update-launcher-align-unknown', { version: now })}\n`)
         } else if (isVersionNewer(now, launcherVersion)) {
           process.stderr.write(
-            `\n[dsh-tui] ${t('update-launcher-outdated', { profile: now, launcher: launcherVersion })}\n`,
+            `\n[dsh-cli] ${t('update-launcher-outdated', { profile: now, launcher: launcherVersion })}\n`,
           )
         }
       }
@@ -369,33 +369,33 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // itself outside any worktree), so `@` completion and mention expansion
   // see the repository, not an arbitrary launch subdirectory. Resolved ONCE
   // here — the agent meta and the channel must agree.
-  const requestedWorkspace = config.workspace ?? process.env.DSH_TUI_WORKSPACE_TARGET
+  const requestedWorkspace = config.workspace ?? process.env.DSH_CLI_WORKSPACE_TARGET
   // Degraded boot (issue #183): a stale bundle patch without the
-  // dsh-tui-workspaces row leaves the service unmounted; resolve startup
+  // dsh-cli-workspaces row leaves the service unmounted; resolve startup
   // targets through the local-only runtime (provider URIs then fail loud
   // below instead of crashing on an undefined service). A profile launch
-  // without the service means the patch came from an older dsh-tui copy
+  // without the service means the patch came from an older dsh-cli copy
   // than the running code — warn once so the skew is diagnosable. Bare
   // embedders (no --profile) take the same fallback by design, silently.
   const mountedWorkspaceService = getHostWorkspaceRuntime(ctx.get('tuiWorkspaces'))
   if (mountedWorkspaceService === undefined && resolveDshProfileName() !== undefined) {
     ctx.logger.warn(
-      'dsh-tui: tuiWorkspaces service is not mounted; /workspace runs with the local-only fallback. ' +
-      'The bundle patch is older than the installed dsh-tui package — update the globally installed dsh-tui launcher to match the profile (issue #183).',
+      'dsh-cli: tuiWorkspaces service is not mounted; /workspace runs with the local-only fallback. ' +
+      'The bundle patch is older than the installed dsh-cli package — update the globally installed dsh-cli launcher to match the profile (issue #183).',
     )
   }
   const workspaceService = mountedWorkspaceService ?? createLocalWorkspaceRuntime()
-  // Same skew guard for the plugin-scene registry (dsh-tui-scenes row): the
+  // Same skew guard for the plugin-scene registry (dsh-cli-scenes row): the
   // channel degrades to never opening scenes when the service is absent, so
   // say why on profile launches — a plugin's open() otherwise fails with only
   // its own warn to go on.
   if (ctx.get('tuiScenes') === undefined && resolveDshProfileName() !== undefined) {
     ctx.logger.warn(
-      'dsh-tui: tuiScenes service is not mounted; plugin scenes will never open. ' +
-      'The bundle patch is older than the installed dsh-tui package — update the globally installed dsh-tui launcher to match the profile (issue #183).',
+      'dsh-cli: tuiScenes service is not mounted; plugin scenes will never open. ' +
+      'The bundle patch is older than the installed dsh-cli package — update the globally installed dsh-cli launcher to match the profile (issue #183).',
     )
   }
-  // Same skew guard for the plugin-UI services (dsh-tui-extensions row):
+  // Same skew guard for the plugin-UI services (dsh-cli-extensions row):
   // managed dialogs park unanswered, status contributions never render,
   // shortcuts never match, custom-entry renderers stay invisible, and runtime
   // themes stay out of the picker when the row is absent — say why on profile
@@ -403,11 +403,11 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   const themeHost = getHostThemes(ctx.get('tuiThemes') as TuiThemeRuntime | undefined)
   if ((ctx.get('tuiDialogs') === undefined || themeHost === undefined) && resolveDshProfileName() !== undefined) {
     ctx.logger.warn(
-      'dsh-tui: tuiDialogs/tuiStatus/tuiShortcuts/tuiRenderers/tuiThemes services are not mounted; plugin dialogs, status contributions, shortcuts, custom-entry renderers and runtime themes are off. ' +
-      'Static ~/.dsh-tui/themes JSON remains available. The bundle patch is older than the installed dsh-tui package — update the globally installed dsh-tui launcher to match the profile (issue #183).',
+      'dsh-cli: tuiDialogs/tuiStatus/tuiShortcuts/tuiRenderers/tuiThemes services are not mounted; plugin dialogs, status contributions, shortcuts, custom-entry renderers and runtime themes are off. ' +
+      'Static ~/.dsh-cli/themes JSON remains available. The bundle patch is older than the installed dsh-cli package — update the globally installed dsh-cli launcher to match the profile (issue #183).',
     )
   }
-  // Same skew guard for the plugin-host row (dsh-tui-plugin-host): without
+  // Same skew guard for the plugin-host row (dsh-cli-plugin-host): without
   // it there is no runtime generation id, no unified grant store service,
   // and no Host Descriptor — plugin interop surfaces degrade silently
   // otherwise. The D-7 decision gate does NOT depend on this row (the
@@ -415,15 +415,15 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // way — what breaks is everything that rides on tuiPluginHost.
   if (ctx.get('tuiPluginHost') === undefined && resolveDshProfileName() !== undefined) {
     ctx.logger.warn(
-      'dsh-tui: tuiPluginHost service is not mounted; plugin grant store, runtime generation and Host Descriptor are unavailable. ' +
-      'The bundle patch is older than the installed dsh-tui package — update the globally installed dsh-tui launcher to match the profile (issue #183).',
+      'dsh-cli: tuiPluginHost service is not mounted; plugin grant store, runtime generation and Host Descriptor are unavailable. ' +
+      'The bundle patch is older than the installed dsh-cli package — update the globally installed dsh-cli launcher to match the profile (issue #183).',
     )
   }
   const initialWorkspace = requestedWorkspace === undefined
     ? undefined
     : await workspaceService.resolve(requestedWorkspace)
   if (requestedWorkspace !== undefined && initialWorkspace === undefined) {
-    throw new Error(`dsh-tui: unsupported or unavailable workspace target: ${requestedWorkspace}`)
+    throw new Error(`dsh-cli: unsupported or unavailable workspace target: ${requestedWorkspace}`)
   }
   const sessionCwd = initialWorkspace?.cwd ?? resolveSessionCwd(config.cwd)
   const meta = { cwd: sessionCwd }
@@ -454,7 +454,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     const attached = await attachSessionToWorkspace(ctx, meta.cwd, agent.session.id)
     if (!attached) {
       ctx.logger.warn(
-        `dsh-tui: session "${agent.session.id}" has no workspace ownership because workspaceRegistry is not mounted`,
+        `dsh-cli: session "${agent.session.id}" has no workspace ownership because workspaceRegistry is not mounted`,
       )
     }
   } catch (error) {
@@ -462,7 +462,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     // failure contract. Keep the TUI usable but make the missing ownership
     // loud instead of silently leaving the conversation Ungrouped.
     ctx.logger.warn(
-      `dsh-tui: session "${agent.session.id}" workspace attachment failed: ${error instanceof Error ? error.message : String(error)}`,
+      `dsh-cli: session "${agent.session.id}" workspace attachment failed: ${error instanceof Error ? error.message : String(error)}`,
     )
   }
 
@@ -518,7 +518,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     // plan/full cycle in sessionModes.ts).
     modes: config.modes,
     // Edit/Write diff presentation (schema default 'auto'); the /settings
-    // screen edits this key live through the dsh-tui namespace.
+    // screen edits this key live through the dsh-cli namespace.
     diffLayout: config.diffLayout,
     thinkingFold: config.thinkingFold,
     toolBackground: config.toolBackground,
@@ -583,7 +583,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   let bootedFullscreen = config.fullscreen === true
   let bootedTerminalImages = lastBootedTerminalImages ?? config.terminalImages ?? true
   let rendererSettingsFrozen = false
-  const terminalImagesDisabledByEnv = isEnvTruthy(process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES)
+  const terminalImagesDisabledByEnv = isEnvTruthy(process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES)
   // The settings service may come up AFTER this plugin's apply: the cordis
   // inject callback defers until the service registers, so the first
   // `apply(scope.get())` below can land after the mount (field report: the
@@ -651,11 +651,11 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     }
     // The /settings language field writes `lang` through the settings
     // service (user layer): apply it live and mirror it to lang.json so
-    // the /lang command and next-boot resolution agree. DSH_TUI_LANG
+    // the /lang command and next-boot resolution agree. DSH_CLI_LANG
     // stays the top precedence — a pinned env is never overridden by the
     // document.
     const applyLang = (value: SettingsValue): void => {
-      if (!isLang(process.env.DSH_TUI_LANG) && isLang(value.lang)) {
+      if (!isLang(process.env.DSH_CLI_LANG) && isLang(value.lang)) {
         setLang(value.lang)
         writeLangPref(value.lang)
       }
@@ -734,7 +734,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     }))
     resolveSettingsReady?.()
   })
-  // The /settings screen's own section: the dsh-tui namespace comes from
+  // The /settings screen's own section: the dsh-cli namespace comes from
   // the settings registration above, and the declared selects write `lang`
   // and `diffLayout` back through the settings service's revision-fenced
   // mutate (the watch applies both live).
@@ -842,7 +842,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   })
   // Prefer the composition's sections service; fall back to the in-package
   // local host. Real compositions have been observed disposing the whole
-  // dsh-tui-* host-seam insert list right after load (issue #557), which
+  // dsh-cli-* host-seam insert list right after load (issue #557), which
   // left this registration silently skipped and /settings read-only.
   // channel.ts reads through the same fallback, so both sides meet in the
   // same registry either way.
@@ -852,7 +852,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     ) ?? getLocalSettingsSectionsHost(ctx)
     const unregister = settingsSections.register({
       ns: tuiSettingsNs,
-      title: 'dsh-tui',
+      title: 'dsh-cli',
       groups: [
         { id: 'status-bar', title: 'Status bar', descriptions: { zh: '底栏设置' } },
         { id: 'shortcuts', title: 'Shortcuts', descriptions: { zh: '快捷键' } },
@@ -898,11 +898,11 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
           label: terminalImagesDisabledByEnv ? 'Image previews (forced off)' : 'Terminal image previews',
           descriptions: { zh: terminalImagesDisabledByEnv ? '图片预览（环境强制关闭）' : '终端图片预览' },
           hint: terminalImagesDisabledByEnv
-            ? 'Checkbox saves your preference. Relaunch without DSH_TUI_DISABLE_TERMINAL_IMAGES to enable previews.'
+            ? 'Checkbox saves your preference. Relaunch without DSH_CLI_DISABLE_TERMINAL_IMAGES to enable previews.'
             : 'Preview images in supported terminals. Use /restart to apply. Sending images is unaffected.',
           hintDescriptions: {
             zh: terminalImagesDisabledByEnv
-              ? '勾选框保存预览偏好；移除 DSH_TUI_DISABLE_TERMINAL_IMAGES 后重新启动才能显示图片。'
+              ? '勾选框保存预览偏好；移除 DSH_CLI_DISABLE_TERMINAL_IMAGES 后重新启动才能显示图片。'
               : '在支持的终端中预览图片。修改后用 /restart 生效；不影响向模型发送图片。',
           },
           kind: 'boolean',
@@ -1306,7 +1306,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     ctx.effect(() => () => herdr.dispose())
   }
   // Positional command-line arguments are the initial prompt (issue #53):
-  // `dsh-tui "run the tests"` forwards positionals through the dsh CLI,
+  // `dsh-cli "run the tests"` forwards positionals through the dsh CLI,
   // which mounts them as ctx.cmdlineArgs. The service shape drifted across
   // dsh-cmdline builds — `{ get() }` is the current contract, older builds
   // exposed `{ args }` — so read both. Submit once the channel exists;
@@ -1357,13 +1357,13 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
       exited = true
       if (error !== undefined) {
         const message = error instanceof Error ? error.message : String(error)
-        ctx.logger.error(`dsh-tui: exit after error: ${message}`)
+        ctx.logger.error(`dsh-cli: exit after error: ${message}`)
         void finishExit(
           ctx,
           instance,
           bootedFullscreen,
           undefined,
-          `dsh-tui crashed: ${message}`,
+          `dsh-cli crashed: ${message}`,
           () => disposeRootAndExit(ctx, 1),
         )
         return
@@ -1479,7 +1479,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     approvalStore,
     injectControllerRef,
     openHomeOnBoot,
-    // The dsh-tui-extensions row's services (managed dialogs, status line,
+    // The dsh-cli-extensions row's services (managed dialogs, status line,
     // shortcuts). Soft-consumed: absent the row (stale patch, bare embed),
     // Chat falls back to inert stores and no shortcut registry.
     extensionDialogs: getHostDialogStore(ctx.get('tuiDialogs') as TuiDialogRuntime | undefined),
@@ -1511,7 +1511,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
       // Confirm the target version before tearing the TUI down: on an
       // already-latest install, an unconditional update+restart would churn
       // the process and then trip the "version did not advance" warning.
-      void resolveTuiUpdateTarget().then((target) => {
+      void resolveCliUpdateTarget().then((target) => {
         if (exited || updateRequested) return
         if (target.kind === 'latest') {
           notifyChannel(t('update-already-latest', { current: target.current }), { color: 'warning' })
@@ -1584,7 +1584,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // /restart handoff diagnosis: the replacement got all the way to a mounted
   // UI, so any later death is post-boot (and its stderr keeps flowing to the
   // parent only within the survival window — this line is the durable mark).
-  if (process.env.DSH_TUI_RESTART_CHILD === '1') {
+  if (process.env.DSH_CLI_RESTART_CHILD === '1') {
     logRestartEvent('boot: UI mounted', { fullscreen: bootedFullscreen, isRecompose })
   }
 
@@ -1599,7 +1599,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
       append: (text) => injectControllerRef.current?.append(text),
       submit: () => injectControllerRef.current?.submit(),
     },
-    (message) => ctx.logger.warn(`dsh-tui: ${message}`),
+    (message) => ctx.logger.warn(`dsh-cli: ${message}`),
   )
   if (injectChannel) {
     ctx.effect(() => () => injectChannel.close())
@@ -1618,7 +1618,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // Check in the background so registry latency never delays the first frame.
   // A failed/offline check is intentionally silent; the manual `/update`
   // command remains available regardless of network access.
-  void checkForTuiUpdate().then((update) => {
+  void checkForCliUpdate().then((update) => {
     if (update === undefined || exited || updateRequested) return
     const key = update.isStandalone ? 'update-standalone-available' : 'update-available'
     // A standalone release without a SHA256SUMS asset (published before the
@@ -1658,7 +1658,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
 }
 
 /**
- * Attach to an existing agent, resume a persisted session (`dsh-tui --resume`
+ * Attach to an existing agent, resume a persisted session (`dsh-cli --resume`
  * feeds the id through `config.sessionId`), or create a fresh one. Resume
  * goes through the DSH persistence seam (`ctx.agents.resume` reads the
  * session log written by dsh-session-persistence-jsonl); a missing artifact
@@ -1701,7 +1701,7 @@ async function resolveAgent(
     }
     // The launch-time counterpart of the in-session `/resume` claim
     // (`channel/session-resume.ts`), and it has to happen before ANY await:
-    // without it `dsh-tui --resume <id>` mounts the log purely because the user
+    // without it `dsh-cli --resume <id>` mounts the log purely because the user
     // asked for it, so a second terminal doing the same joins the first and
     // both interleave writes into one append-only transcript. The mount
     // publisher cannot cover this — it publishes the set, it never refuses a
@@ -1717,19 +1717,19 @@ async function resolveAgent(
     if (!reserved.ok) {
       if (reserved.reason === 'occupied') {
         throw new Error(
-          `dsh-tui: cannot resume session "${requestedSessionId}": it is mounted by another TUI terminal ` +
+          `dsh-cli: cannot resume session "${requestedSessionId}": it is mounted by another TUI terminal ` +
           `(pid ${reserved.holders[0] ?? 0}) — two processes driving one session log would corrupt it. ` +
           'Close that terminal, or drop --resume to start a fresh session.',
         )
       }
       if (reserved.reason === 'busy') {
         throw new Error(
-          `dsh-tui: cannot resume session "${requestedSessionId}": another process is holding the ` +
+          `dsh-cli: cannot resume session "${requestedSessionId}": another process is holding the ` +
           'session mount ledger right now, so its occupancy could not be checked. Retry in a moment.',
         )
       }
       throw new Error(
-        `dsh-tui: cannot resume session "${requestedSessionId}": its occupancy could not be verified ` +
+        `dsh-cli: cannot resume session "${requestedSessionId}": its occupancy could not be verified ` +
         `(${reserved.detail}). Refusing rather than risk two processes writing one session log. ` +
         'If that file is damaged, remove it (and the matching .lock) while no other TUI is running, ' +
         'or drop --resume to start a fresh session.',
@@ -1780,7 +1780,7 @@ async function resolveAgent(
       // stderr. The in-session /resume picker has its own error path.
       const reason = error instanceof Error ? error.message : String(error)
       throw new Error(
-        `dsh-tui: cannot resume session "${requestedSessionId}": ${reason} — ` +
+        `dsh-cli: cannot resume session "${requestedSessionId}": ${reason} — ` +
         'the stored log is unreadable or corrupt; no fresh session was started instead. ' +
         'Drop --resume to start fresh, or repair the session log first.',
         { cause: error },
@@ -1796,7 +1796,7 @@ async function resolveAgent(
   const composed = await composePreset(ctx, configuredPreset ?? presetPref)
   if (!migratePresetPref(presetPref, composed.agentPreset)) {
     ctx.logger.warn(
-      `dsh-tui: resolved preset preference "${presetPref}" as "${composed.agentPreset}" but could not persist the migrated id`,
+      `dsh-cli: resolved preset preference "${presetPref}" as "${composed.agentPreset}" but could not persist the migrated id`,
     )
   }
   // Fresh-session route precedence (issues #14/#30/#67): resolved atomically
@@ -1810,7 +1810,7 @@ async function resolveAgent(
   const { route, rejected } = await validateModelRoute(llm, startupRoute)
   if (rejected !== undefined) {
     ctx.logger.warn(
-      `dsh-tui: model route ${rejected.provider}/${rejected.model} is not advertised by provider "${rejected.provider}"; falling back to ${route.provider}/${route.model}`,
+      `dsh-cli: model route ${rejected.provider}/${rejected.model} is not advertised by provider "${rejected.provider}"; falling back to ${route.provider}/${route.model}`,
     )
   }
   // Reserve the fresh id before the factory, exactly like the in-session
@@ -1821,7 +1821,7 @@ async function resolveAgent(
   // between the create and the next beat from being open.
   const bootReserved = await reserveMount(String(sessionId))
   if (!bootReserved.ok && bootReserved.reason !== 'occupied') {
-    ctx.logger.warn(`dsh-tui: could not announce the new session in the mount ledger: ${bootReserved.reason}`)
+    ctx.logger.warn(`dsh-cli: could not announce the new session in the mount ledger: ${bootReserved.reason}`)
   }
   const bootReservation = bootReserved.ok ? bootReserved.reservation : undefined
   let created: Awaited<ReturnType<typeof ctx.agents.create>>
@@ -1842,7 +1842,7 @@ async function resolveAgent(
     // the worst outcome for a misconfigured leaf (unknown provider/model).
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(
-      `dsh-tui: failed to create agent (provider=${route.provider}, model=${route.model}): ${message}`,
+      `dsh-cli: failed to create agent (provider=${route.provider}, model=${route.model}): ${message}`,
       { cause: error },
     )
   }
@@ -1952,9 +1952,9 @@ export async function finishExit(
         : fromHandle
     )
     if (runtime === undefined) {
-      ctx.logger.debug('dsh-tui: Ink runtime unavailable during shutdown; using generic terminal cleanup')
+      ctx.logger.debug('dsh-cli: Ink runtime unavailable during shutdown; using generic terminal cleanup')
       if (instance !== undefined) {
-        ctx.logger.debug('dsh-tui: Ink shutdown using full unmount as the terminal-restore fallback')
+        ctx.logger.debug('dsh-cli: Ink shutdown using full unmount as the terminal-restore fallback')
         // Lookup-miss (custom stdout embedders / detach-less handles): the
         // registry cannot hand us the detach hooks, so run the full Ink
         // unmount first. It restores raw mode, alt screen and listeners
@@ -1963,11 +1963,11 @@ export async function finishExit(
         try {
           instance.unmount()
         } catch {
-          ctx.logger.debug('dsh-tui: Ink shutdown unmount fallback failed; continuing with generic terminal cleanup')
+          ctx.logger.debug('dsh-cli: Ink shutdown unmount fallback failed; continuing with generic terminal cleanup')
         }
       }
     } else if (fromMap === undefined) {
-      ctx.logger.debug('dsh-tui: Ink runtime resolved from the render handle (instances map missed); detaching')
+      ctx.logger.debug('dsh-cli: Ink runtime resolved from the render handle (instances map missed); detaching')
     }
     const cursor = fullscreen ? '' : cursorMoveToFrameEnd(runtime)
 
@@ -1979,7 +1979,7 @@ export async function finishExit(
       // right after this cleanup anyway.
       runtime?.detachStdinForHandoff?.()
     } catch {
-      ctx.logger.debug('dsh-tui: Ink shutdown detach failed; continuing with generic terminal cleanup')
+      ctx.logger.debug('dsh-cli: Ink shutdown detach failed; continuing with generic terminal cleanup')
     }
     const cleanup = [
       fullscreen ? EXIT_ALT_SCREEN : '',
@@ -2010,7 +2010,7 @@ export async function finishExit(
       await writeStream(process.stderr, `\n${stderrNotice}\n`)
     }
   } catch {
-    ctx.logger.debug('dsh-tui: terminal cleanup failed; continuing with process shutdown')
+    ctx.logger.debug('dsh-cli: terminal cleanup failed; continuing with process shutdown')
   }
   // Filesystem-only: the exported clipboard images live in a per-process
   // temp directory that nothing else removes.
@@ -2082,13 +2082,13 @@ function writeStream(stream: NodeJS.WriteStream, data: string): Promise<void> {
 function runRestart(ctx: Context, profile: string | undefined, sessionId: string): void {
   logRestartEvent('runRestart: entered, disposing cordis root')
   disposeRootAndThen(ctx, () => {
-    logRestartEvent('runRestart: root disposed, starting restartTui')
-    void restartTui(sessionId).then(
+    logRestartEvent('runRestart: root disposed, starting restartCli')
+    void restartCli(sessionId).then(
       restartCode => {
-        logRestartEvent('runRestart: restartTui resolved', { restartCode })
+        logRestartEvent('runRestart: restartCli resolved', { restartCode })
         if (restartCode !== 0) {
           writeHandoffNotice(
-            `\ndsh-tui restart failed to spawn (exit ${restartCode}). Your session is preserved — resume with:\n` +
+            `\ndsh-cli restart failed to spawn (exit ${restartCode}). Your session is preserved — resume with:\n` +
               `${resumeCommand(profile, sessionId)}\n\n`,
           )
         }
@@ -2096,9 +2096,9 @@ function runRestart(ctx: Context, profile: string | undefined, sessionId: string
       },
       restartError => {
         const message = restartError instanceof Error ? restartError.message : String(restartError)
-        logRestartEvent('runRestart: restartTui rejected', { message })
+        logRestartEvent('runRestart: restartCli rejected', { message })
         writeHandoffNotice(
-          `\ndsh-tui restart failed: ${message}. Your session is preserved — resume with:\n` +
+          `\ndsh-cli restart failed: ${message}. Your session is preserved — resume with:\n` +
             `${resumeCommand(profile, sessionId)}\n\n`,
         )
         process.exit(1)
@@ -2118,11 +2118,11 @@ function runUpdate(
       process.stderr.write(`\n${t('update-aborted-no-profile')}\n`)
       process.exit(1)
     }
-    void updateTuiAndRestart(sessionId, profile, targetVersion).then(
+    void updateCliAndRestart(sessionId, profile, targetVersion).then(
       ({ updateCode, restartCode }) => {
         if (updateCode !== 0) {
           process.stderr.write(
-            `\ndsh-tui update failed (exit ${updateCode}). Your session is preserved — resume with:\n` +
+            `\ndsh-cli update failed (exit ${updateCode}). Your session is preserved — resume with:\n` +
               `${resumeCommand(profile, sessionId)}\n\n`,
           )
         }
@@ -2131,7 +2131,7 @@ function runUpdate(
       updateError => {
         const message = updateError instanceof Error ? updateError.message : String(updateError)
         process.stderr.write(
-          `\ndsh-tui update failed: ${message}. Your session is preserved — resume with:\n` +
+          `\ndsh-cli update failed: ${message}. Your session is preserved — resume with:\n` +
             `${resumeCommand(profile, sessionId)}\n\n`,
         )
         process.exit(1)
@@ -2144,12 +2144,12 @@ function runUpdate(
 export function handleStartupError(ctx: Context, error: unknown): void {
   const message = error instanceof Error ? error.message : String(error)
   void finishExit(ctx, undefined, lastBootedFullscreen ?? true, undefined,
-    `dsh-tui startup failed: ${message}`, () => disposeRootAndExit(ctx, 1))
+    `dsh-cli startup failed: ${message}`, () => disposeRootAndExit(ctx, 1))
 }
 
 /**
  * Dispose the whole application before process exit, with a bounded fallback.
- * Mirrors the deleted dsh-tui front-door exit semantics.
+ * Mirrors the deleted dsh-cli front-door exit semantics.
  */
 function disposeRootAndExit(ctx: Context, code: number): void {
   disposeRootAndThen(ctx, () => process.exit(code), code)

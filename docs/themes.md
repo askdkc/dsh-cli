@@ -4,7 +4,7 @@
 
 ## 内置主题
 
-dsh-TUI 提供三套 Gentle Mist Blue 色板，外加一个 `auto` 伪主题：
+dsh-CLI 提供三套 Gentle Mist Blue 色板，外加一个 `auto` 伪主题：
 
 | 名称 | 用途 |
 | --- | --- |
@@ -22,7 +22,7 @@ dsh-TUI 提供三套 Gentle Mist Blue 色板，外加一个 `auto` 伪主题：
 
 `auto` 把这一次性启动检测变成常驻选择：
 
-- 在 `/theme`、`DSH_TUI_THEME`、`~/.dsh-tui/theme.json` 中都是合法值。
+- 在 `/theme`、`DSH_CLI_THEME`、`~/.dsh-cli/theme.json` 中都是合法值。
 - 选中时立即应用上次检测结果，并在后台重新查询 OSC 11。
 - 跟随系统主题的终端切换深浅色后，再次选择 `auto`（或重启）即可跟上。
 - `/theme status` 显示 `auto` 当前解析到的色板。
@@ -32,8 +32,8 @@ dsh-TUI 提供三套 Gentle Mist Blue 色板，外加一个 `auto` 伪主题：
 选择优先级：
 
 ```text
-DSH_TUI_THEME
-  > ~/.dsh-tui/theme.json 中的持久化选择
+DSH_CLI_THEME
+  > ~/.dsh-cli/theme.json 中的持久化选择
   > OSC 11 背景检测
   > dark 回退
 ```
@@ -45,12 +45,12 @@ DSH_TUI_THEME
 - `/theme <name>`：直接切换静态或运行时插件主题。
 - `/theme status`：显示当前主题与持久化位置。
 
-选择器确认后立即热切换，并把选择写入 `~/.dsh-tui/theme.json`。
-如果设置了 `DSH_TUI_THEME`，它在下一次启动时仍然优先。
+选择器确认后立即热切换，并把选择写入 `~/.dsh-cli/theme.json`。
+如果设置了 `DSH_CLI_THEME`，它在下一次启动时仍然优先。
 
 ## 自定义主题
 
-在 `~/.dsh-tui/themes/` 下放置 JSON 文件。每个文件定义一个主题，
+在 `~/.dsh-cli/themes/` 下放置 JSON 文件。每个文件定义一个主题，
 并从一个内置色板开始覆盖：
 
 ```json
@@ -118,7 +118,7 @@ DSH_TUI_THEME
 ## npm 插件主题
 
 npm 插件通过 `tuiThemes` 服务注册运行时主题，不必写入
-`~/.dsh-tui/themes/`。最小示例：
+`~/.dsh-cli/themes/`。最小示例：
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
@@ -136,7 +136,7 @@ export function apply(ctx: Context): void {
 - `auto`、内置主题名和 `status` 是保留字，不能作为插件主题名。
 - 注册随插件 activation 自动清理，返回的 disposer 可以提前注销。
 - 插件主题出现在 `/theme` 选择器和补全里，名字沿用
-  `~/.dsh-tui/theme.json` 持久化。
+  `~/.dsh-cli/theme.json` 持久化。
 - 优先级：内置主题 > 静态 JSON > 同名插件主题。
 - 旧 profile 没有 `tuiThemes` 时插件静默降级，静态主题不受影响。
 
@@ -165,7 +165,7 @@ export function apply(ctx: Context): void {
 - 一个坏主题不会阻止 TUI 启动，也不会影响其他主题。
 
 主题名来自用户输入。加载器检查路径是否仍位于主题目录内，防止
-通过名称跳出 `~/.dsh-tui/themes/`。修改这部分实现时必须保留路径约束。
+通过名称跳出 `~/.dsh-cli/themes/`。修改这部分实现时必须保留路径约束。
 
 ## 设计建议
 

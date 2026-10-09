@@ -19,7 +19,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
 import { settled } from './lib/term-test.mjs'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-lifecycle-'))
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-lifecycle-'))
 process.env.HOME = root
 process.env.USERPROFILE = root
 process.env.DSH_HOME = join(root, 'home')

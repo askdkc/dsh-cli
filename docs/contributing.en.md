@@ -24,7 +24,7 @@ dependency; the adapter compatibility rules below still apply.
   user problem, expected behavior, and relevant compatibility constraints.
 - **Open a pull request** against this repository with one logical change,
   the reason for it, and the checks you ran. An issue link is useful but not
-  required. Contributions do not need approval from the original dsh-TUI
+  required. Contributions do not need approval from the original dsh-CLI
   project or membership in an inherited allowlist.
 - **Run the verification matrix** below before requesting a review; CI runs
   the same commands.
@@ -79,7 +79,7 @@ boundaries and helpers over introducing parallel abstractions.
 - `src/native-ts/yoga-layout/`: ported layout engine used by the renderer.
 - `src/terminal-utils/`: terminal formatting and presentation helpers.
 - `src/*Prefs.ts`, `src/customTheme.ts`, and `src/sessionHistory.ts`: persisted
-  user preferences and local session metadata under `~/.dsh-tui`.
+  user preferences and local session metadata under `~/.dsh-cli`.
 - `.agents/skills/*/SKILL.md`: project skills for repository maintainers,
   discovered by the DSH filesystem provider and excluded from the npm package.
 - `cordis.patch.yml`: package bundle overlay used by profile installation.
@@ -336,7 +336,7 @@ DeepSeek Harness monorepo layout with `apps/cli` and `packages/*`.
 
 - It is not a portable standalone smoke command.
 - For an end-user integration check, install the plugin into a DSH profile and
-  run `dsh --profile dsh-tui` in a real TTY with the required credentials.
+  run `dsh --profile dsh-cli` in a real TTY with the required credentials.
 
 ## TypeScript And Style
 
@@ -471,7 +471,7 @@ guide owns detailed contracts such as the toolchain and verification matrix.
   use the repository's width, slicing, wrapping, and ANSI helpers.
 - Keep frame output buffered and normal runs quiet. Do not add `console.log` or
   stdout diagnostics while the TUI is active. Use an opt-in stderr/debug path
-  such as `DSH_TUI_DEBUG`, or the existing `DSH_TUI_RENDER_LOG` frame capture.
+  such as `DSH_CLI_DEBUG`, or the existing `DSH_CLI_RENDER_LOG` frame capture.
 - Preserve raw-mode, cursor, alternate-screen, synchronized-output, mouse,
   focus, and terminal-query cleanup on success, error, interrupt, and teardown.
 - Avoid render-time unbounded collections or per-token/per-frame allocations.
@@ -489,7 +489,7 @@ guide owns detailed contracts such as the toolchain and verification matrix.
 - Follow the existing precedence for configurable preferences: explicit
   deployment config or environment override, then persisted user choice, then
   detected/default value. Document any change to that order.
-- Persist user data beneath the existing `~/.dsh-tui` locations. Validate and
+- Persist user data beneath the existing `~/.dsh-cli` locations. Validate and
   safely parse external JSON; malformed optional state should warn or fall
   back rather than crash the TUI.
 - Treat theme names, plugin descriptors, and file contents as untrusted input.
@@ -498,7 +498,7 @@ guide owns detailed contracts such as the toolchain and verification matrix.
 - Keep theme additions complete across the `Theme` contract and every built-in
   palette.
   - Runtime themes must use the `tuiThemes` seam; plugins must not rewrite
-    `~/.dsh-tui/themes/` or bypass the managed extension service.
+    `~/.dsh-cli/themes/` or bypass the managed extension service.
   - Use semantic theme keys in components instead of isolated literal colors.
 
 ## Cross-File Change Checklist

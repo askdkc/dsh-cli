@@ -1,12 +1,12 @@
 /**
  * Non-TTY host gating regression (Web / Tauri coexistence).
  *
- * dsh-tui installed in a profile must not fail the whole DSH composition when
+ * dsh-cli installed in a profile must not fail the whole DSH composition when
  * the host is not a terminal (stdout piped or null): the plugin skips itself
- * unless the process was explicitly launched through the dsh-tui launcher
- * (DSH_TUI_LAUNCHER_VERSION / standalone runtime), which keeps failing loudly.
+ * unless the process was explicitly launched through the dsh-cli launcher
+ * (DSH_CLI_LAUNCHER_VERSION / standalone runtime), which keeps failing loudly.
  *
- * Run: node --import tsx/esm scripts/verify-tui-host-mode.ts
+ * Run: node --import tsx/esm scripts/verify-cli-host-mode.ts
  */
 
 import { Context } from '@deepseek-ai/cordis'
@@ -38,13 +38,13 @@ const cases: {
   {
     name: 'tty + launcher marker → interactive',
     stdoutTty: true,
-    env: { DSH_TUI_LAUNCHER_VERSION: '9.9.9' },
+    env: { DSH_CLI_LAUNCHER_VERSION: '9.9.9' },
     expected: 'interactive',
   },
   {
     name: 'no tty + launcher marker → invalid-explicit-launch',
     stdoutTty: false,
-    env: { DSH_TUI_LAUNCHER_VERSION: '9.9.9' },
+    env: { DSH_CLI_LAUNCHER_VERSION: '9.9.9' },
     expected: 'invalid-explicit-launch',
   },
   {
@@ -62,16 +62,16 @@ for (const c of cases) {
 
 // Standalone runtime counts as an explicit launch (isStandaloneRuntime reads
 // the real process env, so drive it through the environment).
-const prevStandalone = process.env.DSH_TUI_STANDALONE
-process.env.DSH_TUI_STANDALONE = '1'
+const prevStandalone = process.env.DSH_CLI_STANDALONE
+process.env.DSH_CLI_STANDALONE = '1'
 check(
-  'no tty + DSH_TUI_STANDALONE=1 → invalid-explicit-launch',
+  'no tty + DSH_CLI_STANDALONE=1 → invalid-explicit-launch',
   resolveTuiHostMode(false) === 'invalid-explicit-launch',
 )
 if (prevStandalone === undefined) {
-  delete process.env.DSH_TUI_STANDALONE
+  delete process.env.DSH_CLI_STANDALONE
 } else {
-  process.env.DSH_TUI_STANDALONE = prevStandalone
+  process.env.DSH_CLI_STANDALONE = prevStandalone
 }
 
 // ── integration: apply() under a non-TTY stdout ────────────────────────────
@@ -84,8 +84,8 @@ const stdoutIsTTYDescriptor = stdoutIsTTYOwn
   : undefined
 Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true })
 
-const prevLauncherVersion = process.env.DSH_TUI_LAUNCHER_VERSION
-delete process.env.DSH_TUI_LAUNCHER_VERSION
+const prevLauncherVersion = process.env.DSH_CLI_LAUNCHER_VERSION
+delete process.env.DSH_CLI_LAUNCHER_VERSION
 
 const infoLogs: string[] = []
 const ctx = new Context()
@@ -106,7 +106,7 @@ try {
   )
 
   // explicit launch without a TTY: the previous loud error is preserved
-  process.env.DSH_TUI_LAUNCHER_VERSION = '9.9.9'
+  process.env.DSH_CLI_LAUNCHER_VERSION = '9.9.9'
   let rejected = false
   let message = ''
   try {
@@ -124,9 +124,9 @@ try {
 } finally {
   logger.info = origInfo
   if (prevLauncherVersion === undefined) {
-    delete process.env.DSH_TUI_LAUNCHER_VERSION
+    delete process.env.DSH_CLI_LAUNCHER_VERSION
   } else {
-    process.env.DSH_TUI_LAUNCHER_VERSION = prevLauncherVersion
+    process.env.DSH_CLI_LAUNCHER_VERSION = prevLauncherVersion
   }
   if (stdoutIsTTYOwn) {
     Object.defineProperty(process.stdout, 'isTTY', stdoutIsTTYDescriptor as PropertyDescriptor)

@@ -38,7 +38,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const bin = join(root, 'bin', 'dsh-tui.js')
+const bin = join(root, 'bin', 'dsh-cli.js')
 const ownVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
 const PACKAGE = '@askdkc/dsh-cli'
 const isWin = process.platform === 'win32'
@@ -62,11 +62,11 @@ mkdirSync(fakeUserHome, { recursive: true })
 const noBin = join(tmp, 'no-bin')
 mkdirSync(noBin, { recursive: true })
 
-// 子进程环境：沙箱外的键一个不带（尤其是宿主可能残留的 DSH_TUI_*），但
+// 子进程环境：沙箱外的键一个不带（尤其是宿主可能残留的 DSH_CLI_*），但
 // Windows 上 cmd.exe 自身要靠 ComSpec/SystemRoot 才能起来——PATH 被换成
 // stub 目录后「找 cmd.exe」这一步不能靠 PATH。
 const baseEnv = env => {
-  const base = { PATH: noBin, DSH_HOME: emptyHome, HOME: fakeUserHome, USERPROFILE: fakeUserHome, DSH_TUI_LANG: 'zh' }
+  const base = { PATH: noBin, DSH_HOME: emptyHome, HOME: fakeUserHome, USERPROFILE: fakeUserHome, DSH_CLI_LANG: 'zh' }
   if (isWin) {
     for (const key of ['ComSpec', 'SystemRoot', 'windir']) if (process.env[key] !== undefined) base[key] = process.env[key]
     base.PATHEXT = process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD'
@@ -114,7 +114,7 @@ bump('calls')
 appendFileSync(join(state, 'argv'), argv.join(' ') + '\\n')
 // 被剥离的会话控制变量**两个都**记，且记在同一行：argv 与 env 两个文件是按行
 // 号一一配对的（见 stubCalls），一个调用占两行会让后面每次配对整体错位。
-appendFileSync(join(state, 'env'), 'resume=' + (process.env.DSH_TUI_RESUME_SESSION ?? 'none') + ' workspace=' + (process.env.DSH_TUI_WORKSPACE_TARGET ?? 'none') + '\\n')
+appendFileSync(join(state, 'env'), 'resume=' + (process.env.DSH_CLI_RESUME_SESSION ?? 'none') + ' workspace=' + (process.env.DSH_CLI_WORKSPACE_TARGET ?? 'none') + '\\n')
 
 const [command] = argv
 if (command === '--version') {
@@ -275,7 +275,7 @@ const cleanManifest = {
     `✗ pnpm: 未找到——安装/升级需要它：  npm install -g pnpm`,
     `✗ profile: 未安装——运行一次 \`dsh-cli\` 即可自举  (${join(emptyHome, 'profiles', 'dsh-cli')})`,
     `✗ DEEPSEEK_API_KEY: 未设置——环境变量与 DSH 凭据库中都没有 DEEPSEEK_API_KEY`,
-    `✗ config: ${join(fakeUserHome, '.dsh-tui', 'cordis.yml')}  缺失`,
+    `✗ config: ${join(fakeUserHome, '.dsh-cli', 'cordis.yml')}  缺失`,
     `✗ config: ${join(emptyHome, 'profiles', 'dsh-cli', 'cordis.patch.yml')}  缺失`,
   ]
   const actual = r.stdout.split('\n').filter(l => l !== '')
@@ -294,7 +294,7 @@ const cleanManifest = {
   const pkgDir = join(profHome, 'profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli')
   mkdirSync(pkgDir, { recursive: true })
   writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: PACKAGE, version: ownVersion }))
-  const runFb = (env = {}) => run([], { PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: profHome, DSH_TUI_NO_DELEGATE: '1', ...env })
+  const runFb = (env = {}) => run([], { PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: profHome, DSH_CLI_NO_DELEGATE: '1', ...env })
   {
     const r = runFb()
     // 判「有没有 safe 提示」必须断真正的提示串：沙箱临时目录叫 verify-safe-*，
@@ -310,7 +310,7 @@ const cleanManifest = {
     )
   }
   {
-    const r = runFb({ DSH_STUB_PROFILE_EXIT: '42', DSH_TUI_LANG: 'en' })
+    const r = runFb({ DSH_STUB_PROFILE_EXIT: '42', DSH_CLI_LANG: 'en' })
     check('fallback: safeHint 双语', r.stderr.includes('Run dsh-cli safe'), `status=${r.status}`)
   }
   if (isWin) {
@@ -366,7 +366,7 @@ const cleanManifest = {
   check('safe: --rescue 之外的附加参数仍提示忽略', r.stdout.includes('已忽略附加参数：1 个'), `status=${r.status}`)
 }
 {
-  const r = run(['safe'], { DSH_HOME: join(tmp, 'safe-home'), DSH_TUI_LANG: 'en' })
+  const r = run(['safe'], { DSH_HOME: join(tmp, 'safe-home'), DSH_CLI_LANG: 'en' })
   check('safe: 标题双语', r.stdout.includes('safe mode'), `status=${r.status}`)
 }
 
@@ -431,7 +431,7 @@ const cleanManifest = {
   const enHome = join(tmp, 'rescue-en')
   mkdirSync(enHome, { recursive: true })
   const ren = run(['safe', '--rescue'], {
-    PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: enHome, DSH_TUI_LANG: 'en',
+    PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: enHome, DSH_CLI_LANG: 'en',
   })
   const enLine = lastLine(ren.stdout)
   check(
@@ -626,7 +626,7 @@ const cleanManifest = {
   mkdirSync(home, { recursive: true })
   const r = run(['safe', '--rescue'], {
     PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: home,
-    DSH_TUI_RESUME_SESSION: 'leaked-session-id', DSH_TUI_WORKSPACE_TARGET: '/leaked/target',
+    DSH_CLI_RESUME_SESSION: 'leaked-session-id', DSH_CLI_WORKSPACE_TARGET: '/leaked/target',
   })
   const addCall = pluginCalls(stub.state)[0]
   // 两个会话控制变量都在被剥离之列（实现侧 RESCUE_DROPPED_ENV），所以两个都
@@ -671,7 +671,7 @@ const cleanManifest = {
     // 用户即使不进菜单也能看到这条路。
     check('指引: 含救援 profile 创建与启动命令', r.stdout.includes('dsh plugin --profile dsh-cli-safe add') && r.stdout.includes('dsh --profile dsh-cli-safe'))
     // 双语契约：en 模式指引全量英文，不得残留中文指引串。
-    const ren = run(['safe'], { DSH_HOME: invHome, DSH_TUI_LANG: 'en' })
+    const ren = run(['safe'], { DSH_HOME: invHome, DSH_CLI_LANG: 'en' })
     check('指引: 英文模式输出英文指引且无中文残留', ren.stdout.includes('# Remove third-party plugins') && !ren.stdout.includes('卸载第三方插件'))
     // en 零 CJK 正式断言：对完整 stdout 扫描 CJK 统一表意文字（U+4E00–U+9FFF），
     // 零命中——夹具含第三方依赖，标题/诊断/清单/卸载指引全分支均被覆盖。
@@ -691,7 +691,7 @@ const cleanManifest = {
       const renHome = join(tmp, 'inv-home-en')
       mkdirSync(renHome, { recursive: true })
       writeFileSync(join(renHome, 'cordis.patch.yml'), '[]\n')
-      const rr = run(['safe', '--rescue'], { DSH_HOME: renHome, DSH_TUI_LANG: 'en' })
+      const rr = run(['safe', '--rescue'], { DSH_HOME: renHome, DSH_CLI_LANG: 'en' })
       const cjk = (rr.stdout + rr.stderr).match(/[一-鿿]/gu) ?? []
       check('指引: en 模式救援拒绝文案零 CJK', rr.status === 1 && cjk.length === 0, `status=${rr.status} cjk=${cjk.join('')}`)
     }

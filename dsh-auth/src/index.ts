@@ -53,10 +53,10 @@ export const name = 'dsh-auth'
 /**
  * Deliberately empty. A hard code-level inject would deadlock any
  * composition lacking the `llm`/`commands` services at boot ("pending
- * (waiting for service: …)") — the failure mode dsh-tui documented for its
+ * (waiting for service: …)") — the failure mode dsh-cli documented for its
  * own optional rows (#183). Both services resolve per call through
  * `ctx.get` in {@link apply}; compositions that guarantee them (the
- * dsh-tui patch row, this package's bundle patch) declare the inject at the
+ * dsh-cli patch row, this package's bundle patch) declare the inject at the
  * *entry* level, where a stale patch cannot deadlock a newer boot.
  */
 export const inject: readonly string[] = []

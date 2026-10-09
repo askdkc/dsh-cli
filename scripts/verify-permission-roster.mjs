@@ -9,7 +9,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-tui-permission-roster-'))
+const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-cli-permission-roster-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
 process.on('exit', () => rmSync(isolatedHome, { recursive: true, force: true }))

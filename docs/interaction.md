@@ -31,7 +31,7 @@
 | 转录内 `PgUp` / `PgDn` | 全屏模式按页翻动消息列表（每页一屏减一行）；Help 或浮层打开时让位（各滚各的）；inline 模式不接管——历史在终端原生 scrollback 里，翻页归终端 |
 | `Shift+Up` | 进入消息选择模式；方向键移动，`Enter` 展开单条，`Esc` 退出 |
 
-动作型快捷键支持在 `/settings` → `dsh-tui` → `Shortcuts` 自定义。
+动作型快捷键支持在 `/settings` → `dsh-cli` → `Shortcuts` 自定义。
 
 - 覆盖：粘贴、历史搜索、外部编辑器、`Ctrl+O/T/P/R/L`、子代理面板、显示全部、待办折叠。
 - 填 `alt+v` 这类组合，多个用逗号分隔；留空恢复默认，保存即生效。
@@ -120,7 +120,7 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 
 - `Ctrl+Shift+E`（可重映射）或输入行尾的 `⛶` 按钮，把草稿展开成整屏编辑器。
 - 编辑状态（光标/选区/折叠/vim 模式）与输入框是同一份。
-- 可在 `/settings` → `dsh-tui` 关闭（`expandEditor`，默认开）。
+- 可在 `/settings` → `dsh-cli` 关闭（`expandEditor`，默认开）。
 - 关闭后 `⛶` 与快捷键两个入口都不再出现。
 
 - **外观**：
@@ -202,7 +202,7 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 - 标题格式 `Image #N — 格式 · 宽×高 · 体积 · 文件名`。
 - 底行：本次暂存的图片显示来源路径（`打开原图: …`，过长保留首尾、省略中间）；历史图片显示文件名。
 - 「打开原图」用系统看图程序打开附件库原始字节，不依赖可能已删除或被修改的来源路径，也不重新编码。
-- 原图仅在点击时导出到私有的 `dsh-tui-original-*` 系统临时目录，退出 TUI 后保留供外部程序读取，可随后通过系统临时文件清理删除。
+- 原图仅在点击时导出到私有的 `dsh-cli-original-*` 系统临时目录，退出 TUI 后保留供外部程序读取，可随后通过系统临时文件清理删除。
 - 失效的 `[Image #N]`（超过 128 个暂存或会话切换后）在点击、发送、作为斜杠命令参数时都会给出明确警告。
 
 ### 缩略图与回退
@@ -227,9 +227,9 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 `/lang` 在简体中文与英文界面之间切换（影响所有 UI 文案）。
 
 - 选择持久化，重启后沿用（0.3.7+）。
-- `/settings` 的 **dsh-tui → 界面语言** 下拉项同样可以切换。
-- 立即生效并保存到当前 profile 配置的 `dsh-tui.lang`（旧版为 `~/.dsh/settings.yaml`）。
-- `DSH_TUI_LANG` 环境变量始终优先。
+- `/settings` 的 **dsh-cli → 界面语言** 下拉项同样可以切换。
+- 立即生效并保存到当前 profile 配置的 `dsh-cli.lang`（旧版为 `~/.dsh/settings.yaml`）。
+- `DSH_CLI_LANG` 环境变量始终优先。
 
 ## 消息投递语义
 
@@ -292,7 +292,7 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 - **重命名**。
 - **从列表移除**：只删登记，目录与会话日志都保留。
 
-工作区加入方式是"用这个目录启动 dsh-tui"（启动时自动登记）。
+工作区加入方式是"用这个目录启动 dsh-cli"（启动时自动登记）。
 
 - 界面里没有"添加工作区"入口。
 
@@ -305,7 +305,7 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 
 - 点击会话行 = 进入该会话（同 `Enter`）。
 - 点击行内的 `★`/`☆` 只切换固定状态。
-- 固定项持久化到 `~/.dsh-tui/session-pins.json`，**不会**进入会话。
+- 固定项持久化到 `~/.dsh-cli/session-pins.json`，**不会**进入会话。
 
 被**其他** TUI 终端占用的会话照常列出：
 
@@ -336,7 +336,7 @@ Bracketed paste（右键或终端原生粘贴）保留普通文本与换行。
 - 后台会话的**派发与回复**、`Space` 预览面板、`Shift+Enter` 派发并切换，目前**没有**回到新界面。
 - `/bg` 之后要进入某个后台会话，请在工作区列表里 `Enter` 它。
 
-Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的会话 ID。
+Windows `dsh-cli.cmd --resume` 使用 `~/.dsh-cli/resume.txt` 中最后选择的会话 ID。
 
 ### Rewind
 
@@ -418,7 +418,7 @@ Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的
 
 命名空间写入：
 
-- dsh-tui 自身命名空间的字段写入当前 profile 配置（旧版为 settings.yaml 用户层）并**实时生效**（`lang`、`statusBar.*` 等）。
+- dsh-cli 自身命名空间的字段写入当前 profile 配置（旧版为 settings.yaml 用户层）并**实时生效**（`lang`、`statusBar.*` 等）。
 - 未声明 TUI 区块的命名空间以只读形式列出。
 - 需手工编辑 profile 配置（旧版为 `~/.dsh/settings.yaml`）。
 
@@ -461,9 +461,9 @@ Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的
 
 启动器同样接受工作区目标，例如：
 
-- `dsh-tui .`
-- `dsh-tui ../project`
-- `dsh-tui file:///path/to/project`
+- `dsh-cli .`
+- `dsh-cli ../project`
+- `dsh-cli file:///path/to/project`
 
 未安装任何工作区插件时：
 
@@ -485,7 +485,7 @@ Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的
   - 轨迹场景移动光标（时间线一格 ±3 行、热点 ±1 行、详情展开时滚详情）。
   - 设置屏移动焦点行。
 - **拖拽**：选择文本，松开后立即复制并清除选区，弹出「已复制 N 字符」提示。
-  - `dsh-tui.scrollGutter: scrollbar` 时，右缘滚动条是拖拽目标。
+  - `dsh-cli.scrollGutter: scrollbar` 时，右缘滚动条是拖拽目标。
   - 未修饰左键按住拖动，按轨道位置连续滚动（与点击轨道同一映射：拖到哪滚到哪）。
   - `Shift`/`Alt`/`Ctrl`+拖动仍是选字（拖拽协议只对无修饰左键开启）。
 - **双击/三击**：选择单词/整行并复制。
@@ -541,7 +541,7 @@ Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的
 
 - 本地终端可回退到 `wl-copy`、`xclip` 或 `xsel`。
 - tmux 使用 `load-buffer -w`。
-- 设置 `DSH_TUI_DISABLE_MOUSE=1` 可临时关闭 fullscreen 鼠标。
+- 设置 `DSH_CLI_DISABLE_MOUSE=1` 可临时关闭 fullscreen 鼠标。
 
 ## `ask_user_question` 问卷
 
@@ -666,7 +666,7 @@ Windows `dsh-tui.cmd --resume` 使用 `~/.dsh-tui/resume.txt` 中最后选择的
 
 - `/plan`、`/goal`，以及当前 DSH 组合注册的其他命令。
 
-dsh-TUI 不预装通用技能；技能内容与发现规则由 DSH 及当前组合负责。
+dsh-CLI 不预装通用技能；技能内容与发现规则由 DSH 及当前组合负责。
 
 补充语法：
 
@@ -718,9 +718,9 @@ dsh-TUI 不预装通用技能；技能内容与发现规则由 DSH 及当前组�
 - 但走本地 socket 而非 HTTP 端口：无端口分配、无鉴权面。
 - 端点随会话退出自动清理。
 
-- **传输**：Unix domain socket `~/.dsh-tui/inject/<sessionId>.sock`
-  （Windows 为命名管道 `\\.\pipe\dsh-tui-inject-<sessionId>`）。
-- **发现**：`~/.dsh-tui/inject/servers.json` 列出每个存活会话
+- **传输**：Unix domain socket `~/.dsh-cli/inject/<sessionId>.sock`
+  （Windows 为命名管道 `\\.\pipe\dsh-cli-inject-<sessionId>`）。
+- **发现**：`~/.dsh-cli/inject/servers.json` 列出每个存活会话
   （`pid`、`sessionId`、`cwd`、`socketPath`），客户端据此按 `cwd` 匹配项目并
   选择目标会话；会话退出时该记录被移除。
 - **协议**：换行分隔的 JSON，每行一条：

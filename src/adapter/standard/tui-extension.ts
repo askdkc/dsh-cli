@@ -1,5 +1,5 @@
 /**
- * dsh-TUI private protocol registration on the shared dsh-std catalog.
+ * dsh-CLI private protocol registration on the shared dsh-std catalog.
  *
  * Private protocol definitions are NOT authored here. The canonical
  * dsh-ecosystem-spec definitions are loaded through `src/adapter/spec/`; this
@@ -40,7 +40,7 @@ export interface AdmissionCatalog {
  * Keeping the builder private prevents a second canonical catalog from being
  * created by product code. */
 function buildAdmissionCatalog(): AdmissionCatalog {
-  const protocols = new ProtocolCatalog({ name: 'dsh-tui-admission', version: '0.15' })
+  const protocols = new ProtocolCatalog({ name: 'dsh-cli-admission', version: '0.15' })
   const manifests = new ManifestDefinitionCatalog()
   registerCommand(protocols, manifests)
   registerStorage(protocols)
@@ -62,7 +62,7 @@ export function getAdmissionCatalog(): AdmissionCatalog {
 /** Backward-compatible factory retained as a long-term compatibility face
  * for existing callers. It now returns the same process-level canonical
  * catalog rather than allocating a new one, so no second admission core can
- * appear in production. OWNER: dsh-tui adapter. UNTIL: no scheduled removal.
+ * appear in production. OWNER: dsh-cli adapter. UNTIL: no scheduled removal.
  */
 export function createAdmissionCatalog(): AdmissionCatalog {
   return getAdmissionCatalog()

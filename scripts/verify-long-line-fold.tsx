@@ -28,7 +28,7 @@ const dataDir = mkdtempSync(join(tmpdir(), 'verify-long-line-fold-'))
 process.env.HOME = dataDir
 process.env.USERPROFILE = dataDir
 // 折叠标记含本地化文案，钉住英文保证 CI（LANG=C）与本地一致。
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { PassThrough, Writable },

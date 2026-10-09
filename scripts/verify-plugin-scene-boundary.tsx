@@ -1,5 +1,5 @@
 /**
- * Plugin scene boundary regression (dsh-tui-scenes): a scene component that
+ * Plugin scene boundary regression (dsh-cli-scenes): a scene component that
  * throws during render must be caught by PluginSceneBoundary — onError fires
  * exactly once with the scene id and the thrown error, the boundary stops
  * painting the scene afterwards, and the app process survives. A healthy

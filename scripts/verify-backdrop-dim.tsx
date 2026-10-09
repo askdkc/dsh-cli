@@ -20,7 +20,7 @@
  * Run: node --import tsx/esm scripts/verify-backdrop-dim.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
+process.env.DSH_CLI_THEME = 'dark'
 
 import { PassThrough, Writable } from 'node:stream'
 import React from 'react'

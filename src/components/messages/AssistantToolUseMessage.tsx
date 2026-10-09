@@ -12,7 +12,7 @@ import { formatDuration } from '../../terminal-utils/format.js'
 import { formatClock } from '../../trajectory/format.js'
 import { foldLongLines } from '../../utils/fold-long-lines.js'
 import { getLang, t, type I18nKey } from '../../i18n.js'
-import type { ToolBackground } from '../../tuiDisplayPrefs.js'
+import type { ToolBackground } from '../../cliDisplayPrefs.js'
 import type { Theme } from '../../theme.js'
 import type { ClickEvent } from '../../ink/events/click-event.js'
 import { revealLinesOf, snapReveal } from '../smoothReveal.js'
@@ -55,13 +55,13 @@ type Props = {
    */
   onOpenFile?: (path: string) => void
   /**
-   * Terminal-card header folding (settings `dsh-tui.foldTerminalCommand`):
+   * Terminal-card header folding (settings `dsh-cli.foldTerminalCommand`):
    * collapsed cards keep the command title's first source line plus a
    * `+N lines` hint; verbose/expanded cards render the full title.
    */
   foldTerminalCommand?: boolean
   /**
-   * Smooth streaming reveal (settings `dsh-tui.smoothStreaming`): the card
+   * Smooth streaming reveal (settings `dsh-cli.smoothStreaming`): the card
    * BODY (diff hunks / write content — model-authored prose, not tool
    * output) paints through an even ~30fps line reveal when it first appears,
    * instead of one jarring block. Only the pending CALL view animates; the
@@ -317,7 +317,7 @@ type FoldedTitle = { first: string; hiddenLines: number; hiddenChars: number }
  *  first line only.)
  *
  *  Two independent folds:
- *   - `foldLines` (the `dsh-tui.foldTerminalCommand` setting): a multi-line
+ *   - `foldLines` (the `dsh-cli.foldTerminalCommand` setting): a multi-line
  *     script collapses to its first source line, reported as `+N lines`.
  *   - The long-line clip (always on — utils/fold-long-lines.ts): a command is
  *     frequently ONE enormous line (`python -c …`, a minified blob, a pasted

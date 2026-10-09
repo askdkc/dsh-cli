@@ -1,7 +1,7 @@
 import React from 'react'
 import { getLang, t as tr } from '../i18n.js'
 import { pickRandomTip, type Tip } from '../tips.js'
-import { installedTuiVersion } from '../package-version.js'
+import { installedCliVersion } from '../package-version.js'
 import { Box, Text, useAnimationFrame, useTerminalSize } from '../ui.js'
 import { getTheme } from '../theme.js'
 import { useTheme } from './design-system/ThemeProvider.js'
@@ -25,7 +25,7 @@ const INTRO_HEART_PASS: readonly number[] = [
 ]
 
 // Cache only the splash badge; update checks must reread package metadata.
-const VERSION = installedTuiVersion()
+const VERSION = installedCliVersion()
 
 /**
  * Center of the whale art's bounding box: sprite columns 3..34 (center
@@ -82,10 +82,10 @@ export function LogoV2({
   intro?: WhaleIntroId
   /** Test seam: pin the startup tip line (probes need a deterministic tip). */
   tip?: Tip
-  /** Show the pixel whale art (settings `dsh-tui.whale`); off → text-only header. */
+  /** Show the pixel whale art (settings `dsh-cli.whale`); off → text-only header. */
   whale?: boolean
   /** Welcome-phase idle whale behaviors — fin flutters, tail thumps,
-   * sleep after inactivity (settings `dsh-tui.whaleIdle`; on by default —
+   * sleep after inactivity (settings `dsh-cli.whaleIdle`; on by default —
    * an explicit `false` keeps the settled header timer-free). Click-hearts
    * work regardless, until the freeze. */
   whaleIdle?: boolean
@@ -165,7 +165,7 @@ export function LogoV2({
 
   const { showWhale, showBigTitle, showPlainTitle } = resolveSplashLayout(columns, { whale })
 
-  // Welcome-phase idle behaviors (settings `dsh-tui.whaleIdle`): fin
+  // Welcome-phase idle behaviors (settings `dsh-cli.whaleIdle`): fin
   // flutters, tail thumps and blinks while idle, and a sleep-Z loop after
   // sustained inactivity — all as INDEPENDENT layers composed per tick
   // (whaleLayers.ts), so a click heart plays over a mid-wag tail or the

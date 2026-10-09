@@ -1,6 +1,6 @@
 /**
  * storage.local contract surface (C-040, `storage.dsh/v1alpha1#LocalStorage`):
- * per-plugin private persistence, mounted by the dsh-tui-plugin-host row as
+ * per-plugin private persistence, mounted by the dsh-cli-plugin-host row as
  * `ctx.tuiPluginStorage`.
  *
  * The plugin-facing API is `open(ctx)` → `{ get, set, delete }`:
@@ -11,7 +11,7 @@
  * - GRANTS AT CALL TIME: `get` requires `storage.local.read`, `set`/`delete`
  *   require `storage.local.write` — checked per call against the live grant
  *   store (a revoked grant blocks the very next operation without restart).
- * - Backend: `~/.dsh-tui/plugin-storage/<namespace>.json`, one flat JSON
+ * - Backend: `~/.dsh-cli/plugin-storage/<namespace>.json`, one flat JSON
  *   object per namespace. Writes go through dsh-atomic-write (`withFileLock`
  *   for the read-modify-write cycle + `writeFileAtomic` for the commit), and
  *   an in-process per-namespace promise chain serializes operations in
@@ -255,7 +255,7 @@ interface NamespaceState {
 
 /**
  * `ctx.tuiPluginStorage` — storage.local contract surface. Mounted by the
- * dsh-tui-plugin-host row; grants come from that row's store when present
+ * dsh-cli-plugin-host row; grants come from that row's store when present
  * (normal path) or a private read otherwise (bare mounts in tests).
  */
 export class TuiPluginStorageRuntime extends Service {
@@ -332,7 +332,7 @@ hostContext: compositionRoot(ctx),
   }> {
     assertCapabilityShadowPolicy('host.storage.liveProbe', storageStateFor(this).runtime.mode, storageStateFor(this).runtime.slices)
     const state = storageStateFor(this)
-    const tempNamespace = `__dsh_tui_live_probe_${randomUUID().replace(/-/g, '')}`
+    const tempNamespace = `__dsh_cli_live_probe_${randomUUID().replace(/-/g, '')}`
     const file = join(state.dir, `${storageFileName(tempNamespace)}.json`)
     const operations: string[] = []
     const identity: VerifiedComponentIdentity = {
@@ -534,7 +534,7 @@ hostContext: compositionRoot(ctx),
         throw new PluginStorageError(
           'PERMISSION_NOT_GRANTED',
           `storage.${permission.endsWith('.read') ? 'get' : 'set/delete'} from plugin "${plugin}" denied — grant "${permission}" ` +
-          `for "${plugin}" in ~/.dsh-tui/extension-grants.json first`,
+          `for "${plugin}" in ~/.dsh-cli/extension-grants.json first`,
         )
       }
     }

@@ -1,6 +1,6 @@
 /** Lightweight regression checks for display settings and their stable render output. */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { strict: assert },
@@ -20,7 +20,7 @@ const [
   import('../src/ui.js'),
   import('../src/screens/StatusLine.js'),
   import('../src/components/messages/AssistantToolUseMessage.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
   import('../src/utils/paths.js'),
 ])
 

@@ -542,13 +542,13 @@ class FakeStdin extends PassThrough {
 const previousEnv = {
   tmux: process.env.TMUX,
   sty: process.env.STY,
-  accessibility: process.env.DSH_TUI_ACCESSIBILITY,
-  disabled: process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES,
+  accessibility: process.env.DSH_CLI_ACCESSIBILITY,
+  disabled: process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES,
 }
 delete process.env.TMUX
 delete process.env.STY
-delete process.env.DSH_TUI_ACCESSIBILITY
-delete process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
+delete process.env.DSH_CLI_ACCESSIBILITY
+delete process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
 
 const stdin = new FakeStdin()
 const stdout = new FakeStdout()
@@ -581,7 +581,7 @@ const imageTree = (
 
 for (const entrypoint of ['render', 'createRoot'] as const) {
   for (const forcedByEnv of [false, true]) {
-    if (forcedByEnv) process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+    if (forcedByEnv) process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
     const disabledStdout = new FakeStdout()
     const options = {
       stdin: new FakeStdin(),
@@ -608,7 +608,7 @@ for (const entrypoint of ['render', 'createRoot'] as const) {
     } finally {
       disabledStdout.isTTY = false
       disabledInstance.unmount()
-      delete process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
+      delete process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
     }
   }
 }
@@ -1019,8 +1019,8 @@ for (const [key, value] of Object.entries(previousEnv)) {
       : key === 'sty'
         ? 'STY'
         : key === 'accessibility'
-          ? 'DSH_TUI_ACCESSIBILITY'
-          : 'DSH_TUI_DISABLE_TERMINAL_IMAGES'
+          ? 'DSH_CLI_ACCESSIBILITY'
+          : 'DSH_CLI_DISABLE_TERMINAL_IMAGES'
   if (value === undefined) delete process.env[envKey]
   else process.env[envKey] = value
 }

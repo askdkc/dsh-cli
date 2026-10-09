@@ -169,7 +169,7 @@ export function isSynchronizedOutputSupported(): boolean {
 // -- XTVERSION-detected terminal name (populated async at startup) --
 //
 // TERM_PROGRAM is not forwarded over SSH by default, so env-based detection
-// fails when dsh-tui runs remotely inside a VS Code integrated terminal.
+// fails when dsh-cli runs remotely inside a VS Code integrated terminal.
 // XTVERSION (CSI > 0 q → DCS > | name ST) goes through the pty — the query
 // reaches the *client* terminal and the reply comes back through stdin.
 // App.tsx fires the query when raw mode enables; setXtversionName() is called
@@ -345,7 +345,7 @@ export function isDecstbmSafe(): boolean {
 }
 
 /**
- * Render forensics: when DSH_TUI_RENDER_LOG names a file path, every painted
+ * Render forensics: when DSH_CLI_RENDER_LOG names a file path, every painted
  * frame's raw ANSI bytes append to it (one JSON-escaped line per frame,
  * prefixed with a timestamp header). Real-terminal rendering corruption
  * (missing rows, stale attributes) cannot be reproduced in headless xterm
@@ -353,7 +353,7 @@ export function isDecstbmSafe(): boolean {
  * the corrupt frame can be diffed against the expected screen. Opt-in and
  * zero-cost when unset: the env read happens once at module load.
  */
-const RENDER_LOG_PATH = process.env.DSH_TUI_RENDER_LOG ?? ''
+const RENDER_LOG_PATH = process.env.DSH_CLI_RENDER_LOG ?? ''
 
 function dumpFrame(buffer: string): void {
   if (RENDER_LOG_PATH === '') return

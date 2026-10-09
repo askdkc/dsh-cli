@@ -1,5 +1,5 @@
 /**
- * The dsh-tui-plugin-host row: the plugin-interop anchor every later
+ * The dsh-cli-plugin-host row: the plugin-interop anchor every later
  * contract surface hangs off (storage.local, messages.observe, effect
  * ledger — each lands as a sibling service mounted by THIS row's apply, so
  * the patch surface changed exactly once for the whole v0.15 alignment).
@@ -224,7 +224,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
     const violations = this.selfCheck()
     if (violations.length > 0) {
       ctx.logger.warn(
-        `dsh-tui: vendored adapter registry failed self-check (${violations.length} violation(s)); ` +
+        `dsh-cli: vendored adapter registry failed self-check (${violations.length} violation(s)); ` +
         `affected contracts are dropped from the Host Descriptor fail-closed: ${violations.join(' | ')}`,
       )
     }
@@ -265,7 +265,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
             const message = error instanceof Error ? error.message : String(error)
             const result = Object.freeze({ status: kernelRuntime.refreshStatus(), error: message })
             state.initialKernelRefreshResult = result
-            this.ctx.logger.warn(`dsh-tui: kernel live refresh failed: ${message}`)
+            this.ctx.logger.warn(`dsh-cli: kernel live refresh failed: ${message}`)
             state.descriptorBuild = undefined
             state.descriptorTopology = undefined
             return result
@@ -286,7 +286,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       // Production mount/dispose closure: mount the kernel drivers now and
       // dispose them when the plugin-host service's owning fiber unloads.
       void kernelRuntime.mount().catch((error) => {
-        this.ctx.logger.warn(`dsh-tui: kernel driver mount failed: ${error instanceof Error ? error.message : String(error)}`)
+        this.ctx.logger.warn(`dsh-cli: kernel driver mount failed: ${error instanceof Error ? error.message : String(error)}`)
       })
       this.ctx.effect(() => () => {
         kernelRuntime.dispose()
@@ -344,21 +344,21 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       const build = kernel.descriptorBuild()
       if (host.get('commands') === undefined) {
         host.logger.warn(
-          'dsh-tui: host descriptor: commands.dsh/v1alpha1#Command excluded — the commands service is not mounted on this context',
+          'dsh-cli: host descriptor: commands.dsh/v1alpha1#Command excluded — the commands service is not mounted on this context',
         )
       }
       if (host.get('tuiPluginStorage') === undefined) {
         host.logger.warn(
-          'dsh-tui: host descriptor: storage.dsh/v1alpha1#LocalStorage excluded — the tuiPluginStorage service is not mounted on this context',
+          'dsh-cli: host descriptor: storage.dsh/v1alpha1#LocalStorage excluded — the tuiPluginStorage service is not mounted on this context',
         )
       }
       if (host.get('tuiMessageObserver') === undefined) {
         host.logger.warn(
-          'dsh-tui: host descriptor: messages.dsh/v1alpha1#MessageObserver excluded — the tuiMessageObserver service is not mounted on this context',
+          'dsh-cli: host descriptor: messages.dsh/v1alpha1#MessageObserver excluded — the tuiMessageObserver service is not mounted on this context',
         )
       }
       for (const warning of build.warnings) {
-        host.logger.warn(`dsh-tui: host descriptor: ${warning}`)
+        host.logger.warn(`dsh-cli: host descriptor: ${warning}`)
       }
       return build
     }
@@ -393,17 +393,17 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       })
       state.descriptorTopology = topology
       for (const warning of state.descriptorBuild.warnings) {
-        host.logger.warn(`dsh-tui: host descriptor: ${warning}`)
+        host.logger.warn(`dsh-cli: host descriptor: ${warning}`)
       }
     }
     if (host.get('commands') === undefined) {
-      host.logger.warn('dsh-tui: host descriptor: commands.dsh/v1alpha1#Command excluded — the commands service is not mounted on this context')
+      host.logger.warn('dsh-cli: host descriptor: commands.dsh/v1alpha1#Command excluded — the commands service is not mounted on this context')
     }
     if (host.get('tuiPluginStorage') === undefined) {
-      host.logger.warn('dsh-tui: host descriptor: storage.dsh/v1alpha1#LocalStorage excluded — the tuiPluginStorage service is not mounted on this context')
+      host.logger.warn('dsh-cli: host descriptor: storage.dsh/v1alpha1#LocalStorage excluded — the tuiPluginStorage service is not mounted on this context')
     }
     if (host.get('tuiMessageObserver') === undefined) {
-      host.logger.warn('dsh-tui: host descriptor: messages.dsh/v1alpha1#MessageObserver excluded — the tuiMessageObserver service is not mounted on this context')
+      host.logger.warn('dsh-cli: host descriptor: messages.dsh/v1alpha1#MessageObserver excluded — the tuiMessageObserver service is not mounted on this context')
     }
     return state.descriptorBuild
   }
@@ -425,7 +425,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
     void source
     void options
     throw new Error(
-      'dsh-tui: admission is host-owned; the loader must use its admission capability',
+      'dsh-cli: admission is host-owned; the loader must use its admission capability',
     )
   }
 
@@ -439,14 +439,14 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
     token?: symbol,
   ): VerifiedComponentIdentity {
     if (token !== HOST_ADMISSION_TOKEN && token !== HOST_ADMISSION_TEST_TOKEN) {
-      throw new Error('dsh-tui: admission capability is host-owned')
+      throw new Error('dsh-cli: admission capability is host-owned')
     }
     this.assertEffect('host.admission')
     const host = hostContextFor(this)
     const caller = assertActivationContext(host, pluginCtx)
     const callerFiber = activationFiber(caller)
     if (callerFiber === undefined) {
-      throw new Error('dsh-tui: admission requires an owning Cordis activation fiber')
+      throw new Error('dsh-cli: admission requires an owning Cordis activation fiber')
     }
     const manifest = parseManifest(source, { source: options.source })
     // The host (not the caller) owns the activation instance identity.
@@ -459,10 +459,10 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       ? options.activationId
       : issueActivationId(callerFiber)
     const data = loadSpecData()
-    if (data === undefined) throw new Error('dsh-tui: admission profile is unavailable')
+    if (data === undefined) throw new Error('dsh-cli: admission profile is unavailable')
     const specViolations = [...verifyRegistry(data), ...verifyContractProfiles(data)]
     if (specViolations.length > 0) {
-      throw new Error(`dsh-tui: admission profile self-check failed: ${specViolations.join(' | ')}`)
+      throw new Error(`dsh-cli: admission profile self-check failed: ${specViolations.join(' | ')}`)
     }
     const index = createContractIndex(data.registry, data.permissions)
     validatePlugin(index, manifest)
@@ -490,7 +490,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       const missing = 'missingRequired' in decision && decision.missingRequired !== undefined
         ? ` (${decision.missingRequired.join(', ')})`
         : ''
-      throw new Error(`dsh-tui: Component ${manifest.id} admission ${decision.decision}: ${'reasonCode' in decision ? decision.reasonCode : 'incompatible'}${missing}`)
+      throw new Error(`dsh-cli: Component ${manifest.id} admission ${decision.decision}: ${'reasonCode' in decision ? decision.reasonCode : 'incompatible'}${missing}`)
     }
     return bindComponentIdentity(caller, manifest, projection, activationId)
   }
@@ -515,7 +515,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
     const identity = requireComponentIdentity(caller)
     if (!requiresDecisionEvents(identity)) {
       throw new Error(
-        `dsh-tui: Component "${identity.componentId}" must require tui.dsh/v1alpha1#DecisionEvents before subscribing`,
+        `dsh-cli: Component "${identity.componentId}" must require tui.dsh/v1alpha1#DecisionEvents before subscribing`,
       )
     }
     const previousMetadata = decisionHandlerMetadataOf(listener)
@@ -587,16 +587,16 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
     // layer. Its traceable service proxy carries this context into register().
     const commands = caller.get('commands')
     if (commands === undefined) {
-      throw new Error('dsh-tui: registerCommand unavailable — the commands service is not mounted on this context')
+      throw new Error('dsh-cli: registerCommand unavailable — the commands service is not mounted on this context')
     }
     const identity = requireComponentIdentity(caller)
     if (!requiresContract(identity, 'commands.dsh/v1alpha1', 'Command')) {
       throw new Error(
-        `dsh-tui: Component "${identity.componentId}" must require commands.dsh/v1alpha1#Command before registering commands`,
+        `dsh-cli: Component "${identity.componentId}" must require commands.dsh/v1alpha1#Command before registering commands`,
       )
     }
     const definition = typeof contributionOrDefinition === 'string' ? explicitDefinition : contributionOrDefinition
-    if (definition === undefined) throw new TypeError('dsh-tui: registerCommand requires a command definition')
+    if (definition === undefined) throw new TypeError('dsh-cli: registerCommand requires a command definition')
     const name = typeof definition.name === 'string' ? definition.name : 'unknown'
     const inferred = identity.manifest.contributes.commands.filter(command =>
       command.id === name || command.id.endsWith(`.${name}`))
@@ -604,7 +604,7 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
       ? contributionOrDefinition
       : inferred.length === 1 ? inferred[0]!.id : ''
     if (contributionId === '' || !declaresCommand(identity, contributionId)) {
-      throw new TypeError(`dsh-tui: command "${name}" is not bound to a declared contribution id`)
+      throw new TypeError(`dsh-cli: command "${name}" is not bound to a declared contribution id`)
     }
     // dsh-commands normalizes into a fresh definition and intentionally drops
     // unknown fields. A per-registration handler wrapper survives that copy,
@@ -702,10 +702,10 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
         signal: AbortSignal,
       ): Promise<{ result?: { kind?: unknown } } | undefined>
     }
-    const name = `dsh_tui_live_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+    const name = `dsh_cli_live_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
     const definition = {
       name,
-      description: 'dsh-tui adapter reversible live probe',
+      description: 'dsh-cli adapter reversible live probe',
       handler: () => ({ kind: 'success' as const, text: 'ok' }),
     }
     let dispose: (() => void) | undefined
@@ -780,8 +780,8 @@ export class TuiPluginHostRuntime extends Service implements TuiPluginHost {
   }
 }
 
-const HOST_ADMISSION_TOKEN = Symbol('dsh-tui.host-admission')
-const HOST_ADMISSION_TEST_TOKEN = Symbol('dsh-tui.host-admission-test')
+const HOST_ADMISSION_TOKEN = Symbol('dsh-cli.host-admission')
+const HOST_ADMISSION_TEST_TOKEN = Symbol('dsh-cli.host-admission-test')
 
 interface HostState {
   readonly hostContext: Context
@@ -877,7 +877,7 @@ export function getHostInitialKernelRefreshForTest(
         await state.initialKernelRefreshStarted
         const refresh = state.initialKernelRefresh
         if (refresh === undefined) {
-          throw new Error('dsh-tui: host initial kernel refresh was not started')
+          throw new Error('dsh-cli: host initial kernel refresh was not started')
         }
         return refresh
       },
@@ -956,16 +956,16 @@ function assertActivationContext(hostCtx: Context, pluginCtx: Context): Context 
       || caller === root
       || callerFiber === undefined
       || callerFiber === rootFiber) {
-      throw new Error('dsh-tui: mediated capability requires a non-root activation context from the host composition')
+      throw new Error('dsh-cli: mediated capability requires a non-root activation context from the host composition')
     }
     return caller
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('dsh-tui:')) throw error
-    throw new Error('dsh-tui: mediated capability requires a live activation context')
+    if (error instanceof Error && error.message.startsWith('dsh-cli:')) throw error
+    throw new Error('dsh-cli: mediated capability requires a live activation context')
   }
 }
 
-export const name = 'dsh-tui-plugin-host'
+export const name = 'dsh-cli-plugin-host'
 
 export function apply(ctx: Context): void {
   // The plugin-host service first — the contract surfaces mounted below

@@ -3,7 +3,7 @@
  * Run: node --import tsx/esm scripts/verify-text-paint-budget.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
+process.env.DSH_CLI_THEME = 'dark'
 import assert from 'node:assert/strict'
 
 const [React, { PassThrough, Writable }, { Box, Text, ScrollBox, AlternateScreen, render }, { default: Output }, { createNode, createTextNode, insertBeforeNode, appendChildNode }, { default: renderNode, resetLayoutShifted, didLayoutShift }, { createScreen, StylePool, CharPool, HyperlinkPool }, { scanPositions }, { default: instances }, { settled }] = await Promise.all([

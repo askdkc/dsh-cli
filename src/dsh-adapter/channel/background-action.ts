@@ -79,7 +79,7 @@ export function createBackgroundCurrentAction(
       } catch (error) {
         // The workspace ledger is optional bookkeeping, but preserve the
         // baseline stderr warning for operators diagnosing a degraded host.
-        ctx.logger.warn('dsh-tui: background session attachment failed: %o', error)
+        ctx.logger.warn('dsh-cli: background session attachment failed: %o', error)
       }
       // Do not adopt after attachment unless the exact captured foreground is
       // still current. A replacement is not a license to target that newer

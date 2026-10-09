@@ -15,7 +15,7 @@ import { join } from 'node:path'
 import { PassThrough, Writable } from 'node:stream'
 import { settle, settled, sleep } from './lib/term-test.mjs'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-history-draft-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-history-draft-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 

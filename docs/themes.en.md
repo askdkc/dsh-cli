@@ -4,7 +4,7 @@
 
 ## Built-in themes
 
-dsh-TUI provides three Gentle Mist Blue palettes, plus an `auto` pseudo-theme:
+dsh-CLI provides three Gentle Mist Blue palettes, plus an `auto` pseudo-theme:
 
 | Name | Purpose |
 | --- | --- |
@@ -24,7 +24,7 @@ background or wallpaper.
 
 `auto` turns that one-shot startup detection into a standing choice:
 
-- A valid value for `/theme`, `DSH_TUI_THEME`, and `~/.dsh-tui/theme.json`.
+- A valid value for `/theme`, `DSH_CLI_THEME`, and `~/.dsh-cli/theme.json`.
 - Selecting `auto` applies the last detected base immediately and re-queries
   OSC 11 in the background.
 - On terminals that follow the system theme, picking `auto` again (or
@@ -37,8 +37,8 @@ background or wallpaper.
 Selection precedence is:
 
 ```text
-DSH_TUI_THEME
-  > persisted choice in ~/.dsh-tui/theme.json
+DSH_CLI_THEME
+  > persisted choice in ~/.dsh-cli/theme.json
   > OSC 11 background detection
   > dark fallback
 ```
@@ -51,12 +51,12 @@ DSH_TUI_THEME
 - `/theme status` shows the current theme and persistence location.
 
 Confirming a choice hot-switches immediately and writes it to
-`~/.dsh-tui/theme.json`. `DSH_TUI_THEME`, when set, still wins on the next
+`~/.dsh-cli/theme.json`. `DSH_CLI_THEME`, when set, still wins on the next
 launch.
 
 ## Custom themes
 
-Place JSON files under `~/.dsh-tui/themes/`. Each file starts from one
+Place JSON files under `~/.dsh-cli/themes/`. Each file starts from one
 built-in palette and overrides a subset of its colors:
 
 ```json
@@ -116,7 +116,7 @@ When the file declares `name`, its filename remains a loading alias. See the
 ## npm plugin themes
 
 An npm plugin registers a runtime theme through the `tuiThemes` service,
-without writing to `~/.dsh-tui/themes/`. Minimal example:
+without writing to `~/.dsh-cli/themes/`. Minimal example:
 
 ```ts
 import type { Context } from '@deepseek-ai/cordis'
@@ -135,7 +135,7 @@ export function apply(ctx: Context): void {
 - Registrations are removed with the plugin activation; the returned disposer
   can remove one early.
 - Plugin themes appear in the `/theme` picker and completion; their names use
-  the existing `~/.dsh-tui/theme.json` persistence.
+  the existing `~/.dsh-cli/theme.json` persistence.
 - Priority: built-ins > static JSON > same-name plugin theme.
 - On an older profile without `tuiThemes`, the plugin degrades silently and
   static themes remain unaffected.
@@ -167,7 +167,7 @@ color names are not accepted.
 - One bad theme never blocks TUI startup or other themes.
 
 Theme names are user input. The loader verifies that the resolved path
-remains inside `~/.dsh-tui/themes/`, preventing names from escaping the theme
+remains inside `~/.dsh-cli/themes/`, preventing names from escaping the theme
 directory. Preserve that containment check when changing the implementation.
 
 ## Design guidance

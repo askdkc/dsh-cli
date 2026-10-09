@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 180" role="img" aria-labelledby="title description">
-  <title id="title">dsh-TUI</title>
-  <desc id="description">A pixel whale beside the dsh-TUI wordmark</desc>
+  <title id="title">dsh-CLI</title>
+  <desc id="description">A pixel whale beside the dsh-CLI wordmark</desc>
   <style>
     .wordmark { fill: #263146; }
     .descriptor { fill: #687386; }

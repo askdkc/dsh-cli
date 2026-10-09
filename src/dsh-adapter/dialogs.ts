@@ -1,6 +1,6 @@
 /**
  * Managed plugin dialogs — the pi `ctx.ui.select/confirm/input` seam for
- * dsh-TUI. Plugins hand the HOST a declarative request; the TUI renders the
+ * dsh-CLI. Plugins hand the HOST a declarative request; the TUI renders the
  * dialog in its own chrome (next to the approval panel), owns the keyboard,
  * and settles the plugin's promise with the user's answer. Plugins never
  * touch the TTY themselves.
@@ -341,7 +341,7 @@ export class TuiDialogRuntime extends Service {
         options.push({ id, label, ...(description === '' ? {} : { description }) })
       }
       if (!title || options.length === 0) {
-        this.ctx.logger.warn('dsh-tui: tuiDialogs.select called without a title or options; cancelled')
+        this.ctx.logger.warn('dsh-cli: tuiDialogs.select called without a title or options; cancelled')
         return Promise.resolve(undefined)
       }
       return dialogStoreFor(this)
@@ -354,7 +354,7 @@ export class TuiDialogRuntime extends Service {
         )
         .then(value => (typeof value === 'string' ? value : undefined))
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiDialogs.select received malformed data; cancelled')
+      this.ctx.logger.warn('dsh-cli: tuiDialogs.select received malformed data; cancelled')
       return Promise.resolve(undefined)
     }
   }
@@ -369,7 +369,7 @@ export class TuiDialogRuntime extends Service {
       const request = (explicitRequest ?? ownerOrRequest) as TuiDialogConfirmRequest
       const title = clean(request?.title, TITLE_CELLS)
       if (!title) {
-        this.ctx.logger.warn('dsh-tui: tuiDialogs.confirm called without a title; cancelled')
+        this.ctx.logger.warn('dsh-cli: tuiDialogs.confirm called without a title; cancelled')
         return Promise.resolve(false)
       }
       const message = clean(request?.message, MESSAGE_CELLS)
@@ -391,7 +391,7 @@ export class TuiDialogRuntime extends Service {
         )
         .then(value => value === true)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiDialogs.confirm received malformed data; cancelled')
+      this.ctx.logger.warn('dsh-cli: tuiDialogs.confirm received malformed data; cancelled')
       return Promise.resolve(false)
     }
   }
@@ -406,7 +406,7 @@ export class TuiDialogRuntime extends Service {
       const request = (explicitRequest ?? ownerOrRequest) as TuiDialogInputRequest
       const title = clean(request?.title, TITLE_CELLS)
       if (!title) {
-        this.ctx.logger.warn('dsh-tui: tuiDialogs.input called without a title; cancelled')
+        this.ctx.logger.warn('dsh-cli: tuiDialogs.input called without a title; cancelled')
         return Promise.resolve(undefined)
       }
       const placeholder = clean(request?.placeholder, LABEL_CELLS)
@@ -421,7 +421,7 @@ export class TuiDialogRuntime extends Service {
         )
         .then(value => (typeof value === 'string' ? value : undefined))
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiDialogs.input received malformed data; cancelled')
+      this.ctx.logger.warn('dsh-cli: tuiDialogs.input received malformed data; cancelled')
       return Promise.resolve(undefined)
     }
   }

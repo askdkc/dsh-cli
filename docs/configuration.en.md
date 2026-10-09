@@ -7,7 +7,7 @@
 After an npm/profile installation, user configuration lives at:
 
 ```text
-$DSH_HOME/profiles/dsh-tui/cordis.patch.yml
+$DSH_HOME/profiles/dsh-cli/cordis.patch.yml
 ```
 
 When `DSH_HOME` is unset, it normally defaults to `~/.dsh`. The file is a
@@ -35,7 +35,7 @@ fullscreen and image previews require `/restart`.
 A complete common override looks like this:
 
 ```yaml
-- id: dsh-tui
+- id: dsh-cli
   config:
     provider: deepseek-official
     model: deepseek-flash
@@ -49,9 +49,9 @@ A complete common override looks like this:
     contextBar: true
     fullscreen: false
     terminalImages: true
-    preset: !!js process.env.DSH_TUI_PRESET ?? undefined
-    workspace: !!js process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined
-    sessionId: !!js process.env.DSH_TUI_RESUME_SESSION ?? undefined
+    preset: !!js process.env.DSH_CLI_PRESET ?? undefined
+    workspace: !!js process.env.DSH_CLI_WORKSPACE_TARGET ?? undefined
+    sessionId: !!js process.env.DSH_CLI_RESUME_SESSION ?? undefined
 ```
 
 | Field | Default/source | Meaning |
@@ -60,7 +60,7 @@ A complete common override looks like this:
 | `model` | Harness `agentDefaultModel`; bare compositions fall back to `deepseek-flash` | Startup model; `/model` can switch through a session fork |
 | `cwd` | git worktree root containing the launch directory (`process.cwd()` when outside any worktree; a dotfiles repo at `$HOME` does not count) | TUI-side session workspace: agent meta, `@` completion/mention expansion, /resume filtering, statusline; resuming an existing session adopts that session's persisted cwd. Note the bash/fs-policy/sandbox roots are still owned by the composition layer's cordis config (default: the launch directory, governed by dsh-base) and may differ from this session-side cwd |
 | `workspace` | unset | Startup workspace target: a local path, `file://` URL, or plugin-provided URI; takes precedence over `cwd` |
-| `effort` | normally `max` in the bundle | Reasoning effort applied to every request (validated against the runtime model's levels; invalid levels silently fall back to the adapter default), also shown in the header at startup. Precedence: /settings `effortDefault` (`auto` defers) > this field > the persisted `/effort` choice (`~/.dsh-tui/effort.json`) > the model default |
+| `effort` | normally `max` in the bundle | Reasoning effort applied to every request (validated against the runtime model's levels; invalid levels silently fall back to the adapter default), also shown in the header at startup. Precedence: /settings `effortDefault` (`auto` defers) > this field > the persisted `/effort` choice (`~/.dsh-cli/effort.json`) > the model default |
 | `effortDefault` | unset | Default reasoning effort for new sessions; `auto` defers to `effort`; editable through `/settings` |
 | `whale` / `whaleIdle` | `true` / `true` | Header whale and welcome-page idle animation |
 | `minimal` | `false` | Reduce header decoration and colors |
@@ -79,7 +79,7 @@ A complete common override looks like this:
 - Without a saved choice, the config value applies and defaults to on.
 - Enabling still needs Kitty graphics support and a display mode that allows
   image rendering.
-- `DSH_TUI_DISABLE_TERMINAL_IMAGES=1` always forces previews off.
+- `DSH_CLI_DISABLE_TERMINAL_IMAGES=1` always forces previews off.
 - Disabled previews do not read or decode image data or send image rendering
   commands; sending images to the model is unaffected.
 - The checkbox edits the preview preference; an environment override is shown
@@ -101,11 +101,11 @@ set:
 
 | Variable | Purpose |
 | --- | --- |
-| `DSH_TUI_DEBUG_REPAINTS=1` | Record repaint diagnostics |
-| `DSH_TUI_COMMIT_LOG=1` | Record render-commit diagnostics |
-| `DSH_TUI_ACCESSIBILITY=1` | Enable accessibility related display paths |
-| `DSH_TUI_TMUX_TRUECOLOR=1` | Enable the truecolor detection path in tmux |
-| `DSH_TUI_TAB_STATUS=1` | Experimental terminal tab-status opt-in; off by default, with no guarantee of support in every terminal |
+| `DSH_CLI_DEBUG_REPAINTS=1` | Record repaint diagnostics |
+| `DSH_CLI_COMMIT_LOG=1` | Record render-commit diagnostics |
+| `DSH_CLI_ACCESSIBILITY=1` | Enable accessibility related display paths |
+| `DSH_CLI_TMUX_TRUECOLOR=1` | Enable the truecolor detection path in tmux |
+| `DSH_CLI_TAB_STATUS=1` | Experimental terminal tab-status opt-in; off by default, with no guarantee of support in every terminal |
 
 Diagnostic output does not change session events or model routing. Enable
 only the variable needed for the terminal or rendering issue being
@@ -157,15 +157,15 @@ preset registry, `@deepseek-ai/dsh-agent-preset-registry`:
 
 ### Default and precedence
 
-- The default is stored in `~/.dsh-tui/agent-preset.json`.
-- Precedence: explicit `config.preset` or `DSH_TUI_PRESET`, then persisted
+- The default is stored in `~/.dsh-cli/agent-preset.json`.
+- Precedence: explicit `config.preset` or `DSH_CLI_PRESET`, then persisted
   preference, then the roster default `standard`.
 - Resuming a session restores the preset recorded in that session's log and
   does not overwrite it with the current default.
 
 ### Liangshen mode
 
-- Liangshen mode ships with dsh-tui. It registers with the official
+- Liangshen mode ships with dsh-cli. It registers with the official
   registry; an existing profile declaration with the same id takes precedence.
 - The first-round `bash` on Windows runs an auto-discovered Git Bash, trying
   in order:
@@ -174,7 +174,7 @@ preset registry, `@deepseek-ai/dsh-agent-preset-registry`:
   - Conventional install roots and Scoop's conventional directories
   - Bare `bash` on PATH (final fallback)
   - It never accepts the System32 WSL launcher as Git Bash
-- Set `DSH_TUI_LIANGSHEN_BASH_PATH` to an absolute `bash.exe` path to pin it.
+- Set `DSH_CLI_LIANGSHEN_BASH_PATH` to an absolute `bash.exe` path to pin it.
 - The pin is the only candidate; a miss warns and skips registration, exposing
   the full tool catalog on the first round.
 
@@ -184,8 +184,8 @@ Declare `@deepseek-ai/dsh-agent-preset` through a profile/bundle with
 `id`, `name`, and `plugins` in its config.
 
 Since 0.3, model-side tools, planning, compaction, and delegation are owned by
-the preset. Profile mode no longer uses the old `DSH_TUI_COMPACT_RATIO`,
-`DSH_TUI_COMPACT_RETAIN`, or the former TUI's subagent-depth customization; configure
+the preset. Profile mode no longer uses the old `DSH_CLI_COMPACT_RATIO`,
+`DSH_CLI_COMPACT_RETAIN`, or the former TUI's subagent-depth customization; configure
 those policies in the preset instead.
 
 ## MCP
@@ -228,34 +228,34 @@ for the complete field reference.
 | `DEEPSEEK_API_KEY` | Required DeepSeek credential |
 | `DEEPSEEK_BASE_URL` | Override the compatible DeepSeek API endpoint |
 | `DSH_HOME` | Harness home (profiles, sessions, credentials, attachments); falls back to the upstream default `~/.dsh` |
-| `DSH_TUI_PERSONA` | Override the Agent persona injected by the composition |
-| `DSH_TUI_PRESET` | Override the default Agent preset for new sessions |
-| `DSH_TUI_THEME` | Pin a built-in (`auto`/`light`/`dark`/`dark-ansi`), static theme, or registered plugin theme ahead of persisted selection |
-| `DSH_TUI_DISABLE_MOUSE` | Temporarily disable mouse handling in fullscreen mode |
-| `DSH_TUI_DISABLE_TERMINAL_IMAGES` | Set to `1` to force Kitty/Sixel probing, preview reads/decoding, and terminal image rendering off, overriding config and /settings; text metadata remains visible |
-| `DSH_TUI_IMAGE_PROTOCOL` | `auto` (default), `kitty`, `sixel`, or `none`; override protocol selection without bypassing the preview preference, disable switch, non-fullscreen, accessibility or multiplexer guards |
-| `DSH_TUI_RESUME_SESSION` | Resume a session at startup, normally set by a launcher |
-| `DSH_TUI_WORKSPACE_TARGET` | Workspace path or URI resolved at startup, normally set by `dsh-tui <target>` |
-| `DSH_TUI_SESSION_ROOT` | Override the JSONL session root; profile default `$DSH_HOME/sessions`, bare `cordis.yml` default `~/.dsh-tui/sessions` |
+| `DSH_CLI_PERSONA` | Override the Agent persona injected by the composition |
+| `DSH_CLI_PRESET` | Override the default Agent preset for new sessions |
+| `DSH_CLI_THEME` | Pin a built-in (`auto`/`light`/`dark`/`dark-ansi`), static theme, or registered plugin theme ahead of persisted selection |
+| `DSH_CLI_DISABLE_MOUSE` | Temporarily disable mouse handling in fullscreen mode |
+| `DSH_CLI_DISABLE_TERMINAL_IMAGES` | Set to `1` to force Kitty/Sixel probing, preview reads/decoding, and terminal image rendering off, overriding config and /settings; text metadata remains visible |
+| `DSH_CLI_IMAGE_PROTOCOL` | `auto` (default), `kitty`, `sixel`, or `none`; override protocol selection without bypassing the preview preference, disable switch, non-fullscreen, accessibility or multiplexer guards |
+| `DSH_CLI_RESUME_SESSION` | Resume a session at startup, normally set by a launcher |
+| `DSH_CLI_WORKSPACE_TARGET` | Workspace path or URI resolved at startup, normally set by `dsh-cli <target>` |
+| `DSH_CLI_SESSION_ROOT` | Override the JSONL session root; profile default `$DSH_HOME/sessions`, bare `cordis.yml` default `~/.dsh-cli/sessions` |
 | `DSH_PERMISSION_MODE` | Override non-Windows sandbox policy, such as `workspace-write` or `danger-full-access` |
-| `DSH_TUI_WORKSPACE` | Working directory used by the Windows `dsh-tui.cmd` launcher |
-| `DSH_TUI_DEBUG` | Enable dsh-tui diagnostics on stderr |
-| `DSH_TUI_RENDER_LOG` | File path for raw ANSI frame capture |
+| `DSH_CLI_WORKSPACE` | Working directory used by the Windows `dsh-cli.cmd` launcher |
+| `DSH_CLI_DEBUG` | Enable dsh-cli diagnostics on stderr |
+| `DSH_CLI_RENDER_LOG` | File path for raw ANSI frame capture |
 
 The old `CC_TUI_*` and `DSH_CC_*` names come from earlier release naming and
-are no longer read as of this release; use the `DSH_TUI_*` prefix.
+are no longer read as of this release; use the `DSH_CLI_*` prefix.
 
 Two directories are involved and neither substitutes for the other:
 
 - **Harness home**: `$DSH_HOME`, falling back to the upstream default `~/.dsh`.
   Holds profiles, sessions, credentials, and attachments. Early releases pinned
   it to `~/.dsh-cc`.
-- **TUI data directory**: `~/.dsh-tui` (a fixed path, independent of
-  `$DSH_HOME`). Holds `/model` (persisted at `~/.dsh-tui/model.json`, surviving
+- **TUI data directory**: `~/.dsh-cli` (a fixed path, independent of
+  `$DSH_HOME`). Holds `/model` (persisted at `~/.dsh-cli/model.json`, surviving
   restart and `/new`), `/lang`, `/theme` and similar preferences plus
   `resume.txt`. Early releases wrote these under `$DSH_HOME` instead.
 
-`DSH_TUI_RENDER_LOG` may capture visible prompts, tool arguments, and output.
+`DSH_CLI_RENDER_LOG` may capture visible prompts, tool arguments, and output.
 Do not attach it to a public issue without reviewing and redacting it.
 
 ## `/provider`: manage model providers at runtime
@@ -301,9 +301,9 @@ path has not been validated with a real account.
   topology. Normal installation and user overrides should follow
   `cordis.patch.yml`.
 
-`DSH_TUI_SESSION_ROOT` always names a JSONL root. `dsh --profile dsh-tui`
+`DSH_CLI_SESSION_ROOT` always names a JSONL root. `dsh --profile dsh-cli`
 defaults to `$DSH_HOME/sessions` (normally `~/.dsh/sessions/`); direct
-`dsh --config cordis.yml` defaults to `~/.dsh-tui/sessions/`.
+`dsh --config cordis.yml` defaults to `~/.dsh-cli/sessions/`.
 
 See [Architecture and limitations](architecture.en.md#permissions-and-security-boundary)
 for permission behavior and platform differences.

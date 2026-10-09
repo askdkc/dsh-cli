@@ -182,7 +182,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const name = 'dsh-tui-workspaces'
+export const name = 'dsh-cli-workspaces'
 /** Bound every provider promise so one plugin cannot park workspace flows. */
 export const WORKSPACE_PROVIDER_TIMEOUT_MS = 2000
 
@@ -252,7 +252,7 @@ export class TuiWorkspaceRuntime extends Service {
     const owner = activationFiber(caller)
     if (owner === undefined) {
       state.providers.delete(provider)
-      throw new Error('dsh-tui: tuiWorkspaces.register requires a live activation')
+      throw new Error('dsh-cli: tuiWorkspaces.register requires a live activation')
     }
     state.providerOwners.set(provider, owner)
     this.notifyProviderWaiters()
@@ -369,7 +369,7 @@ export function getHostWorkspaceRuntime(runtime: TuiWorkspaceRuntime | undefined
 function workspaceCaller(runtime: TuiWorkspaceRuntime, capability: string): object {
   const caller = requirePluginCaller(runtimeContext(runtime), capability, runtime)
   const owner = activationFiber(caller)
-  if (owner === undefined) throw new Error(`dsh-tui: ${capability} requires a live activation`)
+  if (owner === undefined) throw new Error(`dsh-cli: ${capability} requires a live activation`)
   return owner
 }
 
@@ -397,7 +397,7 @@ async function listWorkspaces(
       if (listed === undefined) continue
       for (const target of listed) targets.set(target.uri, withStoredTitle(runtime, target))
     } catch (error) {
-      runtimeContext(runtime).logger.warn(`dsh-tui: workspace provider list failed: ${error instanceof Error ? error.message : String(error)}`)
+      runtimeContext(runtime).logger.warn(`dsh-cli: workspace provider list failed: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
   for (const workspace of workspaceRegistry(runtime)?.list() ?? []) {
@@ -471,7 +471,7 @@ function describeWorkspace(runtime: TuiWorkspaceRuntime, cwd: string, owner: obj
     try {
       target = provider.describe(cwd)
     } catch (error) {
-      runtimeContext(runtime).logger.warn(`dsh-tui: workspace provider describe failed: ${error instanceof Error ? error.message : String(error)}`)
+      runtimeContext(runtime).logger.warn(`dsh-cli: workspace provider describe failed: ${error instanceof Error ? error.message : String(error)}`)
       continue
     }
     if (target !== undefined) return withStoredTitle(runtime, target)
@@ -486,7 +486,7 @@ async function commandShellFor(runtime: TuiWorkspaceRuntime, cwd: string, owner:
     try {
       shell = await providerWithBudget(() => provider.commandShell?.(cwd), undefined)
     } catch (error) {
-      runtimeContext(runtime).logger.warn(`dsh-tui: workspace provider commandShell failed: ${error instanceof Error ? error.message : String(error)}`)
+      runtimeContext(runtime).logger.warn(`dsh-cli: workspace provider commandShell failed: ${error instanceof Error ? error.message : String(error)}`)
       continue
     }
     if (shell !== undefined) return shell

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * 生成 dsh-TUI 一键安装整合包（zip）。
+ * 生成 dsh-CLI 一键安装整合包（zip）。
  *
  * 用法：
  *   node scripts/make-installer-bundle.mjs [--out <dir>]
  *
- * 产物：<out>/dsh-tui-setup.zip，内含：
- *   dsh-tui-setup/
+ * 产物：<out>/dsh-cli-setup.zip，内含：
+ *   dsh-cli-setup/
  *     install.bat         Windows 双击即装（ASCII 壳，调 install.ps1）
  *     install.ps1         Windows 安装主体（UTF-8 中文提示）
  *     install.sh          macOS / Linux 一键安装
- *     启动 dsh-tui.bat    Windows 双击启动
+ *     启动 dsh-cli.bat    Windows 双击启动
  *     使用说明.txt         使用说明（中英）
  *
  * CI（release 事件）与本地均可用；Windows 用 PowerShell Compress-Archive，
@@ -25,13 +25,13 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const argOut = process.argv.indexOf('--out')
 const outDir = resolve(argOut >= 0 ? process.argv[argOut + 1] : join(root, 'dist-bundle'))
-const pkgDirName = 'dsh-tui-setup'
-const zipName = 'dsh-tui-setup.zip'
+const pkgDirName = 'dsh-cli-setup'
+const zipName = 'dsh-cli-setup.zip'
 
 // ─── 模板 ───────────────────────────────────────────────────────────────────
 
 const INSTALL_BAT = `@echo off
-rem dsh-TUI one-click installer launcher (Windows)
+rem dsh-CLI one-click installer launcher (Windows)
 rem The real installer is install.ps1 (UTF-8, Chinese prompts).
 setlocal
 set "DIR=%~dp0"
@@ -45,18 +45,18 @@ endlocal
 `
 
 const LAUNCH_BAT = `@echo off
-rem dsh-TUI launcher (Windows): double-click to start the TUI.
-where dsh-tui >nul 2>&1
+rem dsh-CLI launcher (Windows): double-click to start the TUI.
+where dsh-cli >nul 2>&1
 if errorlevel 1 (
-  echo dsh-tui was not found. Please run install.bat first.
+  echo dsh-cli was not found. Please run install.bat first.
   pause
   exit /b 1
 )
-dsh-tui
+dsh-cli
 pause
 `
 
-const INSTALL_PS1 = `# dsh-TUI 一键安装脚本（Windows / PowerShell）
+const INSTALL_PS1 = `# dsh-CLI 一键安装脚本（Windows / PowerShell）
 # 由整合包生成脚本自动产出，安装时自动获取 npm 最新版。
 $ErrorActionPreference = 'Stop'
 
@@ -78,8 +78,8 @@ function Get-NodeVersion {
 
 Write-Host ''
 Write-Host '============================================' -ForegroundColor Cyan
-Write-Host '   dsh-TUI 一键安装（Windows）' -ForegroundColor Cyan
-Write-Host '   官网：https://dshtui.com' -ForegroundColor Cyan
+Write-Host '   dsh-CLI 一键安装（Windows）' -ForegroundColor Cyan
+Write-Host '   官网：https://github.com/askdkc/dsh-cli#readme' -ForegroundColor Cyan
 Write-Host '============================================' -ForegroundColor Cyan
 
 # 1. Node.js
@@ -119,33 +119,33 @@ if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
 }
 OK 'pnpm 就绪'
 
-# 3. 全局安装 dsh CLI + dsh-TUI
+# 3. 全局安装 dsh CLI + dsh-CLI
 Step '安装 @deepseek-ai/dsh 与 dsh-cli（首次较慢，请稍候）'
 $prefix = (& npm config get prefix 2>$null).Trim()
 if ($prefix -match 'Program Files') {
   Warn "npm 全局目录在受保护路径（$prefix），若下面安装报权限错误，请右键 install.bat 以管理员身份运行，或执行：npm config set prefix \"\$env:APPDATA\\npm\""
 }
-$npmArgs = @('install', '-g', '@deepseek-ai/dsh', 'dsh-cli',
+$npmArgs = @('install', '-g', '@deepseek-ai/dsh', '@askdkc/dsh-cli',
   '--fetch-timeout=60000', '--fetch-retries=1')
 & npm @npmArgs
 if ($LASTEXITCODE -ne 0) {
   Warn 'npm 官方源安装失败（国内网络常见），切换 npmmirror 镜像重试…'
   & npm @npmArgs --registry=https://registry.npmmirror.com
   if ($LASTEXITCODE -ne 0) {
-    Fail "安装失败。可手动执行：npm install -g @deepseek-ai/dsh dsh-cli --registry=https://registry.npmmirror.com"
+    Fail "安装失败。可手动执行：npm install -g @deepseek-ai/dsh @askdkc/dsh-cli --registry=https://registry.npmmirror.com"
   }
 }
-OK 'dsh CLI 与 dsh-TUI 安装完成'
+OK 'dsh CLI 与 dsh-CLI 安装完成'
 
 # 4. 校验
 Step '校验安装'
 Refresh-Path
-if (-not (Get-Command dsh-tui -ErrorAction SilentlyContinue)) {
-  Fail '未找到 dsh-tui 命令。请关闭本窗口、重新打开终端后再次运行 install.bat'
+if (-not (Get-Command dsh-cli -ErrorAction SilentlyContinue)) {
+  Fail '未找到 dsh-cli 命令。请关闭本窗口、重新打开终端后再次运行 install.bat'
 }
-& dsh-tui --version
-if ($LASTEXITCODE -ne 0) { Warn '版本校验未通过，但安装可能已成功，请用 dsh-tui 命令验证' }
-OK 'dsh-tui 命令可用'
+& dsh-cli --version
+if ($LASTEXITCODE -ne 0) { Warn '版本校验未通过，但安装可能已成功，请用 dsh-cli 命令验证' }
+OK 'dsh-cli 命令可用'
 
 # 5. DEEPSEEK_API_KEY
 Step '检查 DEEPSEEK_API_KEY'
@@ -169,17 +169,17 @@ if (-not $hasKey) {
 Write-Host ''
 Write-Host '============================================' -ForegroundColor Green
 Write-Host '  安装完成！启动方式：' -ForegroundColor Green
-Write-Host '    1. 重新打开终端，运行：dsh-tui 或 dst' -ForegroundColor Green
-Write-Host '    2. 或双击本目录下的：启动 dsh-tui.bat' -ForegroundColor Green
+Write-Host '    1. 重新打开终端，运行：dsh-cli 或 dst' -ForegroundColor Green
+Write-Host '    2. 或双击本目录下的：启动 dsh-cli.bat' -ForegroundColor Green
 Write-Host '  首次启动会自动初始化 profile，稍等片刻即可进入界面。' -ForegroundColor Green
-Write-Host '  更新：dsh-tui update ｜ 文档：https://dshtui.com' -ForegroundColor Green
+Write-Host '  更新：dsh-cli update ｜ 文档：https://github.com/askdkc/dsh-cli#readme' -ForegroundColor Green
 Write-Host '============================================' -ForegroundColor Green
 Write-Host ''
 Read-Host '按回车键退出'
 `
 
 const INSTALL_SH = `#!/usr/bin/env bash
-# dsh-TUI one-click installer (macOS / Linux)
+# dsh-CLI one-click installer (macOS / Linux)
 # Generated by make-installer-bundle.mjs.
 set -euo pipefail
 
@@ -216,14 +216,14 @@ need_pnpm() {
 
 install_pkgs() {
   step '安装 @deepseek-ai/dsh 与 dsh-cli（首次较慢，请稍候）'
-  if ! npm install -g @deepseek-ai/dsh dsh-cli \\
+  if ! npm install -g @deepseek-ai/dsh @askdkc/dsh-cli \\
     --fetch-timeout=60000 --fetch-retries=1; then
     warn 'npm 官方源安装失败（国内网络常见），切换 npmmirror 镜像重试…'
-    npm install -g @deepseek-ai/dsh dsh-cli \\
+    npm install -g @deepseek-ai/dsh @askdkc/dsh-cli \\
       --registry=https://registry.npmmirror.com ||
-      fail '安装失败。可手动执行：npm install -g @deepseek-ai/dsh dsh-cli --registry=https://registry.npmmirror.com'
+      fail '安装失败。可手动执行：npm install -g @deepseek-ai/dsh @askdkc/dsh-cli --registry=https://registry.npmmirror.com'
   fi
-  ok 'dsh CLI 与 dsh-TUI 安装完成'
+  ok 'dsh CLI 与 dsh-CLI 安装完成'
 }
 
 ensure_key() {
@@ -248,30 +248,30 @@ ensure_key() {
 
 echo ''
 echo '============================================'
-echo '   dsh-TUI 一键安装（macOS / Linux）'
-echo '   官网：https://dshtui.com'
+echo '   dsh-CLI 一键安装（macOS / Linux）'
+echo '   官网：https://github.com/askdkc/dsh-cli#readme'
 echo '============================================'
 need_node
 need_pnpm
 install_pkgs
 step '校验安装'
-command -v dsh-tui >/dev/null 2>&1 || fail '未找到 dsh-tui 命令，请重开终端后重跑：sh install.sh'
-dsh-tui --version || true
+command -v dsh-cli >/dev/null 2>&1 || fail '未找到 dsh-cli 命令，请重开终端后重跑：sh install.sh'
+dsh-cli --version || true
 ensure_key
 echo ''
 echo '============================================'
-echo '  安装完成！启动方式：dsh-tui 或 dst'
+echo '  安装完成！启动方式：dsh-cli 或 dst'
 echo '  首次启动会自动初始化 profile，稍等片刻即可进入界面。'
-echo '  更新：dsh-tui update ｜ 文档：https://dshtui.com'
+echo '  更新：dsh-cli update ｜ 文档：https://github.com/askdkc/dsh-cli#readme'
 echo '============================================'
 `
 
-const README_TXT = `dsh-TUI 一键安装整合包（dsh-tui-setup）
+const README_TXT = `dsh-CLI 一键安装整合包（dsh-cli-setup）
 ====================================
 
 这是什么？
-  dsh-TUI 是 DeepSeek Harness 的交互式终端界面插件，支持全屏会话。
-  本整合包把"装 Node、装 pnpm、装 dsh CLI 和 dsh-TUI、配 API Key"全部自动化，
+  dsh-CLI 是 DeepSeek Harness 的交互式终端界面插件，支持全屏会话。
+  本整合包把"装 Node、装 pnpm、装 dsh CLI 和 dsh-CLI、配 API Key"全部自动化，
   解压后一条命令即可完成安装，无需手动敲多行命令。
 
 系统要求
@@ -287,37 +287,37 @@ const README_TXT = `dsh-TUI 一键安装整合包（dsh-tui-setup）
     打开终端，进入解压目录，运行：
       sh install.sh
   手动安装（不想用整合包时）：
-      npm install -g @deepseek-ai/dsh dsh-cli
+      npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
 
 安装过程中会做什么
   1. 检查 Node.js（^22.19 或 >=24），没有则自动安装（Windows 用 winget）；
   2. 安装 pnpm；
   3. 全局安装 @deepseek-ai/dsh 与 dsh-cli；
-  4. 校验 dsh-tui 命令可用；
+  4. 校验 dsh-cli 命令可用；
   5. 检查 DEEPSEEK_API_KEY，未配置时引导你粘贴并持久化保存。
 
 启动
-  Windows：双击"启动 dsh-tui.bat"；或打开终端运行：dsh-tui 或 dst
-  macOS / Linux：运行：dsh-tui 或 dst
-  首次启动会自动初始化 profile（dsh --profile dsh-tui 等价），稍等片刻进入界面。
+  Windows：双击"启动 dsh-cli.bat"；或打开终端运行：dsh-cli 或 dst
+  macOS / Linux：运行：dsh-cli 或 dst
+  首次启动会自动初始化 profile（dsh --profile dsh-cli 等价），稍等片刻进入界面。
 
 API Key 从哪来？
   到 https://platform.deepseek.com 注册并创建 API Key（需实名认证）。
   也可以配置兼容端点：DEEPSEEK_BASE_URL + DEEPSEEK_API_KEY。
 
 日常使用
-  更新：dsh-tui update（或 /update）
-  文档：https://dshtui.com ｜ GitHub：https://github.com/askdkc/dsh-TUI-fork
-  卸载：npm uninstall -g dsh-cli @deepseek-ai/dsh
-        并删除 %USERPROFILE%\\.dsh-tui 与 ~/.dsh/profiles/dsh-tui 目录
+  更新：dsh-cli update（或 /update）
+  文档：https://github.com/askdkc/dsh-cli#readme ｜ GitHub：https://github.com/askdkc/dsh-cli
+  卸载：npm uninstall -g @askdkc/dsh-cli @deepseek-ai/dsh
+        并删除 %USERPROFILE%\\.dsh-cli 与 ~/.dsh/profiles/dsh-cli 目录
 
 --------
 English summary:
-  One-command installer bundle for the dsh-TUI plugin (DeepSeek Harness TUI).
+  One-command installer bundle for the dsh-CLI plugin (DeepSeek Harness TUI).
   Windows: double-click install.bat. macOS/Linux: sh install.sh.
   It installs Node (if missing), pnpm, @deepseek-ai/dsh + dsh-cli,
-  verifies the dsh-tui command, and guides DEEPSEEK_API_KEY setup.
-  Launch with: dsh-tui (or dst)
+  verifies the dsh-cli command, and guides DEEPSEEK_API_KEY setup.
+  Launch with: dsh-cli (or dst)
 `
 
 // ─── 组装 ───────────────────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ const files = {
   'install.bat': INSTALL_BAT,
   'install.ps1': INSTALL_PS1,
   'install.sh': INSTALL_SH,
-  '启动 dsh-tui.bat': LAUNCH_BAT,
+  '启动 dsh-cli.bat': LAUNCH_BAT,
   '使用说明.txt': README_TXT,
 }
 

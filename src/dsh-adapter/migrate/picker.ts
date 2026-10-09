@@ -85,7 +85,7 @@ export function parseImportSummary(stdout: string): ImportSummary[] {
  * command is valid must never depend on the picker having been opened first
  * (`migrateRows` is empty on a fresh mount, which used to make every
  * `/migrate <agent>` report an unknown source), and the CLI keeps the same
- * one-source rule (`dsh-tui migrate a b` is a usage error there too).
+ * one-source rule (`dsh-cli migrate a b` is a usage error there too).
  *
  * @param rawInput - arguments after `/migrate`, e.g. `" claude-code --dry-run"`.
  * @param knownAgentIds - the adapter registry's ids (see MIGRATION_ADAPTERS).

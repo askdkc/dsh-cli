@@ -1,8 +1,8 @@
-# 在 VS Code 中使用 dsh-TUI
+# 在 VS Code 中使用 dsh-CLI
 
 [文档索引](README.md) · [English](vscode.en.md)
 
-dsh-TUI 是终端程序：它把 ANSI 写进 PTY，再从 PTY 读按键。
+dsh-CLI 是终端程序：它把 ANSI 写进 PTY，再从 PTY 读按键。
 所以任何兼容终端都能运行它，包括 **VS Code 集成终端**
 （xterm.js）。本页介绍两种用法：
 
@@ -18,7 +18,7 @@ dsh-TUI 是终端程序：它把 ANSI 写进 PTY，再从 PTY 读按键。
 - 零安装、秒级可用；
 - 适合不想装扩展的场景。
 
-> 版本说明：本页的 `dsh-tui` 指本仓库（TUI 插件），
+> 版本说明：本页的 `dsh-cli` 指本仓库（TUI 插件），
 > `dsh-tui-vscode` 指 companion 扩展，两者版本独立、各自发布。
 > 扩展完整说明见其仓库 README：
 > [baobaolaodie/dsh-tui-vscode](https://github.com/baobaolaodie/dsh-tui-vscode)
@@ -26,10 +26,12 @@ dsh-TUI 是终端程序：它把 ANSI 写进 PTY，再从 PTY 读按键。
 > **选区通道要求扩展支持协议 v2**（**dsh-tui-vscode ≥ 0.7.0**）——
 > 更旧的扩展下该功能静默不启用，其余功能不受影响。
 
+> 本版本要求 companion 使用 `DSH_CLI_IDE_PORT` / `DSH_CLI_IDE_TOKEN` 或 `~/.dsh-cli/ide`；旧扩展只支持旧名时无法连接。
+
 ## 方式一：companion 扩展 dsh-tui-vscode（推荐）
 
 [`baobaolaodie/dsh-tui-vscode`](https://github.com/baobaolaodie/dsh-tui-vscode)
-把 dsh-tui 跑进 VS Code **真实的集成终端**（用 `createTerminal`
+把 dsh-cli 跑进 VS Code **真实的集成终端**（用 `createTerminal`
 在终端内运行 CLI），没有 webview、没有 xterm 模拟层。它不改动
 TUI 核心渲染链路，只负责**运行 TUI、做编辑器集成**。
 
@@ -39,7 +41,7 @@ TUI 核心渲染链路，只负责**运行 TUI、做编辑器集成**。
 - 在编辑器区旁边创建名为 `DeepSeek` 的集成终端；
 - 每次启动创建独立会话，已有会话继续在各自终端运行；
 - 侧边栏按项目分组显示会话历史，支持刷新、恢复指定会话；
-- 注入 `DSH_TUI_LANG`、`$VISUAL`、`$DSH_HOME`、指定会话 id 等环境变量；
+- 注入 `DSH_CLI_LANG`、`$VISUAL`、`$DSH_HOME`、指定会话 id 等环境变量；
 - 关闭终端结束对应会话，TUI 内双击 `Ctrl+C` 也可退出。
 
 | 能力 | Claude Code 官方扩展 | dsh-tui-vscode |
@@ -51,15 +53,15 @@ TUI 核心渲染链路，只负责**运行 TUI、做编辑器集成**。
 | 多会话 | 每次点击新开一个会话终端 | 同，旧会话继续运行 |
 | 侧边栏 | sessions 会话列表 | 会话历史（按项目分组树，更强） |
 | 自动启停 | 打开 = 启动；关闭终端 = 结束 | 同 |
-| 环境注入 | — | `DSH_TUI_LANG` / `$VISUAL` / `$DSH_HOME` / 指定会话 id / `DSH_TUI_IDE_PORT/TOKEN`（选区通道） |
+| 环境注入 | — | `DSH_CLI_LANG` / `$VISUAL` / `$DSH_HOME` / 指定会话 id / `DSH_CLI_IDE_PORT/TOKEN`（选区通道） |
 | 编辑器选区联动 | 选区自动进上下文，prompt 下方 `⧉ N lines selected` | 同（IDE 选区通道，见下） |
 
 ### IDE 选区通道
 
-搭配含 IDE 选区通道的 dsh-tui 版本，扩展会在本机起一个
+搭配含 IDE 选区通道的 dsh-cli 版本，扩展会在本机起一个
 loopback WebSocket 服务，并写入 lock 文件（目录 0700、文件 0600）。
 
-- 扩展启动的会话：dsh-tui 启动时通过环境变量直连；
+- 扩展启动的会话：dsh-cli 启动时通过环境变量直连；
 - 手动启动的会话：扫描 lock 自动发现——只连 workspace 覆盖
   当前会话目录的窗口；没有匹配就静默禁用，绝不连别的项目。
 
@@ -90,11 +92,11 @@ loopback WebSocket 服务，并写入 lock 文件（目录 0700、文件 0600）
 ### 前置条件
 
 - VS Code ≥ 1.90；
-- 全局安装 `dsh` CLI 与 `dsh-tui`
-  （**建议 dsh-tui 0.7.0+**，见[快速开始](getting-started.md)）：
+- 全局安装 `dsh` CLI 与 `dsh-cli`
+  （**建议 dsh-cli 0.7.0+**，见[快速开始](getting-started.md)）：
 
   ```sh
-  npm install -g @deepseek-ai/dsh dsh-cli
+  npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
   ```
 
 - 运行模型需要 `DEEPSEEK_API_KEY`（放在终端环境或 dsh 配置里）。
@@ -102,7 +104,7 @@ loopback WebSocket 服务，并写入 lock 文件（目录 0700、文件 0600）
 ### 安装
 
 **从 VS Code 扩展面板安装（推荐）**：`Ctrl+Shift+X` 搜索
-**`dsh-tui`** 一键安装（发布者 `baobaolaodie`），或直接打开
+**`dsh-cli`** 一键安装（发布者 `baobaolaodie`），或直接打开
 [Marketplace 页面](https://marketplace.visualstudio.com/items?itemName=baobaolaodie.dsh-tui-vscode)。
 
 或从源码构建：
@@ -118,19 +120,19 @@ npm run package && code --install-extension dsh-tui-vscode-<version>.vsix --forc
 ### 快速上手
 
 1. 点**编辑器标签栏右侧鲸鱼按钮**，或跑命令面板
-   `dsh-tui: Start new session / 启动新会话`——编辑器区**另一侧**
-   新开 **DeepSeek** 终端并自动运行 dsh-tui。
+   `dsh-cli: Start new session / 启动新会话`——编辑器区**另一侧**
+   新开 **DeepSeek** 终端并自动运行 dsh-cli。
 2. 点**活动栏鲸鱼图标**打开侧边栏「会话历史」，欢迎页提供
    「启动新会话」「恢复上次会话」按钮。
 3. 再次点击 = **再开一个会话**，多会话并行，旧会话在自己的
    终端里继续运行。
-4. **恢复上次会话**：`dsh-tui: Resume last session / 恢复上次会话`。
+4. **恢复上次会话**：`dsh-cli: Resume last session / 恢复上次会话`。
 5. **恢复指定会话**：侧边栏「会话历史」展开项目组 → 点击会话条目。
 6. **终止**：关闭终端标签（只结束该会话），或 TUI 内双击
-   `Ctrl+C`；命令 `dsh-tui: Terminate session / 终止会话` 向最近
+   `Ctrl+C`；命令 `dsh-cli: Terminate session / 终止会话` 向最近
    终端发送 Ctrl+C。
 
-有会话运行时，**状态栏**（左下）显示 `dsh-tui` 项，
+有会话运行时，**状态栏**（左下）显示 `dsh-cli` 项，
 点击启动新会话（对应 `dsh-tui-vscode.open`）。
 
 ### 命令清单
@@ -144,13 +146,13 @@ npm run package && code --install-extension dsh-tui-vscode-<version>.vsix --forc
 | `dsh-tui-vscode.kill` | Terminate session / 终止会话 | 向最近终端发送 Ctrl+C |
 | `dsh-tui-vscode.refreshSessions` | Refresh sessions / 刷新会话列表 | 手动刷新侧边栏 |
 | `dsh-tui-vscode.resumeSession` | Resume session / 恢复会话 | 恢复指定会话（侧边栏点击） |
-| `dsh-tui-vscode.insertAtMention` | Insert @-mention / 插入 @文件引用 | 编辑器聚焦时按 `Ctrl+Alt+K`（macOS `Cmd+Alt+K`）或编辑器右键：把当前文件/选中代码以 `@绝对路径 L起-止` 插入 dsh-tui 输入框（绝对路径与 dsh-tui 会话 cwd 无关；未选中引用整个文件；无运行会话回退为复制到剪贴板） |
+| `dsh-tui-vscode.insertAtMention` | Insert @-mention / 插入 @文件引用 | 编辑器聚焦时按 `Ctrl+Alt+K`（macOS `Cmd+Alt+K`）或编辑器右键：把当前文件/选中代码以 `@绝对路径 L起-止` 插入 dsh-cli 输入框（绝对路径与 dsh-cli 会话 cwd 无关；未选中引用整个文件；无运行会话回退为复制到剪贴板） |
 
 ### 架构与机制
 
 - 扩展在本机起一个 loopback WebSocket 服务，并把连接信息写进 lock
   文件（目录 0700、文件 0600）。
-- 从扩展启动：dsh-tui 用注入的环境变量直连该服务。
+- 从扩展启动：dsh-cli 用注入的环境变量直连该服务。
 - 手动启动（如 tmux / SSH）：扫描 lock 自动发现，只连 workspace
   覆盖当前会话目录的窗口；没有匹配就静默禁用，绝不连别的项目。
 - 连接走协议 v2：TUI 先发 `ide/hello`，扩展回 `ide/hello_ack`，
@@ -161,9 +163,9 @@ npm run package && code --install-extension dsh-tui-vscode-<version>.vsix --forc
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `dsh-tui-vscode.command` | `dsh-tui` | 启动命令（按宿主 PATH 解析为绝对路径） |
+| `dsh-tui-vscode.command` | `dsh-cli` | 启动命令（按宿主 PATH 解析为绝对路径） |
 | `dsh-tui-vscode.extraArgs` | `[]` | 每次启动追加的 CLI 参数，如 `["--lang","en"]` |
-| `dsh-tui-vscode.lang` | `""` | `""`/`zh`/`en`，写入 `DSH_TUI_LANG` |
+| `dsh-tui-vscode.lang` | `""` | `""`/`zh`/`en`，写入 `DSH_CLI_LANG` |
 | `dsh-tui-vscode.injectEditor` | `true` | 未设 `$VISUAL`/`$EDITOR` 时导出 `$VISUAL` |
 | `dsh-tui-vscode.editorCommand` | `code -w` | 导出为 `$VISUAL` 的命令 |
 | `dsh-tui-vscode.dshHome` | `""` | 覆盖会话的 `$DSH_HOME`（空 = 继承） |
@@ -185,34 +187,34 @@ npm run package     # 编译 + 生成 .vsix
 ### 已知限制
 
 - 会话内容即终端内容：滚动历史由 VS Code 集成终端管理；
-- 指定会话恢复依赖 dsh-tui profile 的 `cordis.patch.yml`
-  （dsh-tui 0.7.0+）；
+- 指定会话恢复依赖 dsh-cli profile 的 `cordis.patch.yml`
+  （dsh-cli 0.7.0+）；
 - 无 `session` 头日志的项目名来自组目录解码，含连字符的项目名
   解码有损（如 `flow-comet` → `flow\comet`）——此类会话的 cwd
   仍可在悬浮提示中查看。
 
 ## 方式二：VS Code 集成终端直接运行
 
-不想装扩展时，直接在集成终端里跑 dsh-tui。前置条件与
-[快速开始](getting-started.md) 一致：全局安装 `dsh` CLI 与 `dsh-tui`
+不想装扩展时，直接在集成终端里跑 dsh-cli。前置条件与
+[快速开始](getting-started.md) 一致：全局安装 `dsh` CLI 与 `dsh-cli`
 （首次启动会自举 profile，需要 pnpm）。
 
 1. 打开 VS Code 集成终端（`` Ctrl+` ``）：
 
    ```sh
-   dsh-tui
+   dsh-cli
    ```
 
 2. 恢复上次会话：
 
    ```sh
-   dsh-tui --resume
+   dsh-cli --resume
    ```
 
-   > `-c` / `--continue` 与 `--resume` 等价；`dsh-tui --resume <id>`（或
+   > `-c` / `--continue` 与 `--resume` 等价；`dsh-cli --resume <id>`（或
    > `--resume=<id>`，0.7.0 起）恢复指定会话。
 
-dsh-TUI 对 xterm.js（VS Code / Cursor / code-server）有专门的兼容路径：
+dsh-CLI 对 xterm.js（VS Code / Cursor / code-server）有专门的兼容路径：
 
 - truecolor 配色；
 - OSC 8 链接（由 VS Code 直接渲染为可点击）；
@@ -242,8 +244,8 @@ TUI 的 `Ctrl+G` 走 `$VISUAL`/`$EDITOR`。想让它在 VS Code 里编辑，
 
 ### 界面语言
 
-`DSH_TUI_LANG` 默认中文；要英文界面，在上述 env 里加
-`"DSH_TUI_LANG": "en"`。
+`DSH_CLI_LANG` 默认中文；要英文界面，在上述 env 里加
+`"DSH_CLI_LANG": "en"`。
 
 ### 已知差异（内置终端）
 

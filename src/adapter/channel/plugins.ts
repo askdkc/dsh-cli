@@ -42,7 +42,7 @@ function projectSettingsSection(section: TuiSettingsSection): HostChannelSetting
 /** Build the host-internal plugin-facing surface over one live Channel. */
 export function createChannelPlugins(channel: Channel, token: symbol): HostChannelPluginsPort {
   if (token !== CHANNEL_SPLIT_TOKEN) {
-    throw new Error('dsh-tui: Channel split plugins require the internal host token')
+    throw new Error('dsh-cli: Channel split plugins require the internal host token')
   }
   return Object.freeze({
     async runExternalCommand(name: string, rawInput: string): Promise<string | undefined> {

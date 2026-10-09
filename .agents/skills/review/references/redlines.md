@@ -1,4 +1,4 @@
-# dsh-TUI 仓库红线
+# dsh-CLI 仓库红线
 真源为当前目标分支的 AGENTS.md、ADAPTER.md、docs/contributing.md 全文；本表非穷举。严重度属本技能政策，仓库文本仅定义义务。
 
 ## 1. 源码与生成物分离｜❌

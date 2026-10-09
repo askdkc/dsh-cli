@@ -16,10 +16,12 @@ if (report === undefined || !Array.isArray(report.files)) {
 }
 
 const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
-if (manifest.bin?.['dsh-cli'] !== './bin/dsh-tui.js') {
+if (manifest.bin?.['dsh-cli'] !== './bin/dsh-cli.js') {
   throw new Error('package must expose the dsh-cli command through the launcher')
 }
+if (Object.keys(manifest.bin).join() !== 'dsh-cli') throw new Error('legacy command aliases must not ship')
 const packed = new Set(report.files.map(file => file.path.replaceAll('\\', '/')))
+if (packed.has('bin/dsh-tui.js')) throw new Error('legacy launcher must not ship')
 const targets = new Set()
 
 const addTarget = value => {
@@ -110,7 +112,7 @@ for (const section of ['dependencies', 'optionalDependencies', 'devDependencies'
 
 await import(new URL(`../${manifest.main}`, import.meta.url))
 const invariant = await import(new URL('../lib/types/dsh-adapter/invariant.js', import.meta.url))
-if (invariant.name !== 'dsh-tui-invariant' || typeof invariant.apply !== 'function') {
+if (invariant.name !== 'dsh-cli-invariant' || typeof invariant.apply !== 'function') {
   throw new Error('compiled invariant entry does not expose the expected contract')
 }
 

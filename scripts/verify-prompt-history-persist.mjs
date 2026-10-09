@@ -25,11 +25,11 @@ import { settled, sleep, viewportLines } from './lib/term-test.mjs'
 
 // `DATA_DIR` is resolved at module load from the home directory, so the temp
 // HOME must be in place before the harness imports the compiled app.
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-history-persist-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-history-persist-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 
-const dataDir = join(home, '.dsh-tui')
+const dataDir = join(home, '.dsh-cli')
 const historyFile = join(dataDir, 'history.jsonl')
 mkdirSync(dataDir, { recursive: true })
 /** Append order: index 0 is the oldest entry, the last one is the newest. */

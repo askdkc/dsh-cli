@@ -37,7 +37,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const name = 'dsh-tui-settings-sections'
+export const name = 'dsh-cli-settings-sections'
 
 /**
  * Small host-only registry; settings storage and validation remain owned by
@@ -70,7 +70,7 @@ export class TuiSettingsSectionsRuntime extends Service {
     assertCapabilityShadowPolicy('host.settings.register', settingsSectionStateFor(this).runtime.mode, settingsSectionStateFor(this).runtime.slices)
     const caller = requirePluginCaller(this.ctx, 'tuiSettingsSections.register', this)
     const owner = activationFiber(caller)
-    if (owner === undefined) throw new Error('dsh-tui: tuiSettingsSections.register requires a live activation')
+    if (owner === undefined) throw new Error('dsh-cli: tuiSettingsSections.register requires a live activation')
     // The service path is plugin-land. A plugin's secret field names its own
     // credential ref, but nothing stopped it from naming a host-owned ref
     // (DEEPSEEK_API_KEY / DEEPSEEK_* / DSH_*) and overwriting the user's
@@ -80,7 +80,7 @@ export class TuiSettingsSectionsRuntime extends Service {
     const vetted = vetSectionSecretRefs(section)
     for (const rejection of vetted.rejected) {
       this.ctx.logger.warn(
-        `dsh-tui: settings section "${section.ns}" field "${rejection.path.join('.')}" was rejected: ` +
+        `dsh-cli: settings section "${section.ns}" field "${rejection.path.join('.')}" was rejected: ` +
           `credential ref "${rejection.ref}" is reserved by the host`,
       )
     }
@@ -231,8 +231,8 @@ function isSectionState(value: object): value is SettingsSectionState {
 
 /**
  * In-package fallback registry: some real compositions dispose the
- * `dsh-tui-settings-sections` service row right after it loads (the whole
- * dsh-tui-* host-seam insert list is affected — see the issue-#183 skew
+ * `dsh-cli-settings-sections` service row right after it loads (the whole
+ * dsh-cli-* host-seam insert list is affected — see the issue-#183 skew
  * family), leaving `ctx.get('tuiSettingsSections')` permanently undefined.
  * The TUI's own section must not depend on that: plugin.ts registers into —
  * and channel.ts reads from — this local host whenever the composition

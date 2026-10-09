@@ -20,7 +20,7 @@
  *    structural copy of the plugin's wire value, the same discipline the channel
  *    port already applies to the activity state: this app must not import the
  *    plugin's internals to display a line.
- * @module dsh-tui/dsh-adapter/activity-store
+ * @module dsh-cli/dsh-adapter/activity-store
  */
 
 import type { Context } from '@deepseek-ai/cordis'
@@ -222,7 +222,7 @@ export class ActivityStore {
     this.readFailures.set(sessionId, failures)
     if (!this.warned.has(sessionId)) {
       this.warned.add(sessionId)
-      this.warn?.(`dsh-tui: working-activity projection read failed for session ${sessionId}: ${detail}`)
+      this.warn?.(`dsh-cli: working-activity projection read failed for session ${sessionId}: ${detail}`)
     }
     if (failures >= MAX_READ_FAILURES) this.clear(sessionId)
   }
@@ -344,7 +344,7 @@ export function attachActivityProjection(ctx: Context, store: ActivityStore): vo
       offStore()
       stopTimer()
       offFeed()
-    }, 'dsh-tui activity projection feed')
+    }, 'dsh-cli activity projection feed')
   }) as never)
 }
 

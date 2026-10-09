@@ -25,7 +25,7 @@
  * 可用。shellQuote 等小工具在此内联。
  *
  * 面向用户的消息走 MSG 双语表：与 TUI 的语言契约一致——
- * `DSH_TUI_LANG` 显式指定时从其值，否则默认英文（同 src/i18n.ts 的缺省）。
+ * `DSH_CLI_LANG` 显式指定时从其值，否则默认英文（同 src/i18n.ts 的缺省）。
  */
 import { spawn, spawnSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs'
@@ -33,9 +33,9 @@ import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
-if (process.platform === 'win32' && process.env.DSH_TUI_STANDALONE_BINARY && process.argv[2] !== 'safe') {
+if (process.platform === 'win32' && process.env.DSH_CLI_STANDALONE_BINARY && process.argv[2] !== 'safe') {
   try {
-    const oldBinary = `${process.env.DSH_TUI_STANDALONE_BINARY}.old`
+    const oldBinary = `${process.env.DSH_CLI_STANDALONE_BINARY}.old`
     if (existsSync(oldBinary)) rmSync(oldBinary, { force: true })
   } catch {
     // Best effort cleanup.
@@ -133,15 +133,15 @@ const isVersionNewer = (a, b) => {
   return false
 }
 
-const lang = process.env.DSH_TUI_LANG === 'zh' ? 'zh' : 'en'
+const lang = process.env.DSH_CLI_LANG === 'zh' ? 'zh' : 'en'
 const MSG = {
   noDsh: {
-    en: '[dsh-cli] dsh CLI not found. Install it or set DSH_TUI_DSH_ROOT to a built Harness checkout:\n  npm install -g @deepseek-ai/dsh',
-    zh: '[dsh-cli] 未检测到 dsh CLI。可安装官方客户端，或将 DSH_TUI_DSH_ROOT 指向已构建的 Harness 源码目录：\n  npm install -g @deepseek-ai/dsh',
+    en: '[dsh-cli] dsh CLI not found. Install it or set DSH_CLI_DSH_ROOT to a built Harness checkout:\n  npm install -g @deepseek-ai/dsh',
+    zh: '[dsh-cli] 未检测到 dsh CLI。可安装官方客户端，或将 DSH_CLI_DSH_ROOT 指向已构建的 Harness 源码目录：\n  npm install -g @deepseek-ai/dsh',
   },
   invalidDshRoot: {
-    en: root => `[dsh-cli] DSH_TUI_DSH_ROOT must be an absolute, built DeepSeek Harness checkout: ${root}`,
-    zh: root => `[dsh-cli] DSH_TUI_DSH_ROOT 必须指向已构建的 DeepSeek Harness 源码绝对路径：${root}`,
+    en: root => `[dsh-cli] DSH_CLI_DSH_ROOT must be an absolute, built DeepSeek Harness checkout: ${root}`,
+    zh: root => `[dsh-cli] DSH_CLI_DSH_ROOT 必须指向已构建的 DeepSeek Harness 源码绝对路径：${root}`,
   },
   noPnpm: {
     en: '[dsh-cli] The first-time setup needs pnpm (dsh plugin delegates installs to it):\n  npm install -g pnpm   (or via corepack: corepack enable pnpm)',
@@ -446,7 +446,7 @@ const MSG = {
   },
   helpText: {
     en:
-      `Usage: dsh-cli|dst [command] [options] [path|url]\n\n` +
+      `Usage: dsh-cli [command] [options] [path|url]\n\n` +
       `Commands:\n` +
       `  update                 Update the ${PROFILE} profile to the latest release\n` +
       `  migrate [agent]        Import conversations from claude-code/codex/omp/zcode/grok-build (--dry-run to preview)\n` +
@@ -461,7 +461,7 @@ const MSG = {
       `  <path|url>             Open with the given workspace target\n\n` +
       `Any other argument is forwarded to \`dsh --profile ${PROFILE}\`.`,
     zh:
-      `用法：dsh-cli|dst [命令] [选项] [路径|URL]\n\n` +
+      `用法：dsh-cli [命令] [选项] [路径|URL]\n\n` +
       `命令：\n` +
       `  update                 将 ${PROFILE} profile 升级到最新版本\n` +
       `  migrate [agent]        迁移 claude-code/codex/omp/zcode/grok-build 的对话（--dry-run 预览）\n` +
@@ -480,7 +480,7 @@ const MSG = {
 const msg = key => MSG[key][lang]
 
 // React 开发构建会把每次渲染的 performance.measure() 堆进无界缓冲区导致
-// 长会话 OOM——与仓库根 dsh-tui.cmd 保持一致，强制 production。
+// 长会话 OOM——与仓库根 dsh-cli.cmd 保持一致，强制 production。
 process.env.NODE_ENV ??= 'production'
 
 const sameDir = (a, b) => {
@@ -494,7 +494,7 @@ const sameDir = (a, b) => {
 const dshHome = process.env.DSH_HOME || join(homedir(), '.dsh')
 const profileDir = join(dshHome, 'profiles', PROFILE)
 const profilePkgDir = join(profileDir, 'node_modules', '@askdkc', 'dsh-cli')
-const profileBin = join(profilePkgDir, 'bin', 'dsh-tui.js')
+const profileBin = join(profilePkgDir, 'bin', 'dsh-cli.js')
 const installedPkgPath = join(profilePkgDir, 'package.json')
 const runningInsideProfile = sameDir(ownDir, profilePkgDir)
 const rescueProfileDir = join(dshHome, 'profiles', RESCUE_PROFILE)
@@ -547,7 +547,7 @@ if (subcommand === 'help' || subcommand === '--help' || subcommand === '-h') {
 }
 // A source checkout does not put `dsh` on PATH. An explicit Harness root lets
 // the launcher run its built CLI while keeping the caller's project cwd.
-const dshRoot = process.env.DSH_TUI_DSH_ROOT
+const dshRoot = process.env.DSH_CLI_DSH_ROOT
 let dshBin
 if (dshRoot !== undefined) {
   const candidate = join(dshRoot, 'apps', 'cli', 'lib', 'bin.js')
@@ -638,7 +638,7 @@ const runDoctorChecks = () => {
     'DEEPSEEK_API_KEY',
     keyFromEnv ? L.keySetEnv : keyFromStore ? L.keySetStore : L.keyMissing,
   )
-  for (const candidate of [join(homedir(), '.dsh-tui', 'cordis.yml'), join(profileDir, 'cordis.patch.yml')]) {
+  for (const candidate of [join(homedir(), '.dsh-cli', 'cordis.yml'), join(profileDir, 'cordis.patch.yml')]) {
     report(existsSync(candidate), 'config', `${candidate}${existsSync(candidate) ? '' : `  ${L.missing}`}`)
   }
   return { hardFailure, lines }
@@ -757,7 +757,7 @@ const startDshSession = (dshArgs, profile = PROFILE, env = process.env) =>
 // 那个会话，dsh 会在恢复时再报一次错，正好污染最该干净的通道。其余宿主变量
 // （PATH / DSH_HOME / 凭据…）是救援能工作的前提，照常继承。
 // home 层补丁不在此列：它由 createRescueProfile 的干净性门禁单独把关。
-const RESCUE_DROPPED_ENV = ['DSH_TUI_RESUME_SESSION', 'DSH_TUI_WORKSPACE_TARGET']
+const RESCUE_DROPPED_ENV = ['DSH_CLI_RESUME_SESSION', 'DSH_CLI_WORKSPACE_TARGET']
 const rescueEnv = () => {
   const env = { ...process.env }
   for (const key of RESCUE_DROPPED_ENV) delete env[key]
@@ -1234,7 +1234,7 @@ if (subcommand === 'safe') {
 // 顶层处理、两种角色同一条路径——不放进委托链。委托会把 update 交给
 // profile 内的旧 bin：旧副本不认识这个词，只会当参数透传，恰好是「profile
 // 落后、最需要升级」的用户永远到不了新入口。这里统一动态 import **profile
-// 的**编译产物（不是本副本的——DSH_TUI_NO_DELEGATE 下两者不同包，读本副本
+// 的**编译产物（不是本副本的——DSH_CLI_NO_DELEGATE 下两者不同包，读本副本
 // 会拿全局包版本误判 already-latest/half-updated）；瘦壳零 lib 静态依赖的
 // 迁移契约不变。profile 未初始化时先走既有自举（dsh/pnpm 预检在其中）；
 // 编译产物缺失或没有 cliUpdate 导出（半更新的旧版）给手工升级指引退出 1。
@@ -1282,23 +1282,23 @@ if (subcommand === 'migrate') {
 }
 
 // ─── 全局副本：瘦壳角色 ───────────────────────────────────────────────────────
-// DSH_TUI_NO_DELEGATE=1 是测试/调试逃生口：强制走完整逻辑（verify-launcher
+// DSH_CLI_NO_DELEGATE=1 是测试/调试逃生口：强制走完整逻辑（verify-launcher
 // 的沙箱用它直接驱动全量路径；现场排查委托链时同样可用）。
-if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_TUI_NO_DELEGATE !== '1') {
+if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_CLI_NO_DELEGATE !== '1') {
   if (!profileReady()) bootstrapProfile()
   // Refuse to delegate into a profile from an older release line: the profile
   // copy would launch `dsh --profile dsh-cli` against a composition built from
   // this launcher's patch surface and fail inside the loader.
   checkProfileAlignment(profileVersion())
   // 委托 profile 内副本执行全部启动逻辑。外层代际通过
-  // DSH_TUI_LAUNCHER_VERSION 交代（/update 的对齐诊断沿用该契约）。
+  // DSH_CLI_LAUNCHER_VERSION 交代（/update 的对齐诊断沿用该契约）。
   try {
     readFileSync(profileBin, 'utf8')
   } catch {
     console.error(msg('delegateFailed')(profileBin))
     process.exit(1)
   }
-  process.env.DSH_TUI_LAUNCHER_VERSION = ownVersion
+  process.env.DSH_CLI_LAUNCHER_VERSION = ownVersion
   const child = spawn(process.execPath, [profileBin, ...process.argv.slice(2)], {
     stdio: 'inherit',
     env: process.env,
@@ -1332,18 +1332,18 @@ if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_TUI_NO_
     }
   }
   // 版本错位诊断与瘦壳委托路径共用同一实现（见 checkProfileAlignment）。
-  // `!runningInsideProfile` 只在 DSH_TUI_NO_DELEGATE=1 的调试口下成立，因此
+  // `!runningInsideProfile` 只在 DSH_CLI_NO_DELEGATE=1 的调试口下成立，因此
   // 该判定不能只留在这里——委派出去的子进程就是 profile 副本，看不到外层
   // 启动器版本。
   if (!runningInsideProfile) checkProfileAlignment(installedVersion)
 
   // --resume / 工作区目标拦截（launcher 契约，见 src/sessionHistory.ts）。
   const setResumeEnv = sessionId => {
-    process.env.DSH_TUI_RESUME_SESSION = sessionId
+    process.env.DSH_CLI_RESUME_SESSION = sessionId
   }
   const readLastResumeTarget = () => {
     try {
-      return readFileSync(join(homedir(), '.dsh-tui', 'resume.txt'), 'utf8').trim()
+      return readFileSync(join(homedir(), '.dsh-cli', 'resume.txt'), 'utf8').trim()
     } catch {
       // 没有历史会话可恢复——静默忽略，正常冷启动。
     }
@@ -1363,19 +1363,19 @@ if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_TUI_NO_
       if (!sessionId) sessionId = readLastResumeTarget()
       if (sessionId) setResumeEnv(sessionId)
     } else if (
-      process.env.DSH_TUI_WORKSPACE_TARGET === undefined
+      process.env.DSH_CLI_WORKSPACE_TARGET === undefined
       && !a.startsWith('-')
       && (isAbsolute(a) || /^[a-z][a-z0-9+.-]*:\/\//iu.test(a) || existsSync(resolve(a)))
     ) {
-      process.env.DSH_TUI_WORKSPACE_TARGET = a
+      process.env.DSH_CLI_WORKSPACE_TARGET = a
     } else {
       args.push(a)
     }
   }
 
   // 启动：被委托场景下本副本自己的版本即对齐诊断所见的启动器代际。
-  if (process.env.DSH_TUI_LAUNCHER_VERSION === undefined && ownVersion !== undefined) {
-    process.env.DSH_TUI_LAUNCHER_VERSION = ownVersion
+  if (process.env.DSH_CLI_LAUNCHER_VERSION === undefined && ownVersion !== undefined) {
+    process.env.DSH_CLI_LAUNCHER_VERSION = ownVersion
   }
 
   const firstArgs = args

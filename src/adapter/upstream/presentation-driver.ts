@@ -92,7 +92,7 @@ function createPresentationPort(ctx: unknown): HostPresentationPort {
     async ask(request: HostQuestionRequest): Promise<HostQuestionAnswer> {
       const questionStore = getQuestionStore(ctx as never)
       if (questionStore === undefined) {
-        throw new Error('dsh-tui: host.presentation.ask is unavailable because no QuestionStore is mounted in this composition')
+        throw new Error('dsh-cli: host.presentation.ask is unavailable because no QuestionStore is mounted in this composition')
       }
       const answer = await questionStore.ask({
         questions: request.questions.map(item => ({
@@ -113,9 +113,9 @@ function createPresentationPort(ctx: unknown): HostPresentationPort {
       // pretending to be a working approval path.
       const approvalStore = getApprovalStore(ctx as never)
       if (approvalStore === undefined) {
-        throw new Error('dsh-tui: host.presentation.approve is unavailable because no ApprovalStore is mounted in this composition')
+        throw new Error('dsh-cli: host.presentation.approve is unavailable because no ApprovalStore is mounted in this composition')
       }
-      throw new Error('dsh-tui: host.presentation.approve is staged in P3; use the DSH approval/request waterfall which carries a live ApprovalRequest')
+      throw new Error('dsh-cli: host.presentation.approve is staged in P3; use the DSH approval/request waterfall which carries a live ApprovalRequest')
     },
     dialog(request: HostDialogRequest): Promise<HostDialogAnswer> {
       if (store === undefined) return Promise.resolve(undefined)
@@ -139,8 +139,8 @@ function createPresentationPort(ctx: unknown): HostPresentationPort {
 }
 
 export const presentationDriver: UpstreamDriver = {
-  id: 'dsh-tui-presentation',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-presentation',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.presentation',
   mountEffectClass: 'mutate',
   detect: detectPresentationCapability,

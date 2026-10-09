@@ -25,8 +25,8 @@
  * 运行：node --import tsx/esm scripts/verify-timeline-rail-settle.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 process.env.SSH_CONNECTION = 'headless-test'
 delete process.env.TMUX
 

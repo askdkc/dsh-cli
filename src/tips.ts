@@ -655,8 +655,8 @@ export const TIPS: readonly Tip[] = [
   {
     id: 'disp-theme-custom',
     group: 'display',
-    zh: '主题：~/.dsh-tui/themes/<名>.json 或 npm 插件注册，即时热切换',
-    en: 'Themes: ~/.dsh-tui/themes/<name>.json or npm plugin registration, hot-swappable',
+    zh: '主题：~/.dsh-cli/themes/<名>.json 或 npm 插件注册，即时热切换',
+    en: 'Themes: ~/.dsh-cli/themes/<name>.json or npm plugin registration, hot-swappable',
   },
   {
     id: 'disp-theme-status',
@@ -879,8 +879,8 @@ export const TIPS: readonly Tip[] = [
   {
     id: 'pit-safe-mode',
     group: 'pitfalls',
-    zh: 'dsh 异常退出会提示进入 dsh-tui safe：只读诊断 + 干净救援 profile',
-    en: 'When dsh exits badly, dsh-tui safe offers read-only diagnostics and a clean rescue profile',
+    zh: 'dsh 异常退出会提示进入 dsh-cli safe：只读诊断 + 干净救援 profile',
+    en: 'When dsh exits badly, dsh-cli safe offers read-only diagnostics and a clean rescue profile',
   },
   {
     id: 'pit-effort-fallback',

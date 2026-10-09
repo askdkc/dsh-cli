@@ -40,9 +40,9 @@ import { join } from 'node:path'
 import { zstdCompressSync } from 'node:zlib'
 import { settled } from './lib/term-test.mjs'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-index-'))
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-index-home-'))
-process.env.DSH_TUI_SESSION_ROOT = root
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-index-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-index-home-'))
+process.env.DSH_CLI_SESSION_ROOT = root
 process.env.HOME = home
 process.env.USERPROFILE = home
 
@@ -73,7 +73,7 @@ function ok(name, condition, detail = '') {
   checks += 1
 }
 
-const INDEX_FILE = join(home, '.dsh-tui', 'session-index.json')
+const INDEX_FILE = join(home, '.dsh-cli', 'session-index.json')
 
 /** One zstd frame per event batch — the container the backend writes. */
 function encode(batches) {
@@ -244,16 +244,16 @@ delayedOpening.push([autoTitle('跨目录会话标题', 181)])
 for (let i = 182; i < 560; i++) {
   delayedOpening.push([{ type: 'plugin/noise', seq: i, time: i, data: { text: filler(700) } }])
 }
-const delayedFile = seed('delayed-opening', delayedOpening, { cwd: '/data/proj/dsh-tui' })
-const cheapDelayed = digestSession(delayedFile, '/data/proj/dsh-tui')
+const delayedFile = seed('delayed-opening', delayedOpening, { cwd: '/data/proj/dsh-cli' })
+const cheapDelayed = digestSession(delayedFile, '/data/proj/dsh-cli')
 check('cheap windows reproduce the cwd-basename fallback', cheapDelayed.title, {
-  text: 'dsh-tui',
+  text: 'dsh-cli',
   source: 'fallback',
 })
 check('the inconclusive cheap digest keeps the real conversation visible', cheapDelayed.hasPrompt, true)
 const delayedHeader = {
   id: 'delayed-opening',
-  cwd: '/data/proj/dsh-tui',
+  cwd: '/data/proj/dsh-cli',
   createdAt: 1,
   delegationDepth: 0,
 }
@@ -264,7 +264,7 @@ const delayedSource = (revision) => ({
 let recoveredDelayed
 const delayedSummary = (await listSummaries(delayedSource('delayed-r1'), undefined, row => { recoveredDelayed = row }))[0]
 check('the list returns its usable fallback before deep recovery', delayedSummary.title, {
-  text: 'dsh-tui',
+  text: 'dsh-cli',
   source: 'fallback',
 })
 ok('deep recovery eventually publishes the updated row', await settled(() => recoveredDelayed !== undefined))

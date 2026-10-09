@@ -25,7 +25,7 @@ for (const [id, us] of self) {
   if (filter && !fname.includes(filter)) continue
   const p = parent.get(id)
   const pc = p?.callFrame
-  const pkey = p ? `${pc.functionName || '(anon)'} @ ${(pc.url || '').replace(/^.*(node_modules|dsh-tui)\//, '')}:${pc.lineNumber + 1}` : '(root)'
+  const pkey = p ? `${pc.functionName || '(anon)'} @ ${(pc.url || '').replace(/^.*(node_modules|dsh-cli)\//, '')}:${pc.lineNumber + 1}` : '(root)'
   agg.set(pkey, (agg.get(pkey) ?? 0) + us)
 }
 const rows = [...agg.entries()].sort((a, b) => b[1] - a[1])

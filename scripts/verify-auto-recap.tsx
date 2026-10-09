@@ -1,5 +1,5 @@
 /**
- * Auto-recap regression (`dsh-tui.recapOnOpen`): the dim one-line recap
+ * Auto-recap regression (`dsh-cli.recapOnOpen`): the dim one-line recap
  * row at the bottom of the transcript when a session opens/resumes.
  *
  * Drives the real Chat in xterm (same harness as verify-session-color-recap):
@@ -15,8 +15,8 @@
  * Run: node --import tsx/esm scripts/verify-auto-recap.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [
   { PassThrough, Writable },

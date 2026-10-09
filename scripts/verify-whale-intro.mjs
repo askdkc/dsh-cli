@@ -8,7 +8,7 @@
  * Run: node --import tsx/esm scripts/verify-whale-intro.mjs
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { strict: assert },

@@ -169,7 +169,7 @@
 # tool name as the persistent shell with a Minimal-compatible description, but
 # executes through the ordinary cross-platform subprocess seam (`bash -c`)
 # instead of a PTY. The Git Bash executable is DISCOVERED at preset mount:
-# an explicit `config.bashPath` (or DSH_TUI_LIANGSHEN_BASH_PATH) is honored as
+# an explicit `config.bashPath` (or DSH_CLI_LIANGSHEN_BASH_PATH) is honored as
 # the only candidate, otherwise a PATH git.exe is followed to its install tree
 # (installer/portable/Scoop layouts, Scoop shims followed), then conventional
 # roots, then bare `bash` — never the System32 WSL launcher. A miss warns and

@@ -10,14 +10,14 @@
  *   5. 页签点击切换热点视图 + 排序标签点击循环排序；
  *   6. 热点排行行点击 = 跳回时序视图并定位该组首成员（与 Enter 同路径）。
  *
- * 诊断：置 DSH_TUI_DEBUG_MOUSE=1 看 mouse-debug.log 的
+ * 诊断：置 DSH_CLI_DEBUG_MOUSE=1 看 mouse-debug.log 的
  * "dispatchClick {handled}" / "wheel routed by position"。
  *
  * 运行：node --import tsx/esm scripts/repro-trajectory-mouse.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { TrajectoryScene }, { stringWidth }] =
   await Promise.all([

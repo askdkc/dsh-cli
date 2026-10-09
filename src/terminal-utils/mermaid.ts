@@ -16,7 +16,7 @@ import type { Theme } from '../theme.js'
 
 export type { MermaidArt } from 'lovely-mermaid'
 
-/** The lovely-mermaid surface dsh-tui consumes. */
+/** The lovely-mermaid surface dsh-cli consumes. */
 export type MermaidEngine = Pick<typeof import('lovely-mermaid'), 'render'>
 
 /**

@@ -12,17 +12,17 @@
  *
  * 运行：node --import tsx/esm scripts/verify-update-overflow-guard.tsx
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env['FORCE_COLOR'] = '0'
 
 // 家目录隔离：channel 构造路径会 touch 用户目录，先切临时目录再 import。
 const { mkdtempSync, mkdirSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-185-guard-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-185-guard-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [
   { swallowNestedUpdateOverflow, isNestedUpdateOverflow, callWithUpdateOverflowGuard, resetUpdateOverflowGuardForTest, installNestedUpdateOverflowProcessGuard, registerOverflowQuench },
@@ -93,7 +93,7 @@ try { callWithUpdateOverflowGuard('test.c', () => { throw new Error('boom') }) }
 check('A3 守卫回调透传其他', rethrown instanceof Error && (rethrown as Error).message === 'boom')
 
 // A4 进程级兜底：安装幂等；手动派发一次 #185 uncaughtException 不杀进程
-// （守卫吸收）；DSH_TUI_NO_185_PROCESS_GUARD 逃生门跳过安装。
+// （守卫吸收）；DSH_CLI_NO_185_PROCESS_GUARD 逃生门跳过安装。
 installNestedUpdateOverflowProcessGuard()
 installNestedUpdateOverflowProcessGuard() // 幂等，不重复装
 let processSurvived = true

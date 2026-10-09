@@ -65,7 +65,7 @@ assert.deepEqual(
   ['D:\\Portable\\Git\\bin\\bash.exe'],
 )
 assert.deepEqual(
-  windowsBashCandidates({}, { ...ENV, DSH_TUI_LIANGSHEN_BASH_PATH: 'E:\\Git\\bin\\bash.exe' }),
+  windowsBashCandidates({}, { ...ENV, DSH_CLI_LIANGSHEN_BASH_PATH: 'E:\\Git\\bin\\bash.exe' }),
   ['E:\\Git\\bin\\bash.exe'],
 )
 
@@ -158,14 +158,14 @@ try {
     /D:\\missing\\bash\.exe: not found/,
   )
   await assert.rejects(
-    resolveWindowsBash(fakeSubprocess({}), {}, { ...ENV, DSH_TUI_LIANGSHEN_BASH_PATH: 'E:\\missing\\bash.exe' }),
+    resolveWindowsBash(fakeSubprocess({}), {}, { ...ENV, DSH_CLI_LIANGSHEN_BASH_PATH: 'E:\\missing\\bash.exe' }),
     /E:\\missing\\bash\.exe: not found/,
   )
   assert.equal(
     await resolveWindowsBash(
       fakeSubprocess({ 'd:\\config\\bash.exe': 'D:\\config\\bash.exe', 'e:\\env\\bash.exe': 'E:\\env\\bash.exe' }),
       { bashPath: 'D:\\config\\bash.exe' },
-      { ...ENV, DSH_TUI_LIANGSHEN_BASH_PATH: 'E:\\env\\bash.exe' },
+      { ...ENV, DSH_CLI_LIANGSHEN_BASH_PATH: 'E:\\env\\bash.exe' },
     ),
     'D:\\config\\bash.exe',
   )

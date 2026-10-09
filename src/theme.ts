@@ -1,5 +1,5 @@
 /**
- * dsh-tui color themes — Gentle Mist Blue (雾蓝) family.
+ * dsh-cli color themes — Gentle Mist Blue (雾蓝) family.
  *
  * Two truecolor palettes share one identity: mist blues carry brand, focus,
  * and interaction; body text stays neutral. `light` uses white panel
@@ -190,7 +190,7 @@ export const THEME_NAMES = ['dark', 'dark-ansi', 'light'] as const
  * The `auto` pseudo-theme: not a palette, but a standing request to follow
  * the terminal background (OSC 11, which tracks the system theme in
  * terminals that follow it). Selectable everywhere a theme name is
- * (/theme, DSH_TUI_THEME, ~/.dsh-tui/theme.json); getTheme() resolves it to
+ * (/theme, DSH_CLI_THEME, ~/.dsh-cli/theme.json); getTheme() resolves it to
  * the last detected `light`/`dark` palette via the auto base below.
  */
 export const AUTO_THEME_NAME = 'auto'
@@ -220,7 +220,7 @@ export function getAutoThemeBase(): 'light' | 'dark' {
 
 /**
  * Any theme name: a built-in palette (`light`/`dark`/`dark-ansi`), a user
- * theme from ~/.dsh-tui/themes/<name>.json, or a host runtime contribution.
+ * theme from ~/.dsh-cli/themes/<name>.json, or a host runtime contribution.
  * Always resolvable to a concrete color palette via getTheme() (unknown names
  * fall back to `dark`).
  */
@@ -398,7 +398,7 @@ const lightTheme: Theme = {
  * Dark ANSI theme using only the 16 standard ANSI colors, for terminals
  * without true color support.
  *
- * User themes (JSON files in ~/.dsh-tui/themes/) and host runtime themes
+ * User themes (JSON files in ~/.dsh-cli/themes/) and host runtime themes
  * overlay one of these three bases — see customTheme.ts and the adapter seam.
  * `getTheme` resolves static themes through the resolver registered by
  * ThemeProvider, then consults the optional runtime resolver.

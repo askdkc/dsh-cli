@@ -1,7 +1,7 @@
 /** 探针：快速回底时的空白帧。上滚 30 格 → End 回底，50ms 采样 600ms。 */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { LOCAL_COMMANDS, completeCommands }] = await Promise.all([
   import('node:stream'),

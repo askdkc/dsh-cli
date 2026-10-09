@@ -65,19 +65,19 @@ export { DECISION_EVENT_PERMISSIONS }
 // These aliases are intentionally outside the P6 removal scope: they are a
 // long-term compatibility surface for existing embedder/test code. They map
 // directly to the canonical `../adapter/standard/grants.js` implementation.
-// OWNER: dsh-tui adapter. UNTIL: no scheduled removal.
+// OWNER: dsh-cli adapter. UNTIL: no scheduled removal.
 export { EXTENSION_GRANTS_FILE }
 
 /** @deprecated Use GrantStore from `../adapter/standard/grants.js` (same shape, plus more).
- * Long-term compatibility alias; owner: dsh-tui adapter. */
+ * Long-term compatibility alias; owner: dsh-cli adapter. */
 export type ExtensionGrants = GrantStore
 
 /** @deprecated Use parseGrantStore from `../adapter/standard/grants.js`.
- * Long-term compatibility alias; owner: dsh-tui adapter. */
+ * Long-term compatibility alias; owner: dsh-cli adapter. */
 export const parseExtensionGrants: (text: string) => GrantStore = parseGrantStore
 
 /** @deprecated Use readGrantStore from `../adapter/standard/grants.js`.
- * Long-term compatibility alias; owner: dsh-tui adapter. */
+ * Long-term compatibility alias; owner: dsh-cli adapter. */
 export const readExtensionGrants: (dir?: string) => GrantStore = readGrantStore
 
 /**
@@ -281,7 +281,7 @@ export function registerDecisionHandler(
   const principal = { componentId: identity.componentId, activationId: identity.activationId }
   const currentlyGranted = permission === undefined || registry.grants.allows(principal, permission, scope)
   if (!currentlyGranted) {
-    try { pluginCtx.logger.warn(`dsh-tui: ${event} registration denied for Component "${identity.componentId}" — grant ${permission}@${scope} is missing`) } catch { /* best effort */ }
+    try { pluginCtx.logger.warn(`dsh-cli: ${event} registration denied for Component "${identity.componentId}" — grant ${permission}@${scope} is missing`) } catch { /* best effort */ }
     return () => false
   }
   const order = options.order ?? identity.componentId
@@ -515,7 +515,7 @@ export function installDecisionGuard(ctx: Context, grants: GrantStore): void {
       } catch (error) {
         try {
           this.logger.warn(
-            `dsh-tui: ${name} subscription from Component "${identity.componentId}" denied — ` +
+            `dsh-cli: ${name} subscription from Component "${identity.componentId}" denied — ` +
             `${error instanceof Error ? error.message : String(error)}`,
           )
         } catch { /* best effort */ }
@@ -524,7 +524,7 @@ export function installDecisionGuard(ctx: Context, grants: GrantStore): void {
     }
     const requiredGrant = permission === undefined ? '' : `; required grant ${permission}`
     ctx.logger.warn(
-      `dsh-tui: ${name} direct subscription from Component "${pluginName}" denied${requiredGrant} — ` +
+      `dsh-cli: ${name} direct subscription from Component "${pluginName}" denied${requiredGrant} — ` +
       'use the mediated DecisionEvents activation surface; the listener was NOT registered',
     )
     // Truthy bail result: cordis skips the registration and hands this back

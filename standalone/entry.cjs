@@ -47,14 +47,14 @@ const metadata = require('./runtime-meta.json')
 // scripts/verify-standalone-cache-guard.mjs).
 const { ensureRuntime } = require('./cacheGuard.cjs')
 
-const TUI_VERSION = metadata.tuiVersion
+const CLI_VERSION = metadata.cliVersion
 const BUNDLE_ID = metadata.bundleId
 const PROFILE = 'dsh-cli'
 const archivePath = join(__dirname, 'runtime.tar.gz')
 
 const cacheBase = resolve(
-  process.env.DSH_TUI_STANDALONE_CACHE ??
-    join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'dsh-tui-standalone'),
+  process.env.DSH_CLI_STANDALONE_CACHE ??
+    join(process.env.XDG_CACHE_HOME ?? join(homedir(), '.cache'), 'dsh-cli-standalone'),
 )
 const runtimeRoot = join(cacheBase, BUNDLE_ID)
 const dshBin = join(runtimeRoot, metadata.binPath)
@@ -91,13 +91,13 @@ if (process.platform === 'win32') {
 async function main() {
   await ensureRuntimeReady()
   process.env.DSH_HOME = resolve(
-    process.env.DSH_TUI_STANDALONE_HOME ?? join(homedir(), '.dsh-tui-standalone'),
+    process.env.DSH_CLI_STANDALONE_HOME ?? join(homedir(), '.dsh-cli-standalone'),
   )
-  ensureProfile({ home: process.env.DSH_HOME, runtimeRoot, tuiVersion: TUI_VERSION, profile: PROFILE })
+  ensureProfile({ home: process.env.DSH_HOME, runtimeRoot, cliVersion: CLI_VERSION, profile: PROFILE })
 
-  process.env.DSH_TUI_STANDALONE = '1'
-  process.env.DSH_TUI_STANDALONE_BINARY = process.execPath
-  process.env.DSH_TUI_LAUNCHER_VERSION = TUI_VERSION
+  process.env.DSH_CLI_STANDALONE = '1'
+  process.env.DSH_CLI_STANDALONE_BINARY = process.execPath
+  process.env.DSH_CLI_LAUNCHER_VERSION = CLI_VERSION
   process.argv = [process.execPath, dshBin, '--profile', PROFILE, ...process.argv.slice(2)]
   const { runCli } = await import(pathToFileURL(dshBin).href)
   if (typeof runCli !== 'function') throw new Error(`Bundled DSH CLI has no runCli() entry: ${dshBin}`)

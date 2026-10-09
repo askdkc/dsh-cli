@@ -21,7 +21,7 @@
  * Run: node --import tsx/esm scripts/verify-shrink-anchored-pad.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, Box, Text }, { sleep }] =
   await Promise.all([

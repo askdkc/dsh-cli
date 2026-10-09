@@ -1,6 +1,6 @@
 /**
  * Regression for the settled-header whale behaviors (settings
- * `dsh-tui.whaleIdle`), ported from the dsh-ui-whale web plugin
+ * `dsh-cli.whaleIdle`), ported from the dsh-ui-whale web plugin
  * (https://github.com/lhh010/dsh-ui-whale): the LAYERED planner —
  * independent tail / fin / heart / sleep-Z / blink planes that compose per
  * tick (whaleLayers.ts) so actions run in PARALLEL — plus frame-data parity
@@ -10,7 +10,7 @@
  * Run: node --import tsx/esm scripts/verify-whale-idle.mjs
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { strict: assert },

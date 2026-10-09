@@ -16,7 +16,7 @@ import assert from 'node:assert/strict'
 import { settled, viewportLines } from './lib/term-test.mjs'
 
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 // adapter 走 os.homedir()（Windows 读 USERPROFILE）：两个都指到空夹具目录，
 // 扫描既不碰真实数据，也保证各源计数为 0、启动提示检测无信号。grok-build 还
 // 认 GROK_HOME，一并钉到夹具下的 .grok（否则挂载后的活动检测会扫真实会话库）。

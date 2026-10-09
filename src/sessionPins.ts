@@ -1,6 +1,6 @@
 /**
  * Pinned sessions for the `/resume` browser, kept at
- * `~/.dsh-tui/session-pins.json` (a JSON array of session ids) so the pins
+ * `~/.dsh-cli/session-pins.json` (a JSON array of session ids) so the pins
  * survive restarts.
  *
  * The pin key is the DSH session id (`SessionSummary.id`, from the session

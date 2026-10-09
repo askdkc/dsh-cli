@@ -186,7 +186,7 @@ export function registerPromptDebug(ctx: Context): void {
         schemaVersion: 2,
         generatedAt: new Date().toISOString(),
         captureStartedAt,
-        captureScope: 'Requests observed by this dsh-tui process; requests from before a session resume cannot be reconstructed.',
+        captureScope: 'Requests observed by this dsh-cli process; requests from before a session resume cannot be reconstructed.',
         warning: 'Sensitive debug data: contains system prompts, conversation messages, tool schemas, and tool results. It intentionally excludes credentials and transport headers.',
         sessionId,
         turnCount: turns.size,

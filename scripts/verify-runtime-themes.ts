@@ -11,10 +11,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { TuiThemeHost } from '../src/dsh-adapter/themes.js'
 
-const home = mkdtempSync(join(tmpdir(), 'dshtui-runtime-theme-home-'))
+const home = mkdtempSync(join(tmpdir(), 'dshcli-runtime-theme-home-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
-const themeDir = join(home, '.dsh-tui', 'themes')
+const themeDir = join(home, '.dsh-cli', 'themes')
 mkdirSync(themeDir, { recursive: true })
 writeFileSync(
   join(themeDir, 'shared.json'),

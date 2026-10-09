@@ -4,7 +4,7 @@
  * keeps this shim so existing importers (`/activity` picker, status line,
  * channel, activity prefs) resolve the same names without moving; all preset
  * data (the pi-extension union, 35 presets) lives upstream.
- * @module dsh-tui/components/activityFrames
+ * @module dsh-cli/components/activityFrames
  */
 
 import { FRAME_PRESETS as upstreamPresets, type FramePreset } from 'dsh-working-activity/frames'

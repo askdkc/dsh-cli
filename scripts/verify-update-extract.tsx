@@ -2,7 +2,7 @@
  * 便携包更新解压链安全回归（src/update.ts）。
  *
  * Windows 解压的 PowerShell 单引号注入（安全审查中危）：
- * 下载/解压路径派生自 DSH_TUI_STANDALONE_CACHE 等环境变量，旧实现把
+ * 下载/解压路径派生自 DSH_CLI_STANDALONE_CACHE 等环境变量，旧实现把
  * 路径直接拼进 `Expand-Archive -Path '...' -DestinationPath '...'` 的
  * PowerShell 单引号字符串——路径里一个 `'` 就能闭合字面量注入任意命令
  * （`;Calc.exe;'+'` 类 payload）。断言：
@@ -58,7 +58,7 @@ if (typeof escapePsSingleQuoted === 'function') {
   )
   check(
     'escapePsSingleQuoted 无引号路径原样返回',
-    escapePsSingleQuoted('C:\\cache\\dsh-tui') === 'C:\\cache\\dsh-tui',
+    escapePsSingleQuoted('C:\\cache\\dsh-cli') === 'C:\\cache\\dsh-cli',
   )
 }
 
@@ -134,7 +134,7 @@ if (typeof validateExtractedTree === 'function') {
     // 干净树：目录 + 常规文件嵌套 → 放行
     const cleanDir = join(scratch, 'clean')
     mkdirSync(join(cleanDir, 'sub', 'deep'), { recursive: true })
-    writeFileSync(join(cleanDir, 'dsh-tui'), 'binary')
+    writeFileSync(join(cleanDir, 'dsh-cli'), 'binary')
     writeFileSync(join(cleanDir, 'sub', 'asset.txt'), 'asset')
     writeFileSync(join(cleanDir, 'sub', 'deep', 'x.bin'), 'x')
     const cleanCheck = validateExtractedTree(cleanDir)
@@ -144,7 +144,7 @@ if (typeof validateExtractedTree === 'function') {
     // 必须拒绝，否则替换阶段 copyFileSync 跟随链接读写链接目标。
     const linkDir = join(scratch, 'links')
     mkdirSync(linkDir, { recursive: true })
-    writeFileSync(join(linkDir, 'dsh-tui'), 'binary')
+    writeFileSync(join(linkDir, 'dsh-cli'), 'binary')
     symlinkSync('/etc/passwd', join(linkDir, 'link.txt'))
     const linkCheck = validateExtractedTree(linkDir)
     check('含文件符号链接的提取树被拒绝', !linkCheck.ok, JSON.stringify(linkCheck))
@@ -169,7 +169,7 @@ if (typeof validateExtractedTree === 'function') {
       'import zipfile,sys;'
       + 'z=zipfile.ZipFile(sys.argv[1],"w");'
       + 'z.writestr("../evil.txt","evil");'
-      + 'z.writestr("dsh-tui","binary");'
+      + 'z.writestr("dsh-cli","binary");'
       + 'z.close()',
       evilZip,
     ])
@@ -202,7 +202,7 @@ if (typeof validateExtractedTree === 'function') {
       'import tarfile,io,sys;'
       + 't=tarfile.open(sys.argv[1],"w:gz");'
       + 'data=b"binary";'
-      + 'ti=tarfile.TarInfo("dsh-tui");ti.size=len(data);t.addfile(ti,io.BytesIO(data));'
+      + 'ti=tarfile.TarInfo("dsh-cli");ti.size=len(data);t.addfile(ti,io.BytesIO(data));'
       + 'lk=tarfile.TarInfo("link.txt");lk.type=tarfile.SYMTYPE;lk.linkname="/etc/passwd";t.addfile(lk);'
       + 't.close()',
       evilTar,
@@ -230,8 +230,8 @@ if (typeof validateExtractedTree === 'function') {
       'import tarfile,io,sys;'
       + 't=tarfile.open(sys.argv[1],"w:gz");'
       + 'data=b"binary";'
-      + 'ti=tarfile.TarInfo("dsh-tui");ti.size=len(data);t.addfile(ti,io.BytesIO(data));'
-      + 'hl=tarfile.TarInfo("hard.txt");hl.type=tarfile.LNKTYPE;hl.linkname="dsh-tui";t.addfile(hl);'
+      + 'ti=tarfile.TarInfo("dsh-cli");ti.size=len(data);t.addfile(ti,io.BytesIO(data));'
+      + 'hl=tarfile.TarInfo("hard.txt");hl.type=tarfile.LNKTYPE;hl.linkname="dsh-cli";t.addfile(hl);'
       + 't.close()',
       hardTar,
     ])

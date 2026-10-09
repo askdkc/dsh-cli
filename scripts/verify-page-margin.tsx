@@ -24,8 +24,8 @@
  * 运行：node --import tsx/esm scripts/verify-page-margin.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen, Box, Text }, { PageMargin, PageInsetContext }, { useTerminalSize }, { settle, sleep }] = await Promise.all([
   import('node:stream'),
@@ -108,7 +108,7 @@ check('右列对称：E 行止于第 37 列（38/39 列空白）', edgeRow >= 0 
 check('END 停在内容区底行（第 10 行，0-based）', endRow === ROWS - 2 && lines[endRow]!.startsWith('  '), JSON.stringify(lines[endRow]))
 
 // ── 档位切换：模块级 store 驱动 PageMargin 即时重布局（/settings 实机路径）──
-const { applyPageMargin } = await import('../src/tuiDisplayPrefs.js')
+const { applyPageMargin } = await import('../src/cliDisplayPrefs.js')
 applyPageMargin('roomy')
 await settle(() => screenLines().some(l => l.includes('size=32x8 inset=4,2')))
 const roomy = screenLines()
@@ -125,7 +125,7 @@ check('none：首行即内容（无顶部边距）', none[0]!.includes('size=40x
 check('none：END 贴最后一行', none[ROWS - 1]!.trim() === 'END', JSON.stringify(none[ROWS - 1]))
 
 // ── 自定义规格：NxM（预设之外手动填数值）──
-const { parsePageMarginSpec, normalizePageMargin } = await import('../src/tuiDisplayPrefs.js')
+const { parsePageMarginSpec, normalizePageMargin } = await import('../src/cliDisplayPrefs.js')
 check('单元：parsePageMarginSpec("2,1") → "2x1"', parsePageMarginSpec('2,1') === '2x1')
 check('单元：parsePageMarginSpec("3x1") → "3x1"', parsePageMarginSpec('3x1') === '3x1')
 check('单元：parsePageMarginSpec("9x9") 超界 → undefined', parsePageMarginSpec('9x9') === undefined)

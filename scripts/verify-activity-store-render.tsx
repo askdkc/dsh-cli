@@ -13,11 +13,11 @@
  * 3. Clearing a session takes the line away again.
  * 4. When both seams carry a value, the projection wins over the channel's copy,
  *    which is what makes the read-side migration a no-op for display.
- * @module dsh-tui/scripts/verify-activity-store-render
+ * @module dsh-cli/scripts/verify-activity-store-render
  */
 
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [
   { strict: assert },
@@ -35,7 +35,7 @@ const [
   import('@xterm/headless'),
   import('../src/ui.js'),
   import('../src/screens/StatusLine.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
   import('../src/dsh-adapter/activity-store.js'),
 ])
 

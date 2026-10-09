@@ -56,7 +56,7 @@ export function stageStandaloneLauncher(runtimeRoot, launcherRoot) {
   const tarRoot = dirname(fileURLToPath(import.meta.resolve('tar/package.json')))
   const tar = JSON.parse(readFileSync(join(tarRoot, 'package.json'), 'utf8'))
   writeFileSync(join(launcherRoot, 'package.json'), JSON.stringify({
-    name: 'dsh-tui-standalone-launcher', private: true, dependencies: { tar: tar.version },
+    name: 'dsh-cli-standalone-launcher', private: true, dependencies: { tar: tar.version },
   }, null, 2) + '\n')
   mkdirSync(join(launcherRoot, 'node_modules'))
   symlinkSync(tarRoot, join(launcherRoot, 'node_modules/tar'), process.platform === 'win32' ? 'junction' : 'dir')

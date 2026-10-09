@@ -12,7 +12,7 @@ import { type CommandCompletion, type LocalCommand } from '../../commands.js'
 import type { SpinnerMode } from '../../components/Spinner/spinnerMode.js'
 import { type BalanceResult } from '../../deepseekBalance.js'
 import { type SessionModeSpec } from '../../sessionModes.js'
-import { type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../../tuiDisplayPrefs.js'
+import { type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../../cliDisplayPrefs.js'
 import { type FileCandidate } from '../../utils/fileSuggestions.js'
 import type {
   TuiRewindMode
@@ -48,7 +48,7 @@ export type ChannelImageBlock = Extract<ContentBlock, { type: 'image' }>
 
 export type ChannelImageMediaType = ChannelImageBlock['attachment']['mediaType']
 
-/** The dsh-tools registry seam dsh-tui reads presentations through. The
+/** The dsh-tools registry seam dsh-cli reads presentations through. The
  *  registry lives on the host plane; `get` takes the live agent as the
  *  scope so a preset's own tool definitions resolve (dsh-host-apiproxy's
  *  presenter pattern). */

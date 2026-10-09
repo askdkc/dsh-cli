@@ -63,7 +63,7 @@ function check(name, ok, extra = '') {
 // Independent of any screen: private atomic replacement, fresh
 // read-modify-write, corruption preservation, and lock contention failure
 // without lost data. Still the store the session screen reads.
-const pinDir = join(fakeHome, '.dsh-tui')
+const pinDir = join(fakeHome, '.dsh-cli')
 const pinFile = join(pinDir, 'session-pins.json')
 const pinLock = join(pinDir, 'session-pins.lock')
 check('pin store initial write succeeds', writeSessionPins(['base']))

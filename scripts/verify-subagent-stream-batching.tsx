@@ -18,16 +18,16 @@
  */
 process.env.FORCE_COLOR = '3'
 // 断言文案与 locale 无关
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 // 家目录隔离：channel 构造路径会 touch 用户目录，先切临时目录再 import。
 const { mkdtempSync, mkdirSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-subagent-batch-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-subagent-batch-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [{ Context }, { createChannel }, { SubagentActivityStore }, { mountChannelUi }, { registerTuiChannel }, { settled, sleep }] = await Promise.all([
   import('@deepseek-ai/cordis'),

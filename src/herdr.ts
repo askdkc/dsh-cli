@@ -108,8 +108,8 @@ export function attachHerdrIntegration(
         attempts += 1
         const result = await withTimeout(runSafely([
           'pane', 'report-agent', paneId,
-          '--source', 'custom:dsh-tui',
-          '--agent', 'dsh-tui',
+          '--source', 'custom:dsh-cli',
+          '--agent', 'dsh-cli',
           '--state', state,
           ...(blocked ? ['--message', 'Waiting for user input'] : []),
           '--seq', String(++sequence),
@@ -157,8 +157,8 @@ export function attachHerdrIntegration(
       for (const unsubscribe of unsubscribes) unsubscribe()
       const release = runSafely([
         'pane', 'release-agent', paneId,
-        '--source', 'custom:dsh-tui',
-        '--agent', 'dsh-tui',
+        '--source', 'custom:dsh-cli',
+        '--agent', 'dsh-cli',
         '--seq', String(++sequence),
       ])
       disposePromise = withTimeout(release, releaseTimeoutMs).then(() => undefined)

@@ -25,13 +25,13 @@ import { foldLongLines } from '../utils/fold-long-lines.js'
 import { stringWidth } from '../ink/stringWidth.js'
 import { truncateToWidth } from '../ink/truncateToWidth.js'
 import { clipPreview, type TimelineSnapshot, type TimelineTurn } from '../ink/timeline-rail.js'
-import type { ToolBackground } from '../tuiDisplayPrefs.js'
+import type { ToolBackground } from '../cliDisplayPrefs.js'
 import { getRevealVersion, revealLengthOf, revealTextOf } from './smoothReveal.js'
 import { useRevealVersion } from '../hooks/useRevealVersion.js'
 import { TranscriptImages } from './messages/TranscriptImages.js'
 
 /**
- * Transcript rows rendered with the dsh-TUI message layout: user prompts
+ * Transcript rows rendered with the dsh-CLI message layout: user prompts
  * on a grey bubble with a `❯` pointer, assistant text with a `●` bullet and
  * markdown, thinking as a live three-line/full toggle then a settled
  * `⚓ Thinking` row with the localized ctrl+o expand hint, and tool calls as
@@ -332,7 +332,7 @@ export function MessageList({
   foldTerminalCommand?: boolean
   /** Smooth streaming reveal from the live channel settings (default off at
    *  this layer — embedders and verify harnesses keep exact-paint behavior;
-   *  Chat passes the channel's `dsh-tui.smoothStreaming` value). */
+   *  Chat passes the channel's `dsh-cli.smoothStreaming` value). */
   smoothStreaming?: boolean
   /** Working-activity preset name from the channel; drives the subagent
    *  card's running glyph so both indicators follow one setting. */

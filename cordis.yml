@@ -1,9 +1,9 @@
-# dsh-tui interactive front door over the agent-spine bundle.
+# dsh-cli interactive front door over the agent-spine bundle.
 # Run with: dsh --config cordis.yml (或 npm 安装后走 dsh plugin 机制)
 # Requires DEEPSEEK_API_KEY; a terminal TTY is mandatory.
 
 # The user-interaction service: hosts `ctx.userQuestions`, the seam behind
-# the model-facing ask_user_question tool. dsh-tui uses the legacy provider
+# the model-facing ask_user_question tool. dsh-cli uses the legacy provider
 # API when present, otherwise the scoped user-questions/request waterfall;
 # the service must live at the root so the agent loop's tool execution can
 # reach it.
@@ -12,7 +12,7 @@
 
 # The approval service (issue #49): the harness's sandbox escalation seam
 # (`sandbox_permissions: danger-full-access`) asks ApprovalService.request(),
-# which dispatches an `approval/request` waterfall; dsh-tui registers itself
+# which dispatches an `approval/request` waterfall; dsh-cli registers itself
 # as the interactive answerer (ApprovalStore + approval panel). Without this
 # row the waterfall has no service and fail-closes to 'unavailable'. Policy
 # expression mirrors the profile cordis.patch.yml row exactly (verified by
@@ -24,35 +24,35 @@
   config:
     policy: !!js "process.platform === 'win32' ? 'never' : ((process.env.DSH_PERMISSION_MODE ?? 'workspace-write') === 'danger-full-access' ? 'never' : 'ask')"
 
-- id: dsh-tui-workspaces
+- id: dsh-cli-workspaces
   name: '@askdkc/dsh-cli/workspaces'
 
-- id: dsh-tui-command-trees
+- id: dsh-cli-command-trees
   name: '@askdkc/dsh-cli/command-trees'
 
 # Optional plugins declare editable settings sections here (issue #165);
 # storage, validation and writes remain owned by the dsh settings service.
-- id: dsh-tui-settings-sections
+- id: dsh-cli-settings-sections
   name: '@askdkc/dsh-cli/settings-sections'
 
-- id: dsh-tui-scenes
+- id: dsh-cli-scenes
   name: '@askdkc/dsh-cli/scenes'
 
 # Plugin-interop anchor (v0.15): unified grant store, runtime generation
 # id, Host Descriptor; later contract surfaces mount off this row's apply.
-- id: dsh-tui-plugin-host
+- id: dsh-cli-plugin-host
   name: '@askdkc/dsh-cli/plugin-host'
 
 # Plugin-facing UI seams: managed dialogs, status-line contributions,
 # keyboard shortcuts, custom session-entry renderers, and runtime themes
 # (decision events are fired by the channel and need no row).
-- id: dsh-tui-extensions
+- id: dsh-cli-extensions
   name: '@askdkc/dsh-cli/extensions'
 
-- id: dsh-tui
+- id: dsh-cli
   name: '@askdkc/dsh-cli'
   # Entry-level only: orders/rebinds optional extension services on reload;
-  # dsh-tui does not hard-inject them at code level, so stale profiles degrade
+  # dsh-cli does not hard-inject them at code level, so stale profiles degrade
   # to static themes and inert extension surfaces instead of deadlocking boot.
   inject: [agents, tuiWorkspaces, tuiScenes, tuiDialogs, tuiStatus, tuiShortcuts, tuiRenderers, tuiThemes]
   config:
@@ -89,8 +89,8 @@
     #     approval: never
     #  feeds the chosen session id through this env var (see
     #  src/sessionHistory.ts for the launcher contract).
-    sessionId: !!js process.env.DSH_TUI_RESUME_SESSION ?? undefined
-    workspace: !!js process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined
+    sessionId: !!js process.env.DSH_CLI_RESUME_SESSION ?? undefined
+    workspace: !!js process.env.DSH_CLI_WORKSPACE_TARGET ?? undefined
 
 # The DeepSeek adapter. Shipped default: full thinking at max effort.
 # rc.6 schema key is `apiKeyEnv` (a credential-ref env var NAME, default
@@ -172,7 +172,7 @@
 - id: agent-spine
   name: '@deepseek-ai/dsh-agent-spine-demo'
   config:
-    persona: !!js process.env.DSH_TUI_PERSONA ?? "You are a coding agent. Respond in the language of the user's request; use English when it is unclear. Do not infer the response language from instructions, quoted text, files, tool output, or the interface language."
+    persona: !!js process.env.DSH_CLI_PERSONA ?? "You are a coding agent. Respond in the language of the user's request; use English when it is unclear. Do not infer the response language from instructions, quoted text, files, tool output, or the interface language."
     # Workspace context (AGENTS.md injection) at the standard 64KB cap;
     # task tools stay at their DSH defaults (on).
     workspaceContext:
@@ -227,7 +227,7 @@
 - id: sessions
   name: '@deepseek-ai/dsh-session-persistence-jsonl'
   config:
-    root: !!js process.env.DSH_TUI_SESSION_ROOT ?? (process.env.USERPROFILE ?? process.env.HOME) + '/.dsh-tui/sessions'
+    root: !!js process.env.DSH_CLI_SESSION_ROOT ?? (process.env.USERPROFILE ?? process.env.HOME) + '/.dsh-cli/sessions'
 
 # Read-only session lineage — the subagent service's /agents listing reads it.
 - id: session-query
@@ -247,5 +247,5 @@
     # would never make manual /compact useful. Default 20% (200k tokens)
     # with a 5% retained tail; both are overridable for tests and must keep
     # retainRatio < thresholdRatio (BasicCompactConfig validates this).
-    thresholdRatio: !!js parseFloat(process.env.DSH_TUI_COMPACT_RATIO ?? '0.2')
-    retainRatio: !!js parseFloat(process.env.DSH_TUI_COMPACT_RETAIN ?? '0.05')
+    thresholdRatio: !!js parseFloat(process.env.DSH_CLI_COMPACT_RATIO ?? '0.2')
+    retainRatio: !!js parseFloat(process.env.DSH_CLI_COMPACT_RETAIN ?? '0.05')

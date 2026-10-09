@@ -8,7 +8,7 @@
  * \`width\` prop still wins.
  * Run: node --import tsx/esm scripts/verify-divider-width.tsx
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '3'
 
 const [{ Writable }, React, { Terminal: XTerm }, ui, { Divider }, { settled, viewportLines }] =

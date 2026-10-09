@@ -224,7 +224,7 @@ export function parseAdapterMode(value: string | undefined): AdapterMode {
       return normalized
     default:
       throw new Error(
-        `dsh-tui: unknown DSH_TUI_ADAPTER_MODE ${JSON.stringify(value)}; valid modes: legacy, passive-shadow, replay-shadow, new`,
+        `dsh-cli: unknown DSH_CLI_ADAPTER_MODE ${JSON.stringify(value)}; valid modes: legacy, passive-shadow, replay-shadow, new`,
       )
   }
 }
@@ -258,7 +258,7 @@ function canonicalAdapterSlice(value: string): string {
  * Slice ids are case-insensitive and surrounding whitespace is ignored.
  * Known aliases are mapped to their canonical slice id. Unknown ids are
  * rejected loudly (fail-closed) instead of being silently ignored: a typo in
- * `DSH_TUI_ADAPTER_SLICES` must never accidentally broaden or narrow the
+ * `DSH_CLI_ADAPTER_SLICES` must never accidentally broaden or narrow the
  * governed adapter surface without the operator noticing.
  */
 export function normalizeAdapterSliceList(slices: readonly string[]): readonly string[] {
@@ -268,7 +268,7 @@ export function normalizeAdapterSliceList(slices: readonly string[]): readonly s
     if (name === '') continue
     if (!KNOWN_ADAPTER_SLICES.has(name)) {
       throw new Error(
-        `dsh-tui: unknown adapter slice "${raw}"; valid slices: ${[...KNOWN_ADAPTER_SLICES].sort().join(', ')}`,
+        `dsh-cli: unknown adapter slice "${raw}"; valid slices: ${[...KNOWN_ADAPTER_SLICES].sort().join(', ')}`,
       )
     }
     if (!normalized.includes(name)) normalized.push(name)
@@ -278,8 +278,8 @@ export function normalizeAdapterSliceList(slices: readonly string[]): readonly s
 
 export function parseAdapterRuntime(env: NodeJS.ProcessEnv = process.env): AdapterRuntimeOptions {
   return Object.freeze({
-    mode: parseAdapterMode(env.DSH_TUI_ADAPTER_MODE),
-    slices: normalizeAdapterSliceList((env.DSH_TUI_ADAPTER_SLICES ?? '').split(',')),
+    mode: parseAdapterMode(env.DSH_CLI_ADAPTER_MODE),
+    slices: normalizeAdapterSliceList((env.DSH_CLI_ADAPTER_SLICES ?? '').split(',')),
   })
 }
 
@@ -321,7 +321,7 @@ export function shadowPolicyAllowed(effectClass: HostEffectClass, mode: AdapterM
 export function assertShadowPolicy(effectClass: HostEffectClass, mode: AdapterMode): void {
   if (!shadowPolicyAllowed(effectClass, mode)) {
     throw new Error(
-      `dsh-tui: shadow policy denies ${effectClass} in ${mode} mode`,
+      `dsh-cli: shadow policy denies ${effectClass} in ${mode} mode`,
     )
   }
 }
@@ -345,7 +345,7 @@ export function assertCapabilityShadowPolicy(
   if (!isSelectedSlice(capability, slices) && (mode === 'legacy' || mode === 'new')) return
   const effectClass = effectClassFor(capability)
   if (effectClass === undefined) {
-    throw new Error(`dsh-tui: capability has no registered effect class: ${capability}`)
+    throw new Error(`dsh-cli: capability has no registered effect class: ${capability}`)
   }
   assertShadowPolicy(effectClass, mode)
 }

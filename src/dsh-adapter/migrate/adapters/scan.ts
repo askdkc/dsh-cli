@@ -1,7 +1,7 @@
 /**
  * Shared lightweight counting for the migration adapters.
  *
- * Bare `dsh-tui migrate` (and the TUI's `/migrate`) only prints a per-agent
+ * Bare `dsh-cli migrate` (and the TUI's `/migrate`) only prints a per-agent
  * count, but discover() parses EVERY file into memory (real-world scale:
  * ~9600 files / 5.5GB → 49s and ~880MB just to print five numbers —
  * deep-review M3). countSessions() walks the same trees matching only

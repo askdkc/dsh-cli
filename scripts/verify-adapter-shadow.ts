@@ -681,7 +681,7 @@ for (const claim of integrationClaimChecks) {
 }
 
 // ── Real passive-shadow runtime: mediated + raw ctx.on DecisionEvents ──────
-process.env.DSH_TUI_ADAPTER_MODE = 'passive-shadow'
+process.env.DSH_CLI_ADAPTER_MODE = 'passive-shadow'
 try {
   const { Context } = await import('@deepseek-ai/cordis')
   const pluginHostRow = await import('../src/dsh-adapter/plugin-host.js')
@@ -780,7 +780,7 @@ try {
   const p3Dialogs = new TuiDialogRuntime(passiveRoot)
   const p3Questions = new QuestionStore()
   const p3Approvals = new ApprovalStore()
-  process.env.DSH_TUI_ADAPTER_MODE = 'new'
+  process.env.DSH_CLI_ADAPTER_MODE = 'new'
   assert.throws(() => p3Scenes.register({ id: 'x', component: () => undefined } as never), /shadow policy denies/)
   assert.throws(() => p3Settings.register({ ns: 'x', title: 'x', fields: [] } as never), /shadow policy denies/)
   assert.throws(() => p3Status.set('x', 'y'), /shadow policy denies/)
@@ -864,12 +864,12 @@ try {
   assert.equal(decisionHandlersOf(passiveRoot, 'tui/input').length, 0)
   rawPlugin.dispose()
 } finally {
-  delete process.env.DSH_TUI_ADAPTER_MODE
+  delete process.env.DSH_CLI_ADAPTER_MODE
 }
 
 // Replay-shadow on a real production host must also fail closed for every
 // effectful entry (subscribe/register included), just like passive shadow.
-process.env.DSH_TUI_ADAPTER_MODE = 'replay-shadow'
+process.env.DSH_CLI_ADAPTER_MODE = 'replay-shadow'
 try {
   const { Context } = await import('@deepseek-ai/cordis')
   const pluginHostRow = await import('../src/dsh-adapter/plugin-host.js')
@@ -940,7 +940,7 @@ try {
   const p3Dialogs = new TuiDialogRuntime(root)
   const p3Questions = new QuestionStore()
   const p3Approvals = new ApprovalStore()
-  process.env.DSH_TUI_ADAPTER_MODE = 'new'
+  process.env.DSH_CLI_ADAPTER_MODE = 'new'
   assert.throws(() => p3Scenes.register({ id: 'x', component: () => undefined } as never), /shadow policy denies/)
   assert.throws(() => p3Settings.register({ ns: 'x', title: 'x', fields: [] } as never), /shadow policy denies/)
   assert.throws(() => p3Status.set('x', 'y'), /shadow policy denies/)
@@ -972,12 +972,12 @@ try {
   assert.throws(() => p3Approvals.park({ toolName: 'x' } as never), /shadow policy denies/)
   checks += 1
 } finally {
-  delete process.env.DSH_TUI_ADAPTER_MODE
+  delete process.env.DSH_CLI_ADAPTER_MODE
 }
 
 // Legacy control: the same raw path with a permissive grant does register,
 // proving the passive test above is enforcing shadow rather than grant denial.
-process.env.DSH_TUI_ADAPTER_MODE = 'legacy'
+process.env.DSH_CLI_ADAPTER_MODE = 'legacy'
 try {
   const { Context } = await import('@deepseek-ai/cordis')
   const pluginHostRow = await import('../src/dsh-adapter/plugin-host.js')
@@ -1011,7 +1011,7 @@ try {
   assert.equal(decisionHandlersOf(root, 'tui/input').length, 1, 'legacy control should register one raw handler')
   rawPlugin.dispose()
 } finally {
-  delete process.env.DSH_TUI_ADAPTER_MODE
+  delete process.env.DSH_CLI_ADAPTER_MODE
 }
 
 console.log(`verify:adapter-shadow OK (${checks} runtime checks + ${serviceMethods.length} AST-enumerated service/non-service methods + ${RETURNED_HANDLE_POLICY.length} returned-handle policies + ${Object.keys(ADAPTER_CAPABILITY_EFFECT_CLASSES).length} effect classes + ${PLATFORM_BOUNDARIES.length} platform boundaries + ${KNOWN_GATE_BOUNDARIES.length} known gate boundaries)`)

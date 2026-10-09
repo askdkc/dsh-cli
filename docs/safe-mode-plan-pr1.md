@@ -1,29 +1,29 @@
-# dsh-tui 安全模式 PR① 实现计划
+# dsh-cli 安全模式 PR① 实现计划
 
 > **For agentic workers:** implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 给 `bin/dsh-tui.js` 加安全模式：`safe` 手动子命令 + dsh 非零退出后的自动 fallback 询问，内含只读诊断、插件清单与修复指引。
+**Goal:** 给 `bin/dsh-cli.js` 加安全模式：`safe` 手动子命令 + dsh 非零退出后的自动 fallback 询问，内含只读诊断、插件清单与修复指引。
 
-**Architecture:** 全部改动单文件内联于 `bin/dsh-tui.js`（迁移契约要求单文件自包含，见 spec §3.1）：doctor 检查提取为 `runDoctorChecks`，最终 spawn 提取为返回结果模型的 `startDshSession`，safe 会话（询问/菜单/降级）为内联函数区段。行为验证走新聚焦脚本 `scripts/verify-safe-mode.mjs`（仓库无 test 框架，惯例为 verify-* 回归）。
+**Architecture:** 全部改动单文件内联于 `bin/dsh-cli.js`（迁移契约要求单文件自包含，见 spec §3.1）：doctor 检查提取为 `runDoctorChecks`，最终 spawn 提取为返回结果模型的 `startDshSession`，safe 会话（询问/菜单/降级）为内联函数区段。行为验证走新聚焦脚本 `scripts/verify-safe-mode.mjs`（仓库无 test 框架，惯例为 verify-* 回归）。
 
-**Tech Stack:** Node ESM（顶层 await 可用，`bin/dsh-tui.js:416` 已有先例）、`node:readline/promises`、POSIX sh stub 沙箱测试。
+**Tech Stack:** Node ESM（顶层 await 可用，`bin/dsh-cli.js:416` 已有先例）、`node:readline/promises`、POSIX sh stub 沙箱测试。
 
 **Spec:** `docs/safe-mode-design-pr1.md`（v2）。执行每个任务前先读 spec 对应节。
 
-> **执行后记（2026-09-21，PR review 后由维护者修订）**：本文件是当时的执行计划稿，其中的代码片段**不是**当前实现——一切以 `bin/dsh-tui.js` 与 `scripts/verify-safe-mode.mjs` 的现状为准。相对计划稿的实质偏离：
+> **执行后记（2026-09-21，PR review 后由维护者修订）**：本文件是当时的执行计划稿，其中的代码片段**不是**当前实现——一切以 `bin/dsh-cli.js` 与 `scripts/verify-safe-mode.mjs` 的现状为准。相对计划稿的实质偏离：
 > ① 救援写边界修正（"只发生在全新目录"不成立，dsh 启动会写共享的 `$DSH_HOME/profiles/node_modules`）+ 三条干净性门禁（home 层 / 未知目录 / 含第三方插件的既有 profile）；
-> ② 新增非交互入口 `dsh-tui safe --rescue`（门禁与创建可被脚本与无头环境使用，也让这部分逻辑可自动化验证）；
+> ② 新增非交互入口 `dsh-cli safe --rescue`（门禁与创建可被脚本与无头环境使用，也让这部分逻辑可自动化验证）；
 > ③ 回到菜单前先 `restoreTerminalMinimal()`（重试/救援子进程可能留下备用屏与隐藏光标）；
 > ④ `verify-safe-mode.mjs` 加强并按平台运行（逐文件 sha256 + HOME 双快照、dsh 替身真跑、直接依赖区段内取串、救援矩阵），Windows 整包 `exit 0` 的欺骗性跳过已删除；
 > ⑤ `ownVersion` 缺失时安装钉版本退回 `@latest`（不再拼出 `@undefined`），并删掉无人引用的 `legacyEnv` 文案。
 
 ## Global Constraints
 
-- **单文件内联**：不新增 bin/ 模块文件；`bin/dsh-tui.js` 保持零 lib/ 依赖（`bin/dsh-tui.js:23-25` 迁移契约）
+- **单文件内联**：不新增 bin/ 模块文件；`bin/dsh-cli.js` 保持零 lib/ 依赖（`bin/dsh-cli.js:23-25` 迁移契约）
 - **只追加不替换既有诊断文案**：`profileExited`/`launchFailed` 原样保留，safeHint 追加在其后（`verify-launcher.mjs:174-182` 断言护住旧文案）
-- **退出码保真**：最终退出码 = 最近一次 dsh 会话退出码；信号首启维持 self-kill 透传（`bin/dsh-tui.js:338-340`）；不从数值反推信号
+- **退出码保真**：最终退出码 = 最近一次 dsh 会话退出码；信号首启维持 self-kill 透传（`bin/dsh-cli.js:338-340`）；不从数值反推信号
 - **控制面只读**：safe 会话自身不写文件、不执行安装卸载；重试前 `profileReady()` 检查，不 ready 不自举
-- **双语**：所有新用户可见文案进 MSG 表（en/zh 双键，`DSH_TUI_LANG ?? CC_TUI_LANG` 判定，`bin/dsh-tui.js:123`）
+- **双语**：所有新用户可见文案进 MSG 表（en/zh 双键，`DSH_CLI_LANG ?? CC_TUI_LANG` 判定，`bin/dsh-cli.js:123`）
 - **代码风格**：两空格、单引号、无分号、中文注释（对齐现有文件）；不批量格式化
 - **Git 红线**：只 `git add` 显式路径，不用 `git add .`/`-A`；commit 信息用英文 conventional 风格（对齐 `git log` 现状）
 - **验证命令**：`node scripts/verify-safe-mode.mjs`、`node scripts/verify-cli-subcommands.mjs`、`node scripts/verify-launcher.mjs`（均不依赖 lib/ 构建产物）；本计划不改 TypeScript，不需要 `pnpm build`
@@ -34,7 +34,7 @@
 ### Task 1: `runDoctorChecks()` 提取（特征测试先行）
 
 **Files:**
-- Modify: `bin/dsh-tui.js:278-331`（doctor 截获块）
+- Modify: `bin/dsh-cli.js:278-331`（doctor 截获块）
 - Create: `scripts/verify-safe-mode.mjs`
 
 **Interfaces:**
@@ -63,7 +63,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const bin = join(root, 'bin', 'dsh-tui.js')
+const bin = join(root, 'bin', 'dsh-cli.js')
 const ownVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
 
 let failures = 0
@@ -92,7 +92,7 @@ const run = (args, env = {}) =>
       DSH_HOME: emptyHome,
       HOME: fakeUserHome,
       USERPROFILE: fakeUserHome,
-      DSH_TUI_LANG: 'zh',
+      DSH_CLI_LANG: 'zh',
       ...env,
     },
   })
@@ -116,14 +116,14 @@ const snapshot = dir => {
 {
   const r = run(['doctor'])
   const expected = [
-    `dsh-tui doctor · @deepseek-harness-tui/dsh-tui ${ownVersion}`,
+    `dsh-cli doctor · @deepseek-harness-tui/dsh-cli ${ownVersion}`,
     `✓ node: ${process.version} · ${process.platform} ${process.arch}`,
     `✗ dsh: 未找到——请先安装：  npm install -g @deepseek-ai/dsh`,
     `✗ pnpm: 未找到——安装/升级需要它：  npm install -g pnpm`,
-    `✗ profile: 未安装——运行一次 \`dsh-tui\` 即可自举  (${join(emptyHome, 'profiles', 'dsh-tui')})`,
+    `✗ profile: 未安装——运行一次 \`dsh-cli\` 即可自举  (${join(emptyHome, 'profiles', 'dsh-cli')})`,
     `✗ DEEPSEEK_API_KEY: 未设置——交互启动读取 DEEPSEEK_API_KEY`,
-    `✗ config: ${join(fakeUserHome, '.dsh-tui', 'cordis.yml')}  missing`,
-    `✗ config: ${join(emptyHome, 'profiles', 'dsh-tui', 'cordis.patch.yml')}  missing`,
+    `✗ config: ${join(fakeUserHome, '.dsh-cli', 'cordis.yml')}  missing`,
+    `✗ config: ${join(emptyHome, 'profiles', 'dsh-cli', 'cordis.patch.yml')}  missing`,
   ]
   const actual = r.stdout.split('\n').filter(l => l !== '')
   check(
@@ -145,7 +145,7 @@ Expected: `ALL PASS`（doctor 输出与手写期望逐行一致——若不一�
 
 - [ ] **Step 3: 提取 runDoctorChecks（行为等价重构）**
 
-把 `bin/dsh-tui.js:284-331` 的 doctor 截获块改为调用提取函数。在 doctor 截获块**上方**（`bin/dsh-tui.js:278` 注释块之前）加入：
+把 `bin/dsh-cli.js:284-331` 的 doctor 截获块改为调用提取函数。在 doctor 截获块**上方**（`bin/dsh-cli.js:278` 注释块之前）加入：
 
 ```js
 // ─── doctor 检查逻辑（doctor 子命令与 safe 会话共用）──────────────────────────
@@ -156,7 +156,7 @@ const runDoctorChecks = () => {
   const lines = []
   let hardFailure = false
   const report = (ok, label, detail) => lines.push(`${ok ? '✓' : '✗'} ${label}: ${detail}`)
-  lines.push(`dsh-tui doctor · ${PACKAGE} ${ownVersion ?? 'unknown'}`)
+  lines.push(`dsh-cli doctor · ${PACKAGE} ${ownVersion ?? 'unknown'}`)
   report(true, 'node', `${process.version} · ${process.platform} ${process.arch}`)
   const probeVersion = command => {
     const probe = spawnSync(...cmd(command, ['--version']), { stdio: 'pipe', encoding: 'utf8', ...shellOpt })
@@ -195,7 +195,7 @@ const runDoctorChecks = () => {
   // /doctor（channel.doctorInfo）按 truthiness 报告——两个 doctor 不许分叉。
   const keySet = Boolean(process.env.DEEPSEEK_API_KEY)
   report(keySet, 'DEEPSEEK_API_KEY', keySet ? msg('doctorLabels').keySet : msg('doctorLabels').keyMissing)
-  for (const candidate of [join(homedir(), '.dsh-tui', 'cordis.yml'), join(profileDir, 'cordis.patch.yml')]) {
+  for (const candidate of [join(homedir(), '.dsh-cli', 'cordis.yml'), join(profileDir, 'cordis.patch.yml')]) {
     report(existsSync(candidate), 'config', `${candidate}${existsSync(candidate) ? '' : `  ${msg('doctorLabels').missing}`}`)
   }
   return { hardFailure, lines }
@@ -222,7 +222,7 @@ Expected: 两个脚本均 `ALL PASS`（doctor 行为零漂移）
 - [ ] **Step 5: Commit**
 
 ```bash
-git add bin/dsh-tui.js scripts/verify-safe-mode.mjs
+git add bin/dsh-cli.js scripts/verify-safe-mode.mjs
 git commit -m "refactor(launcher): extract runDoctorChecks for safe-mode reuse (behavior-identical, golden-pinned)"
 ```
 
@@ -231,7 +231,7 @@ git commit -m "refactor(launcher): extract runDoctorChecks for safe-mode reuse (
 ### Task 2: 结果模型 `startDshSession` + 首启路径改造（行为等价）
 
 **Files:**
-- Modify: `bin/dsh-tui.js:333-346`（forwardExit 保持不动，瘦壳仍用）、`bin/dsh-tui.js:568-573`（完整逻辑分支最终 spawn）
+- Modify: `bin/dsh-cli.js:333-346`（forwardExit 保持不动，瘦壳仍用）、`bin/dsh-cli.js:568-573`（完整逻辑分支最终 spawn）
 - Test: `scripts/verify-launcher.mjs`（不改，作为等价回归）
 
 **Interfaces:**
@@ -245,7 +245,7 @@ Expected: `ALL PASS`（本任务全程不得变红——这是行为等价的证
 
 - [ ] **Step 2: 加入 startDshSession 与 settleFirstResult**
 
-在 `forwardExit` 定义（`bin/dsh-tui.js:333`）之后加入：
+在 `forwardExit` 定义（`bin/dsh-cli.js:333`）之后加入：
 
 ```js
 // ─── dsh 会话结果模型（fallback 与 safe 重试共用）─────────────────────────────
@@ -300,7 +300,7 @@ Expected: 均 `ALL PASS`
 - [ ] **Step 4: Commit**
 
 ```bash
-git add bin/dsh-tui.js
+git add bin/dsh-cli.js
 git commit -m "refactor(launcher): settle dsh sessions through a result model (behavior-identical)"
 ```
 
@@ -309,7 +309,7 @@ git commit -m "refactor(launcher): settle dsh sessions through a result model (b
 ### Task 3: fallback 询问 + safeHint 追加（非 TTY 路径完整，TTY 询问接菜单桩）
 
 **Files:**
-- Modify: `bin/dsh-tui.js` MSG 表（新键 `safeAsk`/`safeHint`）、`settleFirstResult`
+- Modify: `bin/dsh-cli.js` MSG 表（新键 `safeAsk`/`safeHint`）、`settleFirstResult`
 - Test: `scripts/verify-safe-mode.mjs`（新增 fallback 矩阵断言，需要 stub dsh）
 
 **Interfaces:**
@@ -320,12 +320,12 @@ git commit -m "refactor(launcher): settle dsh sessions through a result model (b
 
 ```js
   safeAsk: {
-    en: code => `dsh-tui exited unexpectedly (code ${code}). Enter safe mode? [Y/n] `,
-    zh: code => `dsh-tui 异常退出（码 ${code}）。进入安全模式？[Y/n] `,
+    en: code => `dsh-cli exited unexpectedly (code ${code}). Enter safe mode? [Y/n] `,
+    zh: code => `dsh-cli 异常退出（码 ${code}）。进入安全模式？[Y/n] `,
   },
   safeHint: {
-    en: code => `[dsh-tui] Exited with code ${code}. Run dsh-tui safe for diagnostics and repair guidance.`,
-    zh: code => `[dsh-tui] 异常退出（码 ${code}）。可运行 dsh-tui safe 进入安全模式`,
+    en: code => `[dsh-cli] Exited with code ${code}. Run dsh-cli safe for diagnostics and repair guidance.`,
+    zh: code => `[dsh-cli] 异常退出（码 ${code}）。可运行 dsh-cli safe 进入安全模式`,
   },
 ```
 
@@ -342,9 +342,9 @@ git commit -m "refactor(launcher): settle dsh sessions through a result model (b
   chmodSync(join(stubDir, 'dsh'), 0o755)
   // profile 已装且与启动器同版：版本核对不产生额外输出，stderr 断言干净。
   const profHome = join(tmp, 'fb-home')
-  const pkgDir = join(profHome, 'profiles', 'dsh-tui', 'node_modules', '@deepseek-harness-tui', 'dsh-tui')
+  const pkgDir = join(profHome, 'profiles', 'dsh-cli', 'node_modules', '@deepseek-harness-tui', 'dsh-cli')
   mkdirSync(pkgDir, { recursive: true })
-  writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-harness-tui/dsh-tui', version: ownVersion }))
+  writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: '@deepseek-harness-tui/dsh-cli', version: ownVersion }))
   const runFb = (env = {}) => run([], { PATH: stubDir, DSH_HOME: profHome, ...env })
   {
     const r = runFb()
@@ -354,13 +354,13 @@ git commit -m "refactor(launcher): settle dsh sessions through a result model (b
     const r = runFb({ DSH_STUB_EXIT: '42' })
     check(
       'fallback: exit 42 → 保留 profileExited 诊断 + 追加 safeHint + 退出码保真',
-      r.status === 42 && r.stderr.includes('退出码 42') && r.stderr.includes('dsh-tui safe') && r.stderr.indexOf('已退出') < r.stderr.indexOf('safe'),
+      r.status === 42 && r.stderr.includes('退出码 42') && r.stderr.includes('dsh-cli safe') && r.stderr.indexOf('已退出') < r.stderr.indexOf('safe'),
       `status=${r.status}`,
     )
   }
   {
-    const r = runFb({ DSH_STUB_EXIT: '42', DSH_TUI_LANG: 'en' })
-    check('fallback: safeHint 双语', r.stderr.includes('Run dsh-tui safe'), `status=${r.status}`)
+    const r = runFb({ DSH_STUB_EXIT: '42', DSH_CLI_LANG: 'en' })
+    check('fallback: safeHint 双语', r.stderr.includes('Run dsh-cli safe'), `status=${r.status}`)
   }
   {
     // 信号场景：stub 自杀 SIGINT → 启动器 self-kill 透传，无提示。
@@ -458,7 +458,7 @@ Expected: 均 `ALL PASS`（`verify-launcher.mjs:174-182` 的非零退出断言�
 - [ ] **Step 6: Commit**
 
 ```bash
-git add bin/dsh-tui.js scripts/verify-safe-mode.mjs
+git add bin/dsh-cli.js scripts/verify-safe-mode.mjs
 git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-TTY hint, TTY prompt stub)"
 ```
 
@@ -467,7 +467,7 @@ git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-T
 ### Task 4: `safe` 手动入口 + 非 TTY 降级全量输出 + 插件清单/指引（纯函数）
 
 **Files:**
-- Modify: `bin/dsh-tui.js`：新截获块（doctor 块之后、update 块之前 `bin/dsh-tui.js:331-405` 之间）、MSG 表（`safeTitle`/`safeIgnoredArgs`/`safeListUnreadable`/`safeMenuLabels`/`safeGuideIntro` 等键）、`runSafeSession` 填充非 TTY 分支
+- Modify: `bin/dsh-cli.js`：新截获块（doctor 块之后、update 块之前 `bin/dsh-cli.js:331-405` 之间）、MSG 表（`safeTitle`/`safeIgnoredArgs`/`safeListUnreadable`/`safeMenuLabels`/`safeGuideIntro` 等键）、`runSafeSession` 填充非 TTY 分支
 - Test: `scripts/verify-safe-mode.mjs`
 
 **Interfaces:**
@@ -489,7 +489,7 @@ git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-T
   check('safe: 零环境非 TTY 退出 0', r.status === 0, `status=${r.status}`)
   check('safe: 打印标题', r.stdout.includes('安全模式'))
   check('safe: 内嵌 doctor 诊断', r.stdout.includes('✗ dsh'))
-  check('safe: 打印修复指引', r.stdout.includes('dsh plugin --profile dsh-tui'))
+  check('safe: 打印修复指引', r.stdout.includes('dsh plugin --profile dsh-cli'))
   check('safe: 清单不可读降级（空 profile）', r.stdout.includes('清单不可读'))
   check('safe: 控制面只读（DSH_HOME 无任何新增/修改）', JSON.stringify(before) === JSON.stringify(after))
 }
@@ -498,7 +498,7 @@ git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-T
   check('safe: 附加参数提示忽略', r.stdout.includes('已忽略附加参数：2 个'), `status=${r.status}`)
 }
 {
-  const r = run(['safe'], { DSH_HOME: join(tmp, 'safe-home'), DSH_TUI_LANG: 'en' })
+  const r = run(['safe'], { DSH_HOME: join(tmp, 'safe-home'), DSH_CLI_LANG: 'en' })
   check('safe: 标题双语', r.stdout.includes('safe mode'), `status=${r.status}`)
 }
 
@@ -508,39 +508,39 @@ git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-T
   const mk = pkgJson => {
     rmSync(invHome, { recursive: true, force: true })
     mkdirSync(invHome, { recursive: true })
-    if (pkgJson !== null) writeFileSync(join(invHome, 'profiles', 'dsh-tui', 'package.json') .slice(0, 0) ?? '', '')
+    if (pkgJson !== null) writeFileSync(join(invHome, 'profiles', 'dsh-cli', 'package.json') .slice(0, 0) ?? '', '')
     return invHome
   }
   // 正常清单：bundles 两项 + dependencies 三项（含一个保护包）
   {
     rmSync(invHome, { recursive: true, force: true })
-    const profDir = join(invHome, 'profiles', 'dsh-tui')
+    const profDir = join(invHome, 'profiles', 'dsh-cli')
     mkdirSync(profDir, { recursive: true })
     writeFileSync(join(profDir, 'package.json'), JSON.stringify({
-      name: 'dsh-profile-dsh-tui',
-      dependencies: { '@deepseek-harness-tui/dsh-tui': '1.0.0', '@deepseek-ai/dsh-base': '1.0.0', 'cool-plugin': '0.1.0' },
-      dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-harness-tui/dsh-tui'] } },
+      name: 'dsh-profile-dsh-cli',
+      dependencies: { '@deepseek-harness-tui/dsh-cli': '1.0.0', '@deepseek-ai/dsh-base': '1.0.0', 'cool-plugin': '0.1.0' },
+      dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', '@deepseek-harness-tui/dsh-cli'] } },
     }))
     const r = run(['safe'], { DSH_HOME: invHome })
     check('清单: bundles 与 dependencies 两维度分列', r.stdout.includes('组合层') && r.stdout.includes('直接依赖'))
     check('清单: 第三方依赖列出', r.stdout.includes('cool-plugin'))
     check('清单: 保护包标注内置', r.stdout.includes('内置') && r.stdout.includes('@deepseek-ai/dsh-base'))
     // 指引的卸载候选 = 第三方直接依赖
-    check('指引: 卸载候选只列第三方', r.stdout.includes('dsh plugin --profile dsh-tui remove cool-plugin'))
+    check('指引: 卸载候选只列第三方', r.stdout.includes('dsh plugin --profile dsh-cli remove cool-plugin'))
   }
   // 字段缺失：无 dsh.profile.bundles
   {
     rmSync(invHome, { recursive: true, force: true })
-    const profDir = join(invHome, 'profiles', 'dsh-tui')
+    const profDir = join(invHome, 'profiles', 'dsh-cli')
     mkdirSync(profDir, { recursive: true })
-    writeFileSync(join(profDir, 'package.json'), JSON.stringify({ name: 'dsh-profile-dsh-tui', dependencies: {} }))
+    writeFileSync(join(profDir, 'package.json'), JSON.stringify({ name: 'dsh-profile-dsh-cli', dependencies: {} }))
     const r = run(['safe'], { DSH_HOME: invHome })
     check('清单: 字段缺失降级', r.stdout.includes('清单不可读'))
   }
   // 字段类型错误：bundles 为字符串
   {
     rmSync(invHome, { recursive: true, force: true })
-    const profDir = join(invHome, 'profiles', 'dsh-tui')
+    const profDir = join(invHome, 'profiles', 'dsh-cli')
     mkdirSync(profDir, { recursive: true })
     writeFileSync(join(profDir, 'package.json'), JSON.stringify({ dependencies: {}, dsh: { profile: { bundles: 'oops' } } }))
     const r = run(['safe'], { DSH_HOME: invHome })
@@ -549,7 +549,7 @@ git commit -m "feat(launcher): offer safe mode after unexpected dsh exits (non-T
   // 损坏 JSON：文件存在但非法
   {
     rmSync(invHome, { recursive: true, force: true })
-    const profDir = join(invHome, 'profiles', 'dsh-tui')
+    const profDir = join(invHome, 'profiles', 'dsh-cli')
     mkdirSync(profDir, { recursive: true })
     writeFileSync(join(profDir, 'package.json'), '{oops')
     const r = run(['safe'], { DSH_HOME: invHome })
@@ -569,12 +569,12 @@ Expected: 新增 safe 断言全部 FAIL（safe 尚不存在——现在 `safe` �
 
 ```js
   safeTitle: {
-    en: role => `dsh-tui safe · safe mode (read-only control plane)  [${role}]`,
-    zh: role => `dsh-tui safe · 安全模式（控制面只读）  [${role}]`,
+    en: role => `dsh-cli safe · safe mode (read-only control plane)  [${role}]`,
+    zh: role => `dsh-cli safe · 安全模式（控制面只读）  [${role}]`,
   },
   safeIgnoredArgs: {
-    en: n => `[dsh-tui] ignored ${n} extra argument(s) after \`safe\``,
-    zh: n => `[dsh-tui] 已忽略附加参数：${n} 个`,
+    en: n => `[dsh-cli] ignored ${n} extra argument(s) after \`safe\``,
+    zh: n => `[dsh-cli] 已忽略附加参数：${n} 个`,
   },
   safeListUnreadable: {
     en: reason => `Profile inventory unreadable (${reason}). See repair guidance below.`,
@@ -656,10 +656,10 @@ const renderGuide = lines => {
   } else {
     lines.push(`  # 无第三方直接依赖可卸载`)
   }
-  lines.push(`  # 重装/对齐 TUI（版本见 dsh-tui doctor）:`)
+  lines.push(`  # 重装/对齐 TUI（版本见 dsh-cli doctor）:`)
   lines.push(`  dsh plugin --profile ${PROFILE} add ${PACKAGE}@<版本>`)
   lines.push(`  # 环境诊断:`)
-  lines.push(`  dsh-tui doctor`)
+  lines.push(`  dsh-cli doctor`)
   lines.push(`  # 启动器过旧时的全局升级:`)
   lines.push(`  npm install -g --legacy-peer-deps ${PACKAGE}@<版本>`)
 }
@@ -720,8 +720,8 @@ Expected: `ALL PASS`
 - [ ] **Step 8: Commit**
 
 ```bash
-git add bin/dsh-tui.js scripts/verify-safe-mode.mjs scripts/verify-cli-subcommands.mjs
-git commit -m "feat(launcher): add dsh-tui safe entry with non-TTY degraded report and plugin inventory"
+git add bin/dsh-cli.js scripts/verify-safe-mode.mjs scripts/verify-cli-subcommands.mjs
+git commit -m "feat(launcher): add @askdkc/dsh-cli safe entry with non-TTY degraded report and plugin inventory"
 ```
 
 ---
@@ -729,7 +729,7 @@ git commit -m "feat(launcher): add dsh-tui safe entry with non-TTY degraded repo
 ### Task 5: readline 菜单 + 重试重放 + 终端交接
 
 **Files:**
-- Modify: `bin/dsh-tui.js`：`runSafeSession` 填充菜单实现、`bin/dsh-tui.js:36-43` Windows 旧二进制清理加 safe 守卫
+- Modify: `bin/dsh-cli.js`：`runSafeSession` 填充菜单实现、`bin/dsh-cli.js:36-43` Windows 旧二进制清理加 safe 守卫
 - Test: `scripts/verify-safe-mode.mjs`（可无 PTY 验证的部分：safe 在非 TTY 不进菜单；交互逻辑列入手动演练）
 
 **Interfaces:**
@@ -807,14 +807,14 @@ const runSafeSession = async ({ pendingExitCode = 0, retryDsh, extraLines } = {}
         const result = await startDshSession([])
         if (result.kind === 'exit' && result.code === 0) return 0
         if (result.kind === 'exit') { exitCode = result.code; console.error(msg('profileExited')(result.code)); continue }
-        if (result.kind === 'signal') { console.error(`[dsh-tui] retry signaled: ${result.signal}`); continue }
+        if (result.kind === 'signal') { console.error(`[dsh-cli] retry signaled: ${result.signal}`); continue }
         console.error(msg('launchFailed')(result.error)); continue
       }
       if (!profileReady()) { console.error(msg('safeListUnreadable')('profile-not-ready')); continue }
       const result = await retryDsh()
       if (result.kind === 'exit' && result.code === 0) return 0
       if (result.kind === 'exit') { exitCode = result.code; console.error(msg('profileExited')(result.code)); continue }
-      if (result.kind === 'signal') { console.error(`[dsh-tui] retry signaled: ${result.signal}`); continue }
+      if (result.kind === 'signal') { console.error(`[dsh-cli] retry signaled: ${result.signal}`); continue }
       console.error(msg('launchFailed')(result.error)); continue
     }
     if (choice === '2') { for (const l of doctorLines()) console.log(l); continue }
@@ -829,16 +829,16 @@ const runSafeSession = async ({ pendingExitCode = 0, retryDsh, extraLines } = {}
 
 - [ ] **Step 3: Windows 旧二进制清理加 safe 守卫（spec §4：safe 入口跳过旧文件清理）**
 
-`bin/dsh-tui.js:36` 的条件从：
+`bin/dsh-cli.js:36` 的条件从：
 
 ```js
-if (process.platform === 'win32' && process.env.DSH_TUI_STANDALONE_BINARY) {
+if (process.platform === 'win32' && process.env.DSH_CLI_STANDALONE_BINARY) {
 ```
 
 改为：
 
 ```js
-if (process.platform === 'win32' && process.env.DSH_TUI_STANDALONE_BINARY && process.argv[2] !== 'safe') {
+if (process.platform === 'win32' && process.env.DSH_CLI_STANDALONE_BINARY && process.argv[2] !== 'safe') {
 ```
 
 - [ ] **Step 4: 运行全部回归**
@@ -848,12 +848,12 @@ Expected: 均 `ALL PASS`
 
 - [ ] **Step 5: 手动演练（spec §8 要求，PTY 自动化依赖外部原生模块时以本清单兜底）**
 
-在真实终端逐项演练并记录到 PR 描述：①`dsh-tui safe` 全菜单动作 1-5；②人为制造非零退出（`DSH_STUB_EXIT` 手法或临时改 profile）观察 fallback 询问 Y/n/回车/Ctrl+C/EOF；③重试失败回菜单、重试成功退出 0；④fullscreen 模式下杀进程后进菜单的可读性（最小终端恢复）；⑤窄终端（60 列）排版。
+在真实终端逐项演练并记录到 PR 描述：①`dsh-cli safe` 全菜单动作 1-5；②人为制造非零退出（`DSH_STUB_EXIT` 手法或临时改 profile）观察 fallback 询问 Y/n/回车/Ctrl+C/EOF；③重试失败回菜单、重试成功退出 0；④fullscreen 模式下杀进程后进菜单的可读性（最小终端恢复）；⑤窄终端（60 列）排版。
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add bin/dsh-tui.js scripts/verify-safe-mode.mjs
+git add bin/dsh-cli.js scripts/verify-safe-mode.mjs
 git commit -m "feat(launcher): interactive safe menu with replay retry and terminal handoff"
 ```
 
@@ -862,7 +862,7 @@ git commit -m "feat(launcher): interactive safe menu with replay retry and termi
 ### Task 6: helpText、README 双语、CI 登记、全量回归
 
 **Files:**
-- Modify: `bin/dsh-tui.js`（MSG `helpText` 两条各加 safe 行）、`README.md`、`README_EN.md`、`scripts/run-ci-group.mjs`
+- Modify: `bin/dsh-cli.js`（MSG `helpText` 两条各加 safe 行）、`README.md`、`README_EN.md`、`scripts/run-ci-group.mjs`
 - Test: 全部三个 verify 脚本
 
 **Interfaces:**
@@ -875,7 +875,7 @@ git commit -m "feat(launcher): interactive safe menu with replay retry and termi
 
 - [ ] **Step 2: README 双语小节**
 
-`README.md` 与 `README_EN.md` 在既有命令/故障排查章节附近加入对等小节（双语语义等价，对照 `verify-launcher.mjs` 双语断言的严谨度自查）。内容要点：双入口（`dsh-tui safe` 手动；异常退出后自动询问——仅交互终端，脚本/管道环境只追加一行提示且退出码保真）；控制面只读边界与"重试正常启动"例外（重试不自举，profile 不完整时给出重装指引）；覆盖边界=最终 dsh 子进程的非零退出码，不含启动挂起；旧全局启动器场景（profile 副本不可读/过旧时先升级启动器：`npm install -g --legacy-peer-deps @deepseek-harness-tui/dsh-tui@<版本>`）；修复命令示例（remove 第三方插件 / add 重装 / doctor）。
+`README.md` 与 `README_EN.md` 在既有命令/故障排查章节附近加入对等小节（双语语义等价，对照 `verify-launcher.mjs` 双语断言的严谨度自查）。内容要点：双入口（`dsh-cli safe` 手动；异常退出后自动询问——仅交互终端，脚本/管道环境只追加一行提示且退出码保真）；控制面只读边界与"重试正常启动"例外（重试不自举，profile 不完整时给出重装指引）；覆盖边界=最终 dsh 子进程的非零退出码，不含启动挂起；旧全局启动器场景（profile 副本不可读/过旧时先升级启动器：`npm install -g --legacy-peer-deps @deepseek-harness-tui/dsh-cli@<版本>`）；修复命令示例（remove 第三方插件 / add 重装 / doctor）。
 
 - [ ] **Step 3: CI 登记**
 
@@ -896,7 +896,7 @@ Expected: 三个 verify 均 `ALL PASS`；run-ci-group 能列出 `verify-safe-mod
 - [ ] **Step 5: Commit**
 
 ```bash
-git add bin/dsh-tui.js README.md README_EN.md scripts/run-ci-group.mjs
+git add bin/dsh-cli.js README.md README_EN.md scripts/run-ci-group.mjs
 git commit -m "docs(launcher): document safe mode and register verify-safe-mode in CI"
 ```
 
@@ -904,6 +904,6 @@ git commit -m "docs(launcher): document safe mode and register verify-safe-mode 
 
 ## Self-Review 记录
 
-- **Spec 覆盖**：spec §3.1（截获/单文件/兼容/参数消费）→ Task 4/5；§4（只读边界四条）→ Task 4 快照断言 + Task 5 profileReady 前置 + Task 5 Step 3 清理守卫；§5.1 结果模型表 → Task 2/3/5；§5.2 追加提示 → Task 3；§5.3 重放与 LAUNCHER_VERSION 不重设 → Task 2 `firstArgs` + Task 5 重试不经首启路径；§6.1 菜单五动作与两维度清单 → Task 4/5；§6.2 交互/降级/三阶段 → Task 3（询问）+ Task 4（非 TTY）+ Task 5（菜单/交接/最小恢复）；§7.1-7.4 → Task 1/2/3/4/6；§8 测试七组 → Task 1（doctor golden）/3（fallback 矩阵+信号）/4（零环境+快照+清单矩阵+双语+忽略参数）/5（非 TTY 守卫+手动演练清单+PTY 兜底说明）/6（CI 登记、既有断言更新）；PTTY 依赖探测与"跳过须报告"在 Task 5 Step 5 手动演练清单承接。§8.6 双角色真实 profile 内运行：`verify-launcher.mjs:251` 的 `placeProfileBin` 夹具把真实 bin 放入假 profile 后以 `runBin(..., { delegating: true })` 驱动——本计划未新增该场景断言，**补充**：Task 4 Step 7 已在既有脚本补后位不截获；真实 profile 内 safe 运行依赖手动演练①覆盖（`dsh-tui safe` 在 repo 源码目录运行即 profile/源码角色）。若需自动化，可在 verify-launcher 的 delegating 夹具上补 `runBin(['safe'])` 断言——列为执行时可选增强，不阻塞。
+- **Spec 覆盖**：spec §3.1（截获/单文件/兼容/参数消费）→ Task 4/5；§4（只读边界四条）→ Task 4 快照断言 + Task 5 profileReady 前置 + Task 5 Step 3 清理守卫；§5.1 结果模型表 → Task 2/3/5；§5.2 追加提示 → Task 3；§5.3 重放与 LAUNCHER_VERSION 不重设 → Task 2 `firstArgs` + Task 5 重试不经首启路径；§6.1 菜单五动作与两维度清单 → Task 4/5；§6.2 交互/降级/三阶段 → Task 3（询问）+ Task 4（非 TTY）+ Task 5（菜单/交接/最小恢复）；§7.1-7.4 → Task 1/2/3/4/6；§8 测试七组 → Task 1（doctor golden）/3（fallback 矩阵+信号）/4（零环境+快照+清单矩阵+双语+忽略参数）/5（非 TTY 守卫+手动演练清单+PTY 兜底说明）/6（CI 登记、既有断言更新）；PTTY 依赖探测与"跳过须报告"在 Task 5 Step 5 手动演练清单承接。§8.6 双角色真实 profile 内运行：`verify-launcher.mjs:251` 的 `placeProfileBin` 夹具把真实 bin 放入假 profile 后以 `runBin(..., { delegating: true })` 驱动——本计划未新增该场景断言，**补充**：Task 4 Step 7 已在既有脚本补后位不截获；真实 profile 内 safe 运行依赖手动演练①覆盖（`dsh-cli safe` 在 repo 源码目录运行即 profile/源码角色）。若需自动化，可在 verify-launcher 的 delegating 夹具上补 `runBin(['safe'])` 断言——列为执行时可选增强，不阻塞。
 - **占位符扫描**：Task 4 Step 4 与 Task 5 Step 2 中明确标注"实现时删除占位表达式"的两处是给执行者的去噪指令，最终代码不得含它们；其余步骤代码完整。
 - **类型一致性**：`DshResult` 三态在 Task 2 定义、Task 3 `settleFirstResult` 与 Task 5 菜单消费一致；`runSafeSession` 签名在 Task 3（桩）→ Task 4（`extraLines` 参数预留）→ Task 5（最终版）保持 `{ pendingExitCode, retryDsh, extraLines }`；`readProfileInventory` 返回 `{ error } | { bundles, deps }` 在 Task 4 定义并被 `renderInventory`/`renderGuide` 消费。

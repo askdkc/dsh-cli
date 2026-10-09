@@ -1,4 +1,4 @@
-# dsh-TUI 验证映射
+# dsh-CLI 验证映射
 先读当前 package.json 的 scripts、.github/workflows/ci.yml、脚本头部、docs/contributing.md；本表仅选择方法，漂移依仓库真源并记报告。
 
 ## 禁止虚构

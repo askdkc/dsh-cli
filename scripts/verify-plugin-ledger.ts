@@ -31,8 +31,8 @@ import { fileURLToPath } from 'node:url'
 const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-plugin-ledger-home-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_LANG = 'zh'
-process.env.DSH_TUI_ADAPTER_MODE = 'new'
+process.env.DSH_CLI_LANG = 'zh'
+process.env.DSH_CLI_ADAPTER_MODE = 'new'
 
 const { Context } = await import('@deepseek-ai/cordis')
 const { TuiEffectLedgerRuntime, EFFECT_LEDGER_FILE } = await import('../src/dsh-adapter/effect-ledger.js')

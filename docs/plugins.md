@@ -14,10 +14,10 @@
   [终端交互生态插件准入与开发指南](https://github.com/T-Auto/dsh-ecosystem-spec/blob/main/docs/plugin-admission-and-development.md)
   （准入规范、接缝、契约、验证清单）。
 - **生态组织**：
-  [dsh-tui-ecosystem](https://github.com/dsh-tui-ecosystem)
+  [dsh-cli-ecosystem](https://github.com/dsh-cli-ecosystem)
   （社区插件与模板的家）。
 - **模板仓库**：
-  [plugin-template](https://github.com/dsh-tui-ecosystem/plugin-template)
+  [plugin-template](https://github.com/dsh-cli-ecosystem/plugin-template)
   （从模板起步，5 分钟出一个插件）。
 - **参考实现**：`dsh-working-activity`（实时工作状态行：TUI 槽位 +
   `workingActivity` 会话投影双出口）。

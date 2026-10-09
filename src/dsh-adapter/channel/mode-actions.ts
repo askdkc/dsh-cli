@@ -255,7 +255,7 @@ const prePlanModeSpec = (log: readonly SessionEvent[]): SessionModeSpec | undefi
       // schedules a compensating sandbox/approval write into the real log.
       if (runtime.mode === 'passive-shadow' || runtime.mode === 'replay-shadow') return
       applyMode(restore.target, restore.capture).catch(error => {
-        ctx.logger.warn(`dsh-tui: plan-exit mode restore failed: ${error instanceof Error ? error.message : String(error)}`)
+        ctx.logger.warn(`dsh-cli: plan-exit mode restore failed: ${error instanceof Error ? error.message : String(error)}`)
       })
     })
   }

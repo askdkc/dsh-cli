@@ -10,7 +10,7 @@
  */
 import { createHash } from 'node:crypto'
 
-/** This project's migration namespace: dsh-tui-migrate as 16 fixed bytes. */
+/** This project's migration namespace: dsh-cli-migrate as 16 fixed bytes. */
 const NAMESPACE = Buffer.from([0x9f, 0x1d, 0x3a, 0x72, 0x6c, 0x55, 0x4c, 0x8e, 0xb0, 0x2f, 0x6d, 0x69, 0x67, 0x72, 0x61, 0x74])
 
 /**

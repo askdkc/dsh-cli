@@ -1072,7 +1072,7 @@ export default class Ink {
       y: rect.y + decl.relativeY
     } : null;
     const parked = this.displayCursor;
-    // Diagnostics: the resolved park target per frame (DSH_TUI_DEBUG only).
+    // Diagnostics: the resolved park target per frame (DSH_CLI_DEBUG only).
     // ConPTY's readback drops trailing cursor moves, so pty probes can't
     // observe the park position — this trace is the ground truth of where
     // the native cursor is being told to go.
@@ -1772,9 +1772,9 @@ export default class Ink {
       !this.options.stdout.isTTY ||
       process.env.TMUX !== undefined ||
       process.env.STY !== undefined ||
-      isEnvTruthy(process.env.DSH_TUI_ACCESSIBILITY) ||
-      isEnvTruthy(process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES)
-      || process.env.DSH_TUI_IMAGE_PROTOCOL === 'none'
+      isEnvTruthy(process.env.DSH_CLI_ACCESSIBILITY) ||
+      isEnvTruthy(process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES)
+      || process.env.DSH_CLI_IMAGE_PROTOCOL === 'none'
     ) {
       return;
     }
@@ -1794,7 +1794,7 @@ export default class Ink {
         if (this.isUnmounted || this.isPaused || this.terminalQueriesSuspended) {
           return;
         }
-        const protocol = selectTerminalImageProtocol(reply?.status, attributes?.params, process.env.DSH_TUI_IMAGE_PROTOCOL);
+        const protocol = selectTerminalImageProtocol(reply?.status, attributes?.params, process.env.DSH_CLI_IMAGE_PROTOCOL);
         if (protocol === 'none') return;
         if (protocol === 'sixel') {
           const [mode] = await Promise.all([querier.send(decrqm(80)), querier.flush()]);

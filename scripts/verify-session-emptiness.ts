@@ -15,13 +15,13 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import { settled } from './lib/term-test.mjs'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-empty-'))
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-empty-'))
 process.env.HOME = root
 process.env.USERPROFILE = root
 process.env.DSH_HOME = join(root, 'dsh')
-process.env.DSH_TUI_SESSION_ROOT = join(root, 'logs')
+process.env.DSH_CLI_SESSION_ROOT = join(root, 'logs')
 const cwd = join(root, 'project')
-const indexFile = join(root, '.dsh-tui', 'session-index.json')
+const indexFile = join(root, '.dsh-cli', 'session-index.json')
 const { digestSession, recoverSessionTitle, HEAD_MAX_FRAMES, HEAD_WINDOW_BYTES } = await import('../src/dsh-adapter/sessions/digest.js')
 const { listSummaries } = await import('../src/dsh-adapter/sessions/list.js')
 const { readIndex } = await import('../src/dsh-adapter/sessions/store.js')

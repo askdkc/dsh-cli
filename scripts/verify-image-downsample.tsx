@@ -20,7 +20,7 @@
  */
 export {} // 模块边界：避免顶层 await/全局名与其他 verify 脚本冲突
 
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 let failures = 0
 function check(name: string, ok: boolean, extra = ''): void {

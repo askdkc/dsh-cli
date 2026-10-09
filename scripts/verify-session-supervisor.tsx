@@ -36,8 +36,8 @@
  * Run: node --import tsx/esm scripts/verify-session-supervisor.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'en'
 
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -69,7 +69,7 @@ const ROWS = 28
 /** Workspaces in the long-rail case: comfortably more than the rail can show. */
 const RAIL_ENTRIES = 24
 /** The directory an unregistered-only listing falls back to; never created. */
-const GHOST_DIR = join(tmpdir(), 'dsh-tui-supervisor-ghost')
+const GHOST_DIR = join(tmpdir(), 'dsh-cli-supervisor-ghost')
 
 class FakeStdout extends Writable {
   columns = COLS
@@ -91,7 +91,7 @@ class FakeStdin extends PassThrough {
   override unref(): this { return this }
 }
 
-const sandbox = mkdtempSync(join(tmpdir(), 'dsh-tui-supervisor-'))
+const sandbox = mkdtempSync(join(tmpdir(), 'dsh-cli-supervisor-'))
 const alphaDir = join(sandbox, 'alpha')
 mkdirSync(alphaDir)
 // A SECOND workspace that sorts BEFORE the terminal's own directory. It exists
@@ -143,11 +143,11 @@ const FOREIGN_PID = process.ppid
 const HELD_SESSION_ID = 'held-one'
 
 // Seed the cross-process ledger the screen reads for itself. It is a FILE in
-// `~/.dsh-tui` (fake-home pinned HOME before any lib import), so the regression
+// `~/.dsh-cli` (fake-home pinned HOME before any lib import), so the regression
 // proves the live path — the screen reads the ledger on its own pulse — rather
 // than an injected occupancy callback that could hide a stale-snapshot bug.
 {
-  const dataDir = join(fakeHome, '.dsh-tui')
+  const dataDir = join(fakeHome, '.dsh-cli')
   mkdirSync(dataDir, { recursive: true })
   writeFileSync(
     join(dataDir, 'session-mounts.json'),
@@ -710,7 +710,7 @@ const focusedRowOf = (needle: string): boolean => {
   }
   return false
 }
-// The script pins DSH_TUI_LANG=en, so the card's label is the ASCII `+ New
+// The script pins DSH_CLI_LANG=en, so the card's label is the ASCII `+ New
 // session` — looking for the Chinese one silently matched nothing and made every
 // "is the card focused" question unanswerable.
 const CARD_LABEL = '+ New session'
@@ -807,7 +807,7 @@ console.log('occupancy follows the LEDGER, not a snapshot taken at first render'
   // snapshot captured by the host during ITS render stayed frozen: a foreign
   // terminal that released the session left the row red and unclickable until
   // some unrelated channel event happened to repaint the parent.
-  const ledgerPath = join(fakeHome, '.dsh-tui', 'session-mounts.json')
+  const ledgerPath = join(fakeHome, '.dsh-cli', 'session-mounts.json')
   const owner = (sessionIds: readonly string[]): string => JSON.stringify({
     version: 1,
     owners: sessionIds.length === 0 ? [] : [{

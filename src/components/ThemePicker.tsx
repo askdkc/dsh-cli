@@ -67,7 +67,7 @@ export function getThemeOptions(themeHost?: TuiThemeHost): SelectOption[] {
  * listing the `auto` pseudo-theme and built-in palettes first, followed by
  * static JSON and plugin themes — each row shows the display name, base and
  * three key color swatches; `❯` marks focus, `✓` the active theme. Enter
- * applies through the ThemeProvider setter (persists to ~/.dsh-tui/theme.json
+ * applies through the ThemeProvider setter (persists to ~/.dsh-cli/theme.json
  * and hot swaps), Esc cancels.
  */
 export function ThemePicker({

@@ -1,5 +1,5 @@
 /**
- * Smooth streaming reveal regression (settings `dsh-tui.smoothStreaming`).
+ * Smooth streaming reveal regression (settings `dsh-cli.smoothStreaming`).
  *
  * Group A — scheduler/cursor units (no rendering):
  *   step math, cursor creation (active gate), append vs replacement,
@@ -19,7 +19,7 @@
 // 其实无效（i18n.js 在赋值前就已按启动链解析 activeLang；本脚本断言的
 // en 文案此前全靠「折叠提示硬编码英文」蒙混过关，issue #980 修复后暴露）。
 // 权威 pin 是 body 首句的 setLang('en')；此行保留给动态 import 的消费方。
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '3'
 
 import { Writable, PassThrough } from 'node:stream'

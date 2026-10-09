@@ -1,7 +1,7 @@
 /**
  * JediTerm (JetBrains IDE terminal) compatibility regression.
  *
- * Real-terminal report: dsh-tui renders fine in VS Code but in JetBrains IDEs
+ * Real-terminal report: dsh-cli renders fine in VS Code but in JetBrains IDEs
  * (WebStorm/IntelliJ/PyCharm/GoLand/…) the layout slowly garbles as content
  * scrolls. JetBrains terminals are JediTerm with these traits:
  *

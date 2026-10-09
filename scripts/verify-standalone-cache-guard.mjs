@@ -15,7 +15,7 @@
  * cacheBase chmod 0700 会侵入用户指定的目录——缓存指到共享盘（NFS/
  * 团队盘）时破坏他人访问。断言：预存 0755 的 cacheBase（ready 短路
  * 与冷装两条路径）保持 0755（预存目录的权限属用户决策）；自建
- * cacheBase（冷启动 mkdir）仍收紧 0700；版本子目录 tui-<v>-dsh-<v>
+ * cacheBase（冷启动 mkdir）仍收紧 0700；版本子目录 cli-<v>-dsh-<v>
  * （一定由守卫创建）同样 0700。
  *
  * Run: node scripts/verify-standalone-cache-guard.mjs
@@ -48,7 +48,7 @@ const { MANIFEST_ENTRIES, ensureRuntime, runtimeReady } = cacheGuard
 // 通配条目（profile-boot-*.js 等）落地为带假 hash 后缀的具体文件；具名
 // 条目逐个写入。内容任意但稳定（哈希基准 = 首次解压的树本身）。
 const scratch = mkdtempSync(join(tmpdir(), 'verify-cache-guard-'))
-const BUNDLE_ID = 'tui-9.9.9-dsh-9.9.9'
+const BUNDLE_ID = 'cli-9.9.9-dsh-9.9.9'
 const srcRoot = join(scratch, 'archive-src')
 
 function materializePattern(pattern) {
@@ -177,7 +177,7 @@ await scenario('perm-ready-path', async env => {
 
 {
   // 预存 cacheBase + 首次冷装（not ready → 解压重建）：预存根目录同样
-  // 不改写；版本子目录 tui-<v>-dsh-<v> 一定由守卫创建，仍收紧 0700。
+  // 不改写；版本子目录 cli-<v>-dsh-<v> 一定由守卫创建，仍收紧 0700。
   const env = makeEnv('perm-warm-install')
   mkdirSync(env.cacheBase, { recursive: true })
   chmodSync(env.cacheBase, 0o755)
@@ -185,7 +185,7 @@ await scenario('perm-ready-path', async env => {
   check('预存 cacheBase 首次冷装后保持 0755', (statSync(env.cacheBase).mode & 0o777) === 0o755,
     `mode=${(statSync(env.cacheBase).mode & 0o777).toString(8)}`)
   check(
-    '预存 cacheBase 冷装后版本子目录 tui-<v>-dsh-<v> 收紧为 0700',
+    '预存 cacheBase 冷装后版本子目录 cli-<v>-dsh-<v> 收紧为 0700',
     (statSync(env.runtimeRoot).mode & 0o777) === 0o700,
     `mode=${(statSync(env.runtimeRoot).mode & 0o777).toString(8)}`,
   )
@@ -198,7 +198,7 @@ await scenario('perm-ready-path', async env => {
   await ensureRuntime(env)
   check('冷路径创建的 cacheBase 同样是 0700', (statSync(env.cacheBase).mode & 0o777) === 0o700,
     `mode=${(statSync(env.cacheBase).mode & 0o777).toString(8)}`)
-  check('冷路径的版本子目录 tui-<v>-dsh-<v> 是 0700', (statSync(env.runtimeRoot).mode & 0o777) === 0o700,
+  check('冷路径的版本子目录 cli-<v>-dsh-<v> 是 0700', (statSync(env.runtimeRoot).mode & 0o777) === 0o700,
     `mode=${(statSync(env.runtimeRoot).mode & 0o777).toString(8)}`)
   try { rmSync(env.cacheBase, { recursive: true, force: true }) } catch { /* best effort */ }
 }

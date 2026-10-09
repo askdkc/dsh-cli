@@ -1,5 +1,5 @@
 /**
- * verify-scrollbar-gutter — `dsh-tui.scrollGutter` 设置三态：timeline（默认）
+ * verify-scrollbar-gutter — `dsh-cli.scrollGutter` 设置三态：timeline（默认）
  * / scrollbar（比例滚动条）/ hidden（无边栏），以及 scrollbar 形态的滑块
  * 几何与轨道点击。
  *
@@ -25,8 +25,8 @@
  * 运行：node --import tsx/esm scripts/verify-scrollbar-gutter.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 // 强制 OSC 52 复制路径：拖拽若意外落入选字路径，复制会写进假 stdout，
 // 断言可据此发现回归（见 4b）。
 process.env.SSH_CONNECTION = 'headless-test'

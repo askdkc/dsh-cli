@@ -79,7 +79,7 @@ agent-view 投影）。
 不知道"谁正在驱动这份日志"，于是两个进程会往**同一条 append-only
 事件日志**里交错写入，转录被破坏。这不是体验问题，是数据损坏。
 
-### 3.2 谁拥有：`~/.dsh-tui/session-mounts.json`
+### 3.2 谁拥有：`~/.dsh-cli/session-mounts.json`
 
 每个 TUI 进程发布一条自己的记录，声明它当前挂载了哪些会话：
 
@@ -256,8 +256,8 @@ rewind、模型切换、启动新建）：它不可能是别人持有的，拒�
 dpx 创建的 tui 环境彼此**完全隔离**，隔离运行时状态写到**各自的 home
 路径**：
 
-- 会话账本路径 = `join(homedir(), '.dsh-tui')`（`src/utils/paths.ts`）；
-  而 dpx 隔离会同时改写 `HOME` / `USERPROFILE`，所以每个环境的 `.dsh-tui`
+- 会话账本路径 = `join(homedir(), '.dsh-cli')`（`src/utils/paths.ts`）；
+  而 dpx 隔离会同时改写 `HOME` / `USERPROFILE`，所以每个环境的 `.dsh-cli`
   天然落在自己的环境根内，**不会**看到别的环境的挂载记录。
 - 会话日志根 = `$DSH_HOME/sessions`（dpx 各环境各自的 `DSH_HOME`）。
 

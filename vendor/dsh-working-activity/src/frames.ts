@@ -1,7 +1,7 @@
 /**
  * Working-activity indicator frame presets — the single home for every
  * spinner animation, ported from the pi working-activity extension
- * (`FRAME_PRESETS`) plus the dsh-tui additions (moon8 / rainbow / whale
+ * (`FRAME_PRESETS`) plus the dsh-cli additions (moon8 / rainbow / whale
  * family / clock / traffic lights). Consumers (TUI row, Web slot) render the
  * current frame next to the live working line; the preset name is chosen by
  * the UI and persisted in `working-activity.json` (`frames` key).

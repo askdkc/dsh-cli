@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-tui-plan-exit-'))
+const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-cli-plan-exit-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
 process.on('exit', () => rmSync(isolatedHome, { recursive: true, force: true }))
@@ -456,8 +456,8 @@ for (const resume of [false, true]) {
 // Observed plan exits in shadow mode remain a projection only. This uses the
 // real Channel/session-event router rather than a direct mode-actions unit.
 {
-  const previousMode = process.env.DSH_TUI_ADAPTER_MODE
-  process.env.DSH_TUI_ADAPTER_MODE = 'passive-shadow'
+  const previousMode = process.env.DSH_CLI_ADAPTER_MODE
+  process.env.DSH_CLI_ADAPTER_MODE = 'passive-shadow'
   try {
     const env = makeEnv({ history: [
       { type: 'sandbox/mode', data: { mode: 'danger-full-access' }, seq: 1 },
@@ -473,8 +473,8 @@ for (const resume of [false, true]) {
       JSON.stringify(env.appended),
     )
   } finally {
-    if (previousMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = previousMode
+    if (previousMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = previousMode
   }
 }
 

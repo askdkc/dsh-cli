@@ -181,7 +181,7 @@ function invalidateActivation(fiber: object): void {
 
 /** Carry an activation token through every async continuation created by a
  * Cordis plugin callback. The fallback context/root walk covers compositions
- * that do not mount a dsh-tui service and therefore have not been admitted to
+ * that do not mount a dsh-cli service and therefore have not been admitted to
  * the host's canonical Fiber maps yet. */
 function runActivation(fiber: object, execute: (...args: unknown[]) => unknown, receiver: unknown, args: unknown[]): unknown {
   const context = canonicalContexts.get(fiber) ?? (fiber as { ctx?: unknown }).ctx
@@ -300,7 +300,7 @@ export function withHostRootCapability<T>(callback: () => T): T {
 
 function rejectRootCapability(root: Context, capability: string): void {
   if (currentActivationIsPlugin(root)) {
-    throw new Error(`dsh-tui: ${capability} is unavailable from a plugin activation`)
+    throw new Error(`dsh-cli: ${capability} is unavailable from a plugin activation`)
   }
 }
 
@@ -570,7 +570,7 @@ function assertLiveContext(ctx: Context, capability: string): object {
   } catch {
     // Fall through to the stable public error below.
   }
-  throw new Error(`dsh-tui: ${capability} requires a live Cordis activation context`)
+  throw new Error(`dsh-cli: ${capability} requires a live Cordis activation context`)
 }
 
 /** Recover the composition root that owns a traceable service. Cordis stores
@@ -592,19 +592,19 @@ export function serviceCompositionRoot(service: object): Context | undefined {
  * context and thereby borrow its verified identity/lifecycle. */
 export function assertCallerContext(caller: Context, target: Context, capability: string, service?: object): void {
   if (!Context.is(caller) || !Context.is(target)) {
-    throw new Error(`dsh-tui: ${capability} requires a Cordis activation context`)
+    throw new Error(`dsh-cli: ${capability} requires a Cordis activation context`)
   }
   const callerFiber = assertLiveContext(caller, capability)
   const targetFiber = assertLiveContext(target, capability)
   const ownerRoot = service === undefined ? undefined : serviceCompositionRoot(service)
   if (ownerRoot !== undefined
     && (compositionRoot(caller) !== ownerRoot || compositionRoot(target) !== ownerRoot)) {
-    throw new Error(`dsh-tui: ${capability} context belongs to a different composition`)
+    throw new Error(`dsh-cli: ${capability} context belongs to a different composition`)
   }
   if (caller === target || callerFiber === targetFiber) return
   const root = compositionRoot(caller)
   if (caller === root || callerFiber === rootFibers.get(root as object)) return
-  throw new Error(`dsh-tui: ${capability} context must be the calling activation`)
+  throw new Error(`dsh-cli: ${capability} context must be the calling activation`)
 }
 
 /**
@@ -616,21 +616,21 @@ export function assertCallerContext(caller: Context, target: Context, capability
  */
 export function requirePluginCaller(caller: Context, capability: string, service?: object): Context {
   if (!Context.is(caller)) {
-    throw new Error(`dsh-tui: ${capability} requires a Cordis activation context`)
+    throw new Error(`dsh-cli: ${capability} requires a Cordis activation context`)
   }
   try {
     const callerFiber = assertLiveContext(caller, capability)
     const root = compositionRoot(caller)
     if (caller === root || callerFiber === rootFibers.get(root as object)) {
-      throw new Error(`dsh-tui: ${capability} requires a non-root calling activation`)
+      throw new Error(`dsh-cli: ${capability} requires a non-root calling activation`)
     }
     const ownerRoot = service === undefined ? undefined : serviceCompositionRoot(service)
     if (ownerRoot !== undefined && compositionRoot(caller) !== ownerRoot) {
-      throw new Error(`dsh-tui: ${capability} context belongs to a different composition`)
+      throw new Error(`dsh-cli: ${capability} context belongs to a different composition`)
     }
     return caller
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('dsh-tui:')) throw error
-    throw new Error(`dsh-tui: ${capability} requires a live non-root calling activation`)
+    if (error instanceof Error && error.message.startsWith('dsh-cli:')) throw error
+    throw new Error(`dsh-cli: ${capability} requires a live non-root calling activation`)
   }
 }

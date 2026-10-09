@@ -1,7 +1,7 @@
 /**
  * Landing-screen preference for the TUI's workspace home screen.
  *
- * A one-key preference under `~/.dsh-tui/home.json`, deliberately NOT a cordis
+ * A one-key preference under `~/.dsh-cli/home.json`, deliberately NOT a cordis
  * config value: "has this installation shown the user the workspace home on a
  * fresh launch yet" is per-machine UI state, like the lang and tray
  * preferences next to it — not a deployment choice a cordis.yml row should own.

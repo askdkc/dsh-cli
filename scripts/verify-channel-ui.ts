@@ -273,10 +273,10 @@ for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
 // helper as a raw escape hatch. The Kernel has no mutable Channel port in
 // shadow mode, so this is specifically the production local fallback path.
 for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
-  const oldMode = process.env.DSH_TUI_ADAPTER_MODE
-  const oldSlices = process.env.DSH_TUI_ADAPTER_SLICES
-  process.env.DSH_TUI_ADAPTER_MODE = mode
-  process.env.DSH_TUI_ADAPTER_SLICES = 'channel'
+  const oldMode = process.env.DSH_CLI_ADAPTER_MODE
+  const oldSlices = process.env.DSH_CLI_ADAPTER_SLICES
+  process.env.DSH_CLI_ADAPTER_MODE = mode
+  process.env.DSH_CLI_ADAPTER_SLICES = 'channel'
   try {
     const ctx = new Context()
     ctx.logger.warn = () => undefined
@@ -293,10 +293,10 @@ for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
     mount.dispose(); unregister(); live.raw.releaseContributions()
     await fiber.dispose()
   } finally {
-    if (oldMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = oldMode
-    if (oldSlices === undefined) delete process.env.DSH_TUI_ADAPTER_SLICES
-    else process.env.DSH_TUI_ADAPTER_SLICES = oldSlices
+    if (oldMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = oldMode
+    if (oldSlices === undefined) delete process.env.DSH_CLI_ADAPTER_SLICES
+    else process.env.DSH_CLI_ADAPTER_SLICES = oldSlices
   }
 }
 
@@ -419,10 +419,10 @@ for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
 
 // Actual kernel production assembly: settings can arrive before async mount.
 {
-  const oldMode = process.env.DSH_TUI_ADAPTER_MODE
-  const oldSlices = process.env.DSH_TUI_ADAPTER_SLICES
-  process.env.DSH_TUI_ADAPTER_MODE = 'new'
-  process.env.DSH_TUI_ADAPTER_SLICES = 'channel'
+  const oldMode = process.env.DSH_CLI_ADAPTER_MODE
+  const oldSlices = process.env.DSH_CLI_ADAPTER_SLICES
+  process.env.DSH_CLI_ADAPTER_MODE = 'new'
+  process.env.DSH_CLI_ADAPTER_SLICES = 'channel'
   try {
     const ctx = new Context()
     ctx.logger.warn = () => undefined
@@ -536,17 +536,17 @@ for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
     assert.throws(() => earlySettings.write('x', []), /lost Channel UI|disposed|lifetime/)
     mount.dispose(); raw.releaseContributions()
   } finally {
-    if (oldMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = oldMode
-    if (oldSlices === undefined) delete process.env.DSH_TUI_ADAPTER_SLICES
-    else process.env.DSH_TUI_ADAPTER_SLICES = oldSlices
+    if (oldMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = oldMode
+    if (oldSlices === undefined) delete process.env.DSH_CLI_ADAPTER_SLICES
+    else process.env.DSH_CLI_ADAPTER_SLICES = oldSlices
   }
 }
 
 // A legacy host stays descriptor-only: local guarded composition is intentional.
 {
-  const oldMode = process.env.DSH_TUI_ADAPTER_MODE
-  process.env.DSH_TUI_ADAPTER_MODE = 'legacy'
+  const oldMode = process.env.DSH_CLI_ADAPTER_MODE
+  process.env.DSH_CLI_ADAPTER_MODE = 'legacy'
   try {
     const ctx = new Context()
     ctx.logger.warn = () => undefined
@@ -566,8 +566,8 @@ for (const mode of ['passive-shadow', 'replay-shadow'] as const) {
     mount.dispose(); unregister(); raw.releaseContributions()
     await fiber.dispose()
   } finally {
-    if (oldMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = oldMode
+    if (oldMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = oldMode
   }
 }
 

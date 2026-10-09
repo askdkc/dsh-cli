@@ -54,7 +54,7 @@ try {
   Math.random = originalRandom
 }
 
-const preferenceDir = mkdtempSync(join(tmpdir(), 'dshtui-product-migration-'))
+const preferenceDir = mkdtempSync(join(tmpdir(), 'dshcli-product-migration-'))
 let legacyWriteOk = false
 try {
   legacyWriteOk = writeActivityFrames('claude', preferenceDir)
@@ -68,26 +68,26 @@ try {
 }
 check('writing a legacy activity name persists its canonical name', legacyWriteOk)
 
-const savedTabStatus = process.env.DSH_TUI_TAB_STATUS
+const savedTabStatus = process.env.DSH_CLI_TAB_STATUS
 const savedUserType = process.env.USER_TYPE
 try {
-  delete process.env.DSH_TUI_TAB_STATUS
+  delete process.env.DSH_CLI_TAB_STATUS
   for (const userType of [undefined, 'external', 'internal', 'ant']) {
     if (userType === undefined) delete process.env.USER_TYPE
     else process.env.USER_TYPE = userType
-    check(`tab status stays opt-in without DSH_TUI_TAB_STATUS (USER_TYPE=${userType ?? 'unset'})`,
+    check(`tab status stays opt-in without DSH_CLI_TAB_STATUS (USER_TYPE=${userType ?? 'unset'})`,
       supportsTabStatus() === false)
   }
-  process.env.DSH_TUI_TAB_STATUS = '1'
+  process.env.DSH_CLI_TAB_STATUS = '1'
   for (const userType of [undefined, 'external', 'internal', 'ant']) {
     if (userType === undefined) delete process.env.USER_TYPE
     else process.env.USER_TYPE = userType
-    check(`tab status enables only from DSH_TUI_TAB_STATUS (USER_TYPE=${userType ?? 'unset'})`,
+    check(`tab status enables only from DSH_CLI_TAB_STATUS (USER_TYPE=${userType ?? 'unset'})`,
       supportsTabStatus() === true)
   }
 } finally {
-  if (savedTabStatus === undefined) delete process.env.DSH_TUI_TAB_STATUS
-  else process.env.DSH_TUI_TAB_STATUS = savedTabStatus
+  if (savedTabStatus === undefined) delete process.env.DSH_CLI_TAB_STATUS
+  else process.env.DSH_CLI_TAB_STATUS = savedTabStatus
   if (savedUserType === undefined) delete process.env.USER_TYPE
   else process.env.USER_TYPE = savedUserType
 }

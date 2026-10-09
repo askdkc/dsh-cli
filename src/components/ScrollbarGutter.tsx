@@ -22,7 +22,7 @@ const PIN_SETTLE_CHECKS = 3
 
 /**
  * Proportional scrollbar for the fullscreen transcript's gutter — the
- * `scrollbar` option of the `dsh-tui.scrollGutter` setting (the timeline
+ * `scrollbar` option of the `dsh-cli.scrollGutter` setting (the timeline
  * rail's sibling; same 2-column slot, same chrome rules):
  *
  *  - the thumb (██) shows the visible window's position AND size over the

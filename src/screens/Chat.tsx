@@ -50,7 +50,7 @@ import { LogoHeader, MessageList } from '../components/MessageList.js'
 import { TimelineRail } from '../components/TimelineRail.js'
 import { ScrollbarGutter } from '../components/ScrollbarGutter.js'
 import type { TimelineSnapshot } from '../ink/timeline-rail.js'
-import { normalizeScrollGutter } from '../tuiDisplayPrefs.js'
+import { normalizeScrollGutter } from '../cliDisplayPrefs.js'
 import { OverlayAbove } from '../components/OverlayAbove.js'
 import { TooltipLayer } from '../components/Tooltip.js'
 import { PromptInput, type PromptController } from '../components/PromptInput.js'
@@ -169,7 +169,7 @@ const NO_EVENTS: readonly SessionEvent[] = []
 
 const COMMAND_RESULT_CELLS = 200
 
-/** Ceiling for one `dsh-tui migrate` child run. Discovery parses every source
+/** Ceiling for one `dsh-cli migrate` child run. Discovery parses every source
  *  file, but a healthy import of thousands of conversations finishes well
  *  inside this; without a cap a wedged child would hang the loop forever. */
 const MIGRATE_CHILD_TIMEOUT_MS = 30 * 60 * 1000
@@ -257,7 +257,7 @@ let fallbackApprovalStore: ApprovalStore | undefined
 
 /**
  * Shared inert extension stores for hosts that render Chat without the
- * dsh-tui-extensions row (headless verify scripts, bare embeds). Never
+ * dsh-cli-extensions row (headless verify scripts, bare embeds). Never
  * written, so plugin dialogs/status contributions never mount and
  * no shortcut ever matches.
  */
@@ -769,7 +769,7 @@ export function Chat({
     btwAbortRef.current = null
     setBtw(null)
   }, [channel.agentId])
-  // Auto-recap (`dsh-tui.recapOnOpen`): every time the session switches
+  // Auto-recap (`dsh-cli.recapOnOpen`): every time the session switches
   // (mount = open/resume, rewind/fork included), summarize its tail into
   // the dim AutoRecapRow. Failures stay silent in auto mode — `/recap`
   // surfaces them; the summary never enters the transcript or session log.
@@ -1371,9 +1371,9 @@ export function Chat({
   const thinkingStatus = useThinkingStatus(channel.spinnerMode === 'thinking')
 
   // Terminal tab title: the session
-  // title when set, else "dsh-TUI"; a `⠂/⠐` spinner prefix while a turn is
+  // title when set, else "dsh-CLI"; a `⠂/⠐` spinner prefix while a turn is
   // working (960ms cadence, only while the terminal is focused), a static
-  // `✦` otherwise. dsh-TUI brands the idle prefix with the DeepSeek whale.
+  // `✦` otherwise. dsh-CLI brands the idle prefix with the DeepSeek whale.
   const [titleFrame, setTitleFrame] = React.useState(0)
   const terminalFocused = useTerminalFocus()
   // Mouse text selection auto-copy: active only in
@@ -1627,16 +1627,16 @@ export function Chat({
   }
 
   /** Hot-swap the UI language (`/lang <id>` and the LangPicker both land
-   *  here): persist to ~/.dsh-tui/lang.json and mirror into the dsh-tui
+   *  here): persist to ~/.dsh-cli/lang.json and mirror into the dsh-cli
    *  settings namespace when it is served (best effort). */
   const applyLang = (lang: Lang): void => {
     const ok = writeLangPref(lang)
     setLang(lang)
     const settingsHost = channel.settingsHost()
-    const tuiView = settingsHost?.listNamespaces().find(entry => entry.ns === 'dsh-tui')
+    const tuiView = settingsHost?.listNamespaces().find(entry => entry.ns === 'dsh-cli')
     if (settingsHost !== undefined && tuiView !== undefined) {
       void settingsHost
-        .write('dsh-tui', [{ op: 'set', path: ['lang'], value: lang }], tuiView.revision)
+        .write('dsh-cli', [{ op: 'set', path: ['lang'], value: lang }], tuiView.revision)
         .catch(() => {})
     }
     channel.notify(
@@ -1663,7 +1663,7 @@ export function Chat({
     setImmediate(() => resolve(collectMigratePickerRows(Date.now())))
   })
 
-  /** Run `dsh-tui migrate <args>` in a child process through the package
+  /** Run `dsh-cli migrate <args>` in a child process through the package
    *  bin; resolves with the exit code and the combined output. Uses the
    *  shared no-throw runner (bounded capture, timeout, windowsHide): a wedged
    *  child would otherwise hang the sequential per-source loop forever. */
@@ -1754,7 +1754,7 @@ export function Chat({
         // opens the interactive indicator picker; `/activity frames <name>`
         // switches directly; `/activity frames` lists presets; `/activity
         // status` shows the current choice. The choice persists to
-        // ~/.dsh-tui/working-activity.json and survives restarts.
+        // ~/.dsh-cli/working-activity.json and survives restarts.
         const parts = rawInput.trim().split(/\s+/).filter(Boolean)
         if (parts[0] === 'status') {
           setHelpOpen(false)
@@ -1800,7 +1800,7 @@ export function Chat({
         // switches directly; `/preset status` shows the current choice. A
         // blank session swaps composition in place (official blank-only
         // rule); a started session is locked and the choice persists as the
-        // default for future sessions (~/.dsh-tui/agent-preset.json).
+        // default for future sessions (~/.dsh-cli/agent-preset.json).
         const parts = rawInput.trim().split(/\s+/).filter(Boolean)
         if (parts[0] === 'status') {
           setHelpOpen(false)
@@ -1845,7 +1845,7 @@ export function Chat({
         // Bare `/effort` opens the rheostat slider over the live route's
         // adapter levels (←/→ applies each step immediately); `/effort <id>`
         // sets directly (validated by the channel); `/effort status` prints
-        // the current level. The choice persists to ~/.dsh-tui/effort.json.
+        // the current level. The choice persists to ~/.dsh-cli/effort.json.
         const parts = rawInput.trim().split(/\s+/).filter(Boolean)
         if (parts[0] === 'status') {
           setHelpOpen(false)
@@ -1879,9 +1879,9 @@ export function Chat({
       }
       case 'lang': {
         // `/lang` shows the current UI language, `/lang en|zh` switches
-        // (hot-swap, persisted to ~/.dsh-tui/lang.json), bare `/lang` opens
-        // the en/zh picker. Precedence on next launch: DSH_TUI_LANG >
-        // settings.yaml `dsh-tui.lang` > cordis.yml `lang` > the persisted
+        // (hot-swap, persisted to ~/.dsh-cli/lang.json), bare `/lang` opens
+        // the en/zh picker. Precedence on next launch: DSH_CLI_LANG >
+        // settings.yaml `dsh-cli.lang` > cordis.yml `lang` > the persisted
         // choice.
         const parts = rawInput.trim().split(/\s+/).filter(Boolean)
         if (parts[0] === 'status') {
@@ -1914,8 +1914,8 @@ export function Chat({
         // palettes + static/runtime themes); `/theme <name>`
         // switches directly; `/theme status` shows the current choice.
         // `auto` follows the terminal background (OSC 11). Selection
-        // persists to ~/.dsh-tui/theme.json and hot swaps via the
-        // ThemeProvider setter (DSH_TUI_THEME still wins on next launch).
+        // persists to ~/.dsh-cli/theme.json and hot swaps via the
+        // ThemeProvider setter (DSH_CLI_THEME still wins on next launch).
         const parts = rawInput.trim().split(/\s+/).filter(Boolean)
         if (parts[0] === 'status') {
           setHelpOpen(false)
@@ -2328,8 +2328,8 @@ export function Chat({
       case 'config': {
         const userHome = process.env.USERPROFILE ?? ''
         const lines = [
-          t('doctor-example-config', { path: 'dsh --profile dsh-tui' }),
-          t('doctor-user-config', { path: `${userHome}/.dsh/profiles/dsh-tui/cordis.patch.yml` }),
+          t('doctor-example-config', { path: 'dsh --profile dsh-cli' }),
+          t('doctor-user-config', { path: `${userHome}/.dsh/profiles/dsh-cli/cordis.patch.yml` }),
           '',
           t('doctor-launch-hint'),
           t('doctor-route-hint'),
@@ -2596,9 +2596,9 @@ export function Chat({
         return true
       case 'reload': {
         // pi-style soft reload: re-read the persisted preference files
-        // (~/.dsh-tui/{theme,lang,agent-preset,model,working-activity}.json)
+        // (~/.dsh-cli/{theme,lang,agent-preset,model,working-activity}.json)
         // and re-apply live, honoring the boot-time precedence (env >
-        // cordis.yml > settings user layer > pref). The dsh-tui settings
+        // cordis.yml > settings user layer > pref). The dsh-cli settings
         // namespace is NOT re-read here — its watch applies edits live and
         // the platform watcher hot-reloads settings.yaml itself. What no
         // reload can re-read (cordis.yml root config, frozen fullscreen,
@@ -2606,10 +2606,10 @@ export function Chat({
         setHelpOpen(false)
         const tuiNamespace = channel.settingsHost()
           ?.listNamespaces()
-          .find(entry => entry.ns === 'dsh-tui')
+          .find(entry => entry.ns === 'dsh-cli')
         const plan = planReload({
           envTheme: envThemeOverride(),
-          envLang: isLang(process.env.DSH_TUI_LANG) ? process.env.DSH_TUI_LANG : undefined,
+          envLang: isLang(process.env.DSH_CLI_LANG) ? process.env.DSH_CLI_LANG : undefined,
           themePref: readThemePref(),
           currentTheme: themeName,
           langPref: readLangPref(),
@@ -3085,7 +3085,7 @@ export function Chat({
     // reached the chat:cancel branch below whenever a turn was in flight —
     // dismissing the panel and killing the turn with one key.
     if (jobsPanelOpen) return
-    // A plugin scene (dsh-tui-scenes) or the trajectory scene owns the whole
+    // A plugin scene (dsh-cli-scenes) or the trajectory scene owns the whole
     // screen while open: every key belongs to it. Unguarded, an Esc meant to
     // CLOSE the scene also reached the chat:cancel branch below whenever a
     // turn was in flight — closing the view and killing the turn in one key.
@@ -4001,7 +4001,7 @@ export function Chat({
     return fullscreen ? node : <AlternateScreen>{node}</AlternateScreen>
   }
 
-  // A plugin scene (dsh-tui-scenes) takes the whole terminal the same way
+  // A plugin scene (dsh-cli-scenes) takes the whole terminal the same way
   // the trajectory scene does, and sits at the TOP of this return chain:
   // an open() landing while the session browser or the trajectory scene is
   // up must still take the screen (and the keyboard, via the useInput guard
@@ -4380,7 +4380,7 @@ export function Chat({
         />
         </ScrollBox>
         {(() => {
-          // Gutter mode (settings `dsh-tui.scrollGutter`): the timeline
+          // Gutter mode (settings `dsh-cli.scrollGutter`): the timeline
           // rail (default), the proportional scrollbar, or nothing. The
           // slot keeps its 2 columns in both rendered modes (Qwen's
           // permanent-gutter rule — an appearing/disappearing gutter

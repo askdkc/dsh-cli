@@ -5,7 +5,7 @@
  * src/commands.ts 的注册：
  *   1. 五类偏好（theme/lang/preset/model/activity）在无显式配置时的应用
  *      与顺序；
- *   2. 优先级守卫：DSH_TUI_THEME / DSH_TUI_LANG（env-wins）、cordis.yml
+ *   2. 优先级守卫：DSH_CLI_THEME / DSH_CLI_LANG（env-wins）、cordis.yml
  *      显式 preset / lang / activityFrames / 完整 provider+model 对
  *      （config-wins）、settings 用户层 lang（config-wins）；
  *   3. 原子路由规则（issue #67）：provider-only pin 不得阻止偏好生效；
@@ -142,7 +142,7 @@ const BASE = {
 
 // ── 7. legacy code preset：名册解析后才迁移（rc 仍以 code 为真名） ─────
 {
-  const dir = mkdtempSync(join(tmpdir(), 'dsh-tui-preset-pref-'))
+  const dir = mkdtempSync(join(tmpdir(), 'dsh-cli-preset-pref-'))
   const file = join(dir, 'agent-preset.json')
   try {
     writeFileSync(file, JSON.stringify({ preset: 'code' }))

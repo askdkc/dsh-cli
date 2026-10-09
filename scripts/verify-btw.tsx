@@ -12,7 +12,7 @@
 import assert from 'node:assert/strict'
 
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { render }, { Chat }, { QuestionStore }, { LOCAL_COMMANDS }, { wrapSideQuestion, runSideQuestion }] = await Promise.all([
   import('node:stream'),

@@ -1,5 +1,5 @@
 /**
- * Public rendering surface, themed for dsh-tui.
+ * Public rendering surface, themed for dsh-cli.
  *
  * `Box` and `Text` are theme-aware wrappers around the local renderer, so
  * components can use `color="subtle"`-style semantic theme keys consistently.

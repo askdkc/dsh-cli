@@ -21,7 +21,7 @@ import { join } from 'node:path'
 const dataDir = mkdtempSync(join(tmpdir(), 'verify-hover-details-data-'))
 process.env.HOME = dataDir
 process.env.USERPROFILE = dataDir
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 // 组 I 断言条上各段的底色（进度条去掉标签后，颜色是唯一表达），必须开色。
 process.env.FORCE_COLOR = '3'
 
@@ -125,7 +125,7 @@ try {
     id: 'sess-1',
     kind: { kind: 'root' as const },
     title: { text: '修复一个非常长非常长需要被截断才能看到结尾标记END-OF-TITLE的标题', source: 'auto' as const },
-    cwd: 'D:\\work\\dsh-tui',
+    cwd: 'D:\\work\\dsh-cli',
     createdAt: NOW - 86_400_000,
     updatedAt: NOW - 3_600_000,
     bytes: 2048,
@@ -154,7 +154,7 @@ try {
   check('G 截断标题悬停后弹出完整标题', await settled(() => screenHas(term, 'END-OF-TITLE')))
   const absolute = formatAbsolute(session.updatedAt)
   check('G 浮层带绝对时间戳', await settled(() => screenHas(term, absolute)), `abs=${absolute}`)
-  check('G 浮层带 cwd', await settled(() => screenHas(term, 'D:\\work\\dsh-tui')))
+  check('G 浮层带 cwd', await settled(() => screenHas(term, 'D:\\work\\dsh-cli')))
   hover(stdin, 1, 1)
   check('G 移开即隐藏工具提示', await settled(() => !screenHas(term, 'END-OF-TITLE')))
 
@@ -166,7 +166,7 @@ try {
   {
     const content = tooltip.getTooltipSnapshot()?.content ?? ''
     check('G2 浮层不重复完整标题', !content.includes('END-OF-TITLE'), `content=${JSON.stringify(content)}`)
-    check('G2 浮层仍带绝对时间与 cwd', content.includes(absolute) && content.includes('dsh-tui'))
+    check('G2 浮层仍带绝对时间与 cwd', content.includes(absolute) && content.includes('dsh-cli'))
   }
   hover(stdin, 1, 1)
 
@@ -178,8 +178,8 @@ try {
     provider: 'test-provider',
     contextWindow: 64_000,
     gitBranch: 'test-branch-long',
-    displayCwd: 'D:\\work\\dsh-tui',
-    cwd: 'D:\\work\\dsh-tui',
+    displayCwd: 'D:\\work\\dsh-cli',
+    cwd: 'D:\\work\\dsh-cli',
     mode: { plan: false, sandbox: 'workspace-write', approval: 'on-request' },
     modeIndex: 0,
     tokens: { input: 0, output: 0 },

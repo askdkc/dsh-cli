@@ -107,7 +107,7 @@ ok('detect returns supported only after a read-only probe succeeds', () => {
 })
 
 ok('driver object has a stable id/capability', () => {
-  assert.equal(hostDescriptorDriver.id, 'dsh-tui-host-descriptor')
+  assert.equal(hostDescriptorDriver.id, 'dsh-cli-host-descriptor')
   assert.equal(hostDescriptorDriver.capability, 'host.descriptor')
 })
 

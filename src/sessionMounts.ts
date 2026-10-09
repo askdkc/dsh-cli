@@ -1,6 +1,6 @@
 /**
  * Cross-process session mounting ledger, kept at
- * `~/.dsh-tui/session-mounts.json`.
+ * `~/.dsh-cli/session-mounts.json`.
  *
  * A TUI terminal hosts SEVERAL agent sessions at once (the attached one plus
  * every parked background session), and sessions are durable: another TUI, or

@@ -18,12 +18,12 @@ test('source and compiled metadata boundaries and rereading', async () => {
    writeFileSync(join(dir, 'package-version.mjs'), code)
    const manifest = join(root, 'package.json')
    const module = await import(pathToFileURL(join(dir, 'package-version.mjs')).href)
-   assert.equal(module.installedTuiVersion(), undefined)
+   assert.equal(module.installedCliVersion(), undefined)
    for (const metadata of ['{', '{}', '{"name":"other","version":"9.9.9"}', '{"name":"@askdkc/dsh-cli","version":"bad"}', '{"name":"@askdkc/dsh-cli","version":123}', '[]', 'null']) {
-    writeFileSync(manifest, metadata); assert.equal(module.installedTuiVersion(), undefined)
+    writeFileSync(manifest, metadata); assert.equal(module.installedCliVersion(), undefined)
    }
    for (const version of ['1.2.3', '2.0.0-beta.1']) {
-    writeFileSync(manifest, JSON.stringify({name:'@askdkc/dsh-cli',version})); assert.equal(module.installedTuiVersion(),version)
+    writeFileSync(manifest, JSON.stringify({name:'@askdkc/dsh-cli',version})); assert.equal(module.installedCliVersion(),version)
    }
   }
  } finally { rmSync(temp,{recursive:true,force:true}) }

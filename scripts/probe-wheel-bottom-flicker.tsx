@@ -5,20 +5,20 @@
  * 连续 wheel-down N 格，逐帧（每次 stdout 写入后）截图对比稳定帧 S0：
  *   - framesAfter: 与 S0 不同的中间帧数（0 = 完全无可见拖动）
  *   - 列出第一个差异帧的差异行
- * 同时 DSH_TUI_GEOMETRY_TRACE=<file> 打印 burst 期间每帧的 scroll 几何，
+ * 同时 DSH_CLI_GEOMETRY_TRACE=<file> 打印 burst 期间每帧的 scroll 几何，
  * 看 sticky/scrollTop/maxScroll/pending 的 flip-flop。
  *
  * Run: node --import tsx/esm scripts/probe-wheel-bottom-flicker.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 delete process.env.WT_SESSION
 delete process.env.TERM_PROGRAM
 delete process.env.TMUX
 
-const TRACE = process.env.DSH_TUI_GEOMETRY_TRACE_FILE ?? ''
-if (TRACE) process.env.DSH_TUI_GEOMETRY_TRACE = TRACE
+const TRACE = process.env.DSH_CLI_GEOMETRY_TRACE_FILE ?? ''
+if (TRACE) process.env.DSH_CLI_GEOMETRY_TRACE = TRACE
 
 const [
   { PassThrough, Writable },

@@ -39,9 +39,9 @@ import SessionStore, { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
 import { sessionFormatCatalog } from '@deepseek-ai/dsh-session-format-catalog'
 import Jsonl from '@deepseek-ai/dsh-session-persistence-jsonl'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-title-payload-'))
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-title-payload-'))
 // The compat writer resolves its store through this override first.
-process.env.DSH_TUI_SESSION_ROOT = root
+process.env.DSH_CLI_SESSION_ROOT = root
 
 const { appendSessionTitle, userTitleData } = await import('../lib/types/dsh-adapter/compat/sessionLog.js')
 

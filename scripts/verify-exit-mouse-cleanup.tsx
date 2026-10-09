@@ -1,5 +1,5 @@
 /**
- * Exit mouse-reporting cleanup regression (issue #522): after dsh-tui exits
+ * Exit mouse-reporting cleanup regression (issue #522): after dsh-cli exits
  * the shell keeps echoing SGR mouse sequences (ESC[<btn;col;rowM) because
  * ENABLE_MOUSE_TRACKING was re-written AFTER the exit cleanup's
  * DISABLE_MOUSE_TRACKING — the self-heal probe (and the DECRPM re-entry
@@ -152,7 +152,7 @@ const sleep = (ms: number): Promise<void> =>
 // synchronous cleanup to the stdout stream's own fd.
 // ---------------------------------------------------------------------------
 {
-  const tmpFile = join(tmpdir(), `dsh-tui-exit-mouse-cleanup-${process.pid}.out`)
+  const tmpFile = join(tmpdir(), `dsh-cli-exit-mouse-cleanup-${process.pid}.out`)
   const tmpFd = openSync(tmpFile, 'w')
   const stdout = fakeTTY({ fd: tmpFd })
   const stdin = new FakeStdin()

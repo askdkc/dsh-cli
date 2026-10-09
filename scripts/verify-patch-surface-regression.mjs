@@ -41,7 +41,7 @@ try {
   // Same release label may describe different harmless Web-only additions.
   writeFileSync(join(web, 'cordis.patch.yml'), `${installedPatch}\n- insert:\n    - id: web-only-future-feature\n      name: test-feature\n`)
   check('verify-patch-surface.ts', true)
-  writeFileSync(join(web, 'cordis.patch.yml'), `${installedPatch}\n- insert:\n    - id: dsh-tui\n      name: conflicting-plugin\n`)
+  writeFileSync(join(web, 'cordis.patch.yml'), `${installedPatch}\n- insert:\n    - id: dsh-cli\n      name: conflicting-plugin\n`)
   check('verify-patch-surface.ts', false, /insertsSharedWithWebApp/)
   check('verify-web-coexistence.mjs', false, /reuses official loader ids/)
   const before = readFileSync(join(tui, 'patch-surface.snapshot.json'), 'utf8')

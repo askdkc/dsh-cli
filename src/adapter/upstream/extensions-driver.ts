@@ -99,7 +99,7 @@ async function verifyStatusLive(ctx: unknown): Promise<CapabilityLifecycle[]> {
     ]
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiStatus')]
-  const key = `dsh_tui_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+  const key = `dsh_cli_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
   const token = Math.floor(Math.random() * 0x7fffffff)
   let setLive = false
   try {
@@ -197,7 +197,7 @@ async function verifyShortcutsLive(ctx: unknown): Promise<CapabilityLifecycle[]>
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiShortcuts')]
   const shortcutKeys = ['9', '0', 'u', 'i', 'o', 'p', 'h', 'j', 'k', 'l', 'b', 'n', 'm']
   const combo = `ctrl+alt+shift+${shortcutKeys[Math.floor(Math.random() * shortcutKeys.length)]}`
-  const options = { description: 'dsh-tui reversible shortcut probe', handler: () => undefined }
+  const options = { description: 'dsh-cli reversible shortcut probe', handler: () => undefined }
   let activeCombo = combo
   let dispose: (() => void) | undefined
   let observed = false
@@ -297,7 +297,7 @@ async function verifyRenderersLive(ctx: unknown): Promise<CapabilityLifecycle[]>
     ]
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiRenderers')]
-  const type = `dsh-tui/probe-${randomUUID().replace(/-/g, '').slice(0, 8)}`
+  const type = `dsh-cli/probe-${randomUUID().replace(/-/g, '').slice(0, 8)}`
   let dispose: (() => void) | undefined
   let registerLive = false
   try {
@@ -383,11 +383,11 @@ async function verifyThemesLive(ctx: unknown): Promise<CapabilityLifecycle[]> {
     ]
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiThemes')]
-  const name = `dshtuiprobe${randomUUID().replace(/-/g, '').slice(0, 8)}`
+  const name = `dshcliprobe${randomUUID().replace(/-/g, '').slice(0, 8)}`
   let dispose: (() => void) | undefined
   let registerLive = false
   try {
-    dispose = host.register({ name, displayName: 'dsh-tui probe', base: 'dark', colors: {} })
+    dispose = host.register({ name, displayName: 'dsh-cli probe', base: 'dark', colors: {} })
     const snapshot = host.getSnapshot()
     if (!snapshot.some(entry => entry.name === name)) {
       throw new Error('temporary theme was not visible')
@@ -540,7 +540,7 @@ async function verifyCommandTreesLive(ctx: unknown): Promise<CapabilityLifecycle
     ]
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiCommandTrees')]
-  const root = `dshtuiprobe${randomUUID().replace(/-/g, '').slice(0, 8)}`
+  const root = `dshcliprobe${randomUUID().replace(/-/g, '').slice(0, 8)}`
   let dispose: (() => void) | undefined
   let registerLive = false
   try {
@@ -591,8 +591,8 @@ function createCommandTreesPort(host: TuiCommandTreeHost): HostCommandTreesPort 
 // ── driver objects ────────────────────────────────────────────────────────
 
 export const statusDriver: UpstreamDriver = {
-  id: 'dsh-tui-status',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-status',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.status',
   mountEffectClass: 'mutate',
   detect: detectStatusCapability,
@@ -612,8 +612,8 @@ export const statusDriver: UpstreamDriver = {
 }
 
 export const shortcutsDriver: UpstreamDriver = {
-  id: 'dsh-tui-shortcuts',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-shortcuts',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.shortcuts',
   mountEffectClass: 'register',
   detect: detectShortcutsCapability,
@@ -633,8 +633,8 @@ export const shortcutsDriver: UpstreamDriver = {
 }
 
 export const renderersDriver: UpstreamDriver = {
-  id: 'dsh-tui-renderers',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-renderers',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.renderers',
   mountEffectClass: 'register',
   detect: detectRenderersCapability,
@@ -654,8 +654,8 @@ export const renderersDriver: UpstreamDriver = {
 }
 
 export const themesDriver: UpstreamDriver = {
-  id: 'dsh-tui-themes',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-themes',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.themes',
   mountEffectClass: 'register',
   detect: detectThemesCapability,
@@ -675,8 +675,8 @@ export const themesDriver: UpstreamDriver = {
 }
 
 export const toastDriver: UpstreamDriver = {
-  id: 'dsh-tui-toast',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-toast',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.toast',
   mountEffectClass: 'mutate',
   detect: detectToastCapability,
@@ -696,8 +696,8 @@ export const toastDriver: UpstreamDriver = {
 }
 
 export const commandTreesDriver: UpstreamDriver = {
-  id: 'dsh-tui-command-trees',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-command-trees',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.command-trees',
   mountEffectClass: 'register',
   detect: detectCommandTreesCapability,

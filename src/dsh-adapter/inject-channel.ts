@@ -1,15 +1,15 @@
 /**
  * External injection channel — lets an out-of-process editor integration
  * (e.g. the `dsh.nvim` Neovim plugin) push text into the running TUI's
- * prompt input and, optionally, submit it. This is dsh-TUI's answer to
+ * prompt input and, optionally, submit it. This is dsh-CLI's answer to
  * OpenCode's `POST /tui/publish` (`tui.prompt.append` / `tui.command.execute`),
  * but over a per-session local socket instead of an HTTP port: no port
  * allocation, no auth surface, and the endpoint is torn down with the
  * session.
  *
- * Transport: a Unix domain socket at `~/.dsh-tui/inject/<sessionId>.sock`
- * (a named pipe `\\.\pipe\dsh-tui-inject-<sessionId>` on Windows). Alongside
- * it the server maintains a discovery file `~/.dsh-tui/inject/servers.json`
+ * Transport: a Unix domain socket at `~/.dsh-cli/inject/<sessionId>.sock`
+ * (a named pipe `\\.\pipe\dsh-cli-inject-<sessionId>` on Windows). Alongside
+ * it the server maintains a discovery file `~/.dsh-cli/inject/servers.json`
  * listing every live session (`pid`, `sessionId`, `cwd`, `socketPath`) so a
  * client can pick the instance whose `cwd` overlaps the editor's project —
  * the same cwd-matching OpenCode's server discovery does.
@@ -84,7 +84,7 @@ export type InjectController = InjectHandlers
  */
 export function socketPathFor(sessionId: string): string {
   if (process.platform === 'win32') {
-    return `\\\\.\\pipe\\dsh-tui-inject-${sessionId}`
+    return `\\\\.\\pipe\\dsh-cli-inject-${sessionId}`
   }
   return join(INJECT_DIR, `${sessionId}.sock`)
 }

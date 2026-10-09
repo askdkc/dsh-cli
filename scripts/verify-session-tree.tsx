@@ -6,7 +6,7 @@
  *           轮间条目）、家族拼接（fork 锚点、覆盖去重、活动路径）、
  *           扁平化/过滤（活动优先、user-only、搜索、活动叶存活）、
  *           整轮丢弃预警（coversBranch 陷阱）。
- *  [读取层] compat 预算读取器：临时 DSH_TUI_SESSION_ROOT 下写入 zstd 帧
+ *  [读取层] compat 预算读取器：临时 DSH_CLI_SESSION_ROOT 下写入 zstd 帧
  *           日志，验证全量读、事件预算截断、继承前缀跳过。
  *  [屏幕层] SessionTree 无头组装：树渲染（标题/连接线/分支徽标）、
  *           Enter 打开操作菜单、字母直达执行分叉（经 channel 记录）、
@@ -15,8 +15,8 @@
  * 运行：node --import tsx/esm scripts/verify-session-tree.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const tree = await import('../src/dsh-adapter/sessionTree.js')
 
@@ -237,7 +237,7 @@ function family() {
   const { join } = await import('node:path')
   const { zstdCompressSync } = await import('node:zlib')
   const root = mkdtempSync(join(tmpdir(), 'dsh-tree-verify-'))
-  process.env.DSH_TUI_SESSION_ROOT = root
+  process.env.DSH_CLI_SESSION_ROOT = root
   try {
     const dir = join(root, 'ws1', 'session-readerprobe')
     mkdirSync(dir, { recursive: true })
@@ -262,7 +262,7 @@ function family() {
     check('reader: 不存在的日志返回 undefined', missing === undefined)
 
   } finally {
-    delete process.env.DSH_TUI_SESSION_ROOT
+    delete process.env.DSH_CLI_SESSION_ROOT
     rmSync(root, { recursive: true, force: true })
   }
 }

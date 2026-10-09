@@ -116,7 +116,7 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
   const shell = options.shell ?? process.env.SHELL ?? ''
   const pathValue = options.path ?? process.env.PATH ?? ''
   const sourceRoot = harnessSourceRoot(options.cliEntry ?? process.argv[1])
-    ?? configuredHarnessRoot(options.dshRoot ?? process.env.DSH_TUI_DSH_ROOT)
+    ?? configuredHarnessRoot(options.dshRoot ?? process.env.DSH_CLI_DSH_ROOT)
   const binDir = platform === 'win32'
     ? join(options.localAppData ?? process.env.LOCALAPPDATA ?? join(home, 'AppData', 'Local'), 'dsh-cli', 'bin')
     : join(home, '.local', 'bin')
@@ -130,6 +130,7 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
     throw new Error(`dsh-cli profile package is missing or unreadable at ${profilePackage}`)
   }
   const currentCommand = pathValue.split(platform === 'win32' ? ';' : ':')
+    .filter(dir => dir.length > 0)
     .map(dir => join(dir, platform === 'win32' ? 'dsh-cli.cmd' : 'dsh-cli'))
     .find(candidate => candidate !== command && pathExists(candidate) && !candidate.includes(`${join('node_modules', '.bin')}`))
   if (currentCommand !== undefined) return `Existing dsh-cli command at ${currentCommand} was kept; automatic registration skipped.`
@@ -146,7 +147,7 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
     }
   }
   try {
-    const target = join('profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli', 'bin', 'dsh-tui.js')
+    const target = join('profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli', 'bin', 'dsh-cli.js')
     const content = platform === 'win32'
       ? `@echo off\r\nrem dsh-cli managed launcher\r\nsetlocal DisableDelayedExpansion\r\nif not defined DSH_HOME set "DSH_HOME=${dshHome.replace(/%/g, '%%')}"\r\nnode "%DSH_HOME%\\${target.replace(/\//g, '\\')}" %*\r\nexit /b %ERRORLEVEL%\r\n`
       : `#!/bin/sh\n${marker}\nDEFAULT_DSH_HOME=${quoted(dshHome)}\n: "\${DSH_HOME:=$DEFAULT_DSH_HOME}"\nexport DSH_HOME\nexec node "$DSH_HOME/${target}" "$@"\n`
@@ -177,8 +178,8 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
         ? `contains -- ${quoted(binDir)} $PATH; or set -gx PATH ${quoted(binDir)} $PATH`
         : `case ":$PATH:" in *:${quoted(binDir)}:*) ;; *) export PATH=${quoted(binDir)}:"$PATH" ;; esac`
       const sourceLine = sourceRoot === undefined ? '' : basename(shell) === 'fish'
-        ? `\nset -q DSH_TUI_DSH_ROOT; or set -gx DSH_TUI_DSH_ROOT ${quoted(sourceRoot)}`
-        : `\nif [ -z "\${DSH_TUI_DSH_ROOT:-}" ]; then export DSH_TUI_DSH_ROOT=${quoted(sourceRoot)}; fi`
+        ? `\nset -q DSH_CLI_DSH_ROOT; or set -gx DSH_CLI_DSH_ROOT ${quoted(sourceRoot)}`
+        : `\nif [ -z "\${DSH_CLI_DSH_ROOT:-}" ]; then export DSH_CLI_DSH_ROOT=${quoted(sourceRoot)}; fi`
       const line = pathLine + sourceLine
       for (const file of files) updateShellFile(file, line)
     }

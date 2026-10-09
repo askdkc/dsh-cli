@@ -17,7 +17,7 @@
 process.env.FORCE_COLOR = '3'
 // English UI copy is asserted below; pin the language before any module
 // import resolves the startup lang (env > persisted > locale).
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { PassThrough, Writable },

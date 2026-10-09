@@ -15,8 +15,8 @@
 process.env.FORCE_COLOR = '3'
 // This script asserts English UI copy; pin the language before any module
 // import resolves the startup lang.
-process.env.DSH_TUI_LANG = 'en'
-// Redirect ~/.dsh-tui (history.jsonl / resume.txt / theme.json) into a temp
+process.env.DSH_CLI_LANG = 'en'
+// Redirect ~/.dsh-cli (history.jsonl / resume.txt / theme.json) into a temp
 // dir BEFORE any module import resolves utils/paths.js — os.homedir() reads
 // these env vars, so the submits below never touch the real history.
 const [{ mkdtempSync, rmSync }, { tmpdir }, { join }] = await Promise.all([

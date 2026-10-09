@@ -24,7 +24,7 @@ function usage() {
     '       pnpm dev:test',
     '',
     'Environment:',
-    '  DSH_TUI_DEV_ROOT   Persistent isolated test root.',
+    '  DSH_CLI_DEV_ROOT   Persistent isolated test root.',
     '  DSH_SOURCE_HOME    Source settings directory (default: ~/.dsh).',
   ].join('\n'))
 }
@@ -101,19 +101,19 @@ try {
   }
   const tarball = tarballs[0]
 
-  run('dsh', ['plugin', '--profile', 'dsh-tui', 'add', tarball], {
+  run('dsh', ['plugin', '--profile', 'dsh-cli', 'add', tarball], {
     env: { ...process.env, DSH_HOME: dshHome },
   })
 
   const installed = join(
     dshHome,
     'profiles',
-    'dsh-tui',
+    'dsh-cli',
     'node_modules',
     'dsh-cli',
   )
   for (const file of [
-    'bin/dsh-tui.js',
+    'bin/dsh-cli.js',
     'cordis.patch.yml',
     'lib/types/index.js',
   ]) {
@@ -147,7 +147,7 @@ try {
 
   if (noLaunch) process.exit(0)
 
-  const child = spawn(...commandInvocation('dsh', ['--profile', 'dsh-tui', ...args]), {
+  const child = spawn(...commandInvocation('dsh', ['--profile', 'dsh-cli', ...args]), {
     cwd: repoRoot,
     stdio: 'inherit',
     shell: isWindows,
@@ -156,8 +156,8 @@ try {
       HOME: isolatedHome,
       USERPROFILE: isolatedHome,
       DSH_HOME: dshHome,
-      DSH_TUI_SESSION_ROOT: sessionRoot,
-      DSH_TUI_WORKSPACE_TARGET: workspaceTarget,
+      DSH_CLI_SESSION_ROOT: sessionRoot,
+      DSH_CLI_WORKSPACE_TARGET: workspaceTarget,
       NODE_ENV: 'production',
     },
   })

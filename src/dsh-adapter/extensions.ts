@@ -1,5 +1,5 @@
 /**
- * The dsh-tui-extensions row: mounts every plugin-facing UI seam service in
+ * The dsh-cli-extensions row: mounts every plugin-facing UI seam service in
  * one cordis plugin (one profile row, one patch-surface entry — see issue
  * #183 for the cost of row/code skew, and #242 for the entry-level-only
  * inject rule this row follows).
@@ -20,7 +20,7 @@
  * module's public surface (`./extensions` export). The Cordis `ctx.on` hook is
  * only a compatibility facade and cannot bypass admission, scope or grant
  * checks. Intercept-class events require an explicit grant in
- * `~/.dsh-tui/extension-grants.json`, default deny. The channel installs the
+ * `~/.dsh-cli/extension-grants.json`, default deny. The channel installs the
  * SAME hook (idempotent per cordis root, so exactly one installation lands):
  * this row covers profiles launching without the channel, and the channel
  * covers the skew path where THIS row is missing.
@@ -42,7 +42,7 @@ import { installDecisionGuard } from './decision-guard.js'
 import { readGrantStore } from '../adapter/standard/grants.js'
 import { adapterRuntimeFor } from '../adapter/kernel/runtime-context.js'
 
-export const name = 'dsh-tui-extensions'
+export const name = 'dsh-cli-extensions'
 
 export function apply(ctx: Context): void {
   installDecisionGuard(ctx, readGrantStore(undefined, undefined, adapterRuntimeFor(ctx)))

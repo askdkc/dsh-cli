@@ -3,7 +3,7 @@
  *
  * The browser cannot see the host's in-process state, and the previous
  * transport (appending `activity/status` events into the shared session log)
- * made the log unreadable for other readers — the reason dsh-tui mounts this
+ * made the log unreadable for other readers — the reason dsh-cli mounts this
  * plugin with `publish: false`. A **session projection** is the supported
  * replacement: the host folds committed events into a value and ships it to
  * clients through the projection store, so nothing is written to the log.

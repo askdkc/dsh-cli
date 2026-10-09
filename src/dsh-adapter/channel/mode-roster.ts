@@ -69,7 +69,7 @@ export function warnOnceForPermissionEntry(
   if (warned.has(key)) return
   if (warned.size >= 200) warned.clear()
   warned.add(key)
-  warn(`dsh-tui: permission preset "${value}" skipped from Shift+Tab (${reason})`)
+  warn(`dsh-cli: permission preset "${value}" skipped from Shift+Tab (${reason})`)
 }
 
 /** The Shift+Tab roster: configured modes first, runtime presets appended. */

@@ -39,7 +39,7 @@ const MANIFEST_ENTRIES = [
   'node_modules/@deepseek-ai/cordis/lib/index.js',
   'node_modules/@askdkc/dsh-cli/lib/types/index.js',
   'node_modules/@askdkc/dsh-cli/lib/types/update.js',
-  'node_modules/@askdkc/dsh-cli/bin/dsh-tui.js',
+  'node_modules/@askdkc/dsh-cli/bin/dsh-cli.js',
   'node_modules/@askdkc/dsh-cli/package.json',
   'node_modules/@askdkc/dsh-cli/cordis.patch.yml',
 ]
@@ -157,7 +157,7 @@ const tightenCacheBase = cacheBase => {
  * → 写哈希清单 marker → 原子 rename 到 runtimeRoot。
  *
  * @param {object} options
- * @param {string} options.cacheBase - 缓存根目录（如 ~/.cache/dsh-tui-standalone）
+ * @param {string} options.cacheBase - 缓存根目录（如 ~/.cache/dsh-cli-standalone）
  * @param {string} options.runtimeRoot - 本次 bundle 的解压目标目录
  * @param {string} options.bundleId - bundle 标识（tui-<ver>-dsh-<ver>）
  * @param {string} options.archivePath - 内置 runtime.tar.gz 路径
@@ -186,7 +186,7 @@ async function ensureRuntime(options) {
   // 整可执行代码，在临时目录阶段就收紧，rename 过去即为 0700。
   tightenCacheBase(temporaryRoot)
 
-  log?.(`[dsh-tui] 首次运行，正在释放内置 DSH/TUI 运行时到 ${runtimeRoot}\n`)
+  log?.(`[dsh-cli] 首次运行，正在释放内置 DSH/TUI 运行时到 ${runtimeRoot}\n`)
   try {
     writeFileSync(temporaryArchive, readFileSync(archivePath))
     await extract({

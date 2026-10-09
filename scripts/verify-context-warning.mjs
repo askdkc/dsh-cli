@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-tui-context-warning-'))
+const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-cli-context-warning-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
 process.on('exit', () => rmSync(isolatedHome, { recursive: true, force: true }))

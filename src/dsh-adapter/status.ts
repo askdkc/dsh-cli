@@ -266,7 +266,7 @@ export class TuiStatusRuntime extends Service {
     // works with Cordis's caller-bound method proxy (unlike `#private`).
     const state: StatusState = {
       store: new TuiStatusStore((key, error) => {
-        ctx.logger.warn(`dsh-tui: status view "${key}" crashed and was hidden: %o`, error)
+        ctx.logger.warn(`dsh-cli: status view "${key}" crashed and was hidden: %o`, error)
       }),
       nextToken: 1,
       runtime: adapterRuntimeFor(ctx),
@@ -301,7 +301,7 @@ export class TuiStatusRuntime extends Service {
     try {
       caller = requirePluginCaller(this.ctx, 'tuiStatus.set', this)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiStatus.set requires a live non-root plugin activation')
+      this.ctx.logger.warn('dsh-cli: tuiStatus.set requires a live non-root plugin activation')
       return noop
     }
     const state = statusStateFor(this)
@@ -312,31 +312,31 @@ export class TuiStatusRuntime extends Service {
       try {
         assertCallerContext(caller, identity, 'tuiStatus.set')
       } catch {
-        caller.logger.warn('dsh-tui: tuiStatus.set rejected an identity belonging to another activation')
+        caller.logger.warn('dsh-cli: tuiStatus.set rejected an identity belonging to another activation')
         return noop
       }
     }
     const owner = activationFiber(caller)
     if (owner === undefined) {
-      caller.logger.warn('dsh-tui: tuiStatus.set requires a live activation owner')
+      caller.logger.warn('dsh-cli: tuiStatus.set requires a live activation owner')
       return noop
     }
     let normalized: string
     try {
       normalized = String(key ?? '').trim().toLowerCase()
     } catch {
-      caller.logger.warn('dsh-tui: tuiStatus.set rejected an uncoercible key')
+      caller.logger.warn('dsh-cli: tuiStatus.set rejected an uncoercible key')
       return noop
     }
     if (!KEY_PATTERN.test(normalized)) {
-      caller.logger.warn('dsh-tui: tuiStatus.set rejected an invalid key')
+      caller.logger.warn('dsh-cli: tuiStatus.set rejected an invalid key')
       return noop
     }
     if (text !== undefined && !store.getSnapshot().some(e => e.key === normalized)) {
       // New key beyond the cap: the line is one row of terminal — an
       // unbounded count would push the prompt off screen.
       if (store.getSnapshot().length >= MAX_ENTRIES) {
-        caller.logger.warn(`dsh-tui: tuiStatus.set rejected "${normalized}": ${MAX_ENTRIES} contributions already shown`)
+        caller.logger.warn(`dsh-cli: tuiStatus.set rejected "${normalized}": ${MAX_ENTRIES} contributions already shown`)
         return noop
       }
     }
@@ -346,18 +346,18 @@ export class TuiStatusRuntime extends Service {
       // object would otherwise render as "[object Object]") is REFUSED with
       // a warning — it must not silently become a clear, either.
       if (typeof text !== 'string' && typeof text !== 'number' && typeof text !== 'boolean') {
-        caller.logger.warn(`dsh-tui: tuiStatus.set rejected non-scalar text for "${normalized}"`)
+        caller.logger.warn(`dsh-cli: tuiStatus.set rejected non-scalar text for "${normalized}"`)
         return noop
       }
       cleaned = cleanScalarText(text, TEXT_CELLS)
     }
     if (cleaned !== undefined && store.viewOwnerOf(normalized) !== undefined) {
-      caller.logger.warn(`dsh-tui: tuiStatus.set rejected "${normalized}" — the key already owns a rich view`)
+      caller.logger.warn(`dsh-cli: tuiStatus.set rejected "${normalized}" — the key already owns a rich view`)
       return noop
     }
     const had = store.getSnapshot().some(entry => entry.key === normalized)
     if (store.ownerOf(normalized) !== undefined && store.ownerOf(normalized) !== owner) {
-      caller.logger.warn(`dsh-tui: tuiStatus.set rejected "${normalized}" — the contribution belongs to another activation`)
+      caller.logger.warn(`dsh-cli: tuiStatus.set rejected "${normalized}" — the contribution belongs to another activation`)
       return noop
     }
     const ledger = caller.get('tuiEffectLedger')
@@ -423,24 +423,24 @@ export class TuiStatusRuntime extends Service {
     try {
       caller = requirePluginCaller(this.ctx, 'tuiStatus.registerView', this)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiStatus.registerView requires a live non-root plugin activation')
+      this.ctx.logger.warn('dsh-cli: tuiStatus.registerView requires a live non-root plugin activation')
       return undefined
     }
     if (identity !== undefined) {
       try {
         assertCallerContext(caller, identity, 'tuiStatus.registerView')
       } catch {
-        caller.logger.warn('dsh-tui: tuiStatus.registerView rejected an identity belonging to another activation')
+        caller.logger.warn('dsh-cli: tuiStatus.registerView rejected an identity belonging to another activation')
         return undefined
       }
     }
     const owner = activationFiber(caller)
     if (owner === undefined) {
-      caller.logger.warn('dsh-tui: tuiStatus.registerView requires a live activation owner')
+      caller.logger.warn('dsh-cli: tuiStatus.registerView requires a live activation owner')
       return undefined
     }
     if (typeof descriptor !== 'object' || descriptor === null || Array.isArray(descriptor)) {
-      caller.logger.warn('dsh-tui: tuiStatus.registerView rejected an invalid descriptor')
+      caller.logger.warn('dsh-cli: tuiStatus.registerView rejected an invalid descriptor')
       return undefined
     }
     const raw = descriptor as unknown as {
@@ -452,26 +452,26 @@ export class TuiStatusRuntime extends Service {
     try {
       normalized = String(raw.key ?? '').trim().toLowerCase()
     } catch {
-      caller.logger.warn('dsh-tui: tuiStatus.registerView rejected an uncoercible key')
+      caller.logger.warn('dsh-cli: tuiStatus.registerView rejected an uncoercible key')
       return undefined
     }
     if (!KEY_PATTERN.test(normalized)) {
-      caller.logger.warn('dsh-tui: tuiStatus.registerView rejected an invalid key')
+      caller.logger.warn('dsh-cli: tuiStatus.registerView rejected an invalid key')
       return undefined
     }
     const maxRows = raw.maxRows ?? 1
     if (typeof maxRows !== 'number' || !Number.isInteger(maxRows) || maxRows < 1 || maxRows > MAX_VIEW_ROWS) {
-      caller.logger.warn(`dsh-tui: tuiStatus.registerView rejected "${normalized}" — maxRows must be an integer from 1 to ${MAX_VIEW_ROWS}`)
+      caller.logger.warn(`dsh-cli: tuiStatus.registerView rejected "${normalized}" — maxRows must be an integer from 1 to ${MAX_VIEW_ROWS}`)
       return undefined
     }
     if (typeof raw.component !== 'function') {
-      caller.logger.warn(`dsh-tui: tuiStatus.registerView rejected "${normalized}" — component must be a function`)
+      caller.logger.warn(`dsh-cli: tuiStatus.registerView rejected "${normalized}" — component must be a function`)
       return undefined
     }
     const state = statusStateFor(this)
     const store = state.store
     if (store.ownerOf(normalized) !== undefined || store.viewOwnerOf(normalized) !== undefined) {
-      caller.logger.warn(`dsh-tui: tuiStatus.registerView rejected "${normalized}" — the key is already registered`)
+      caller.logger.warn(`dsh-cli: tuiStatus.registerView rejected "${normalized}" — the key is already registered`)
       caller.get('tuiEffectLedger')?.record(
         {
           operation: 'bind',
@@ -488,7 +488,7 @@ export class TuiStatusRuntime extends Service {
       maxRows,
     )
     if (requestedRows > MAX_VIEW_ROW_BUDGET) {
-      caller.logger.warn(`dsh-tui: tuiStatus.registerView rejected "${normalized}" — rich status views are limited to ${MAX_VIEW_ROW_BUDGET} rows total`)
+      caller.logger.warn(`dsh-cli: tuiStatus.registerView rejected "${normalized}" — rich status views are limited to ${MAX_VIEW_ROW_BUDGET} rows total`)
       return undefined
     }
     const token = state.nextToken++
@@ -541,7 +541,7 @@ export class TuiStatusRuntime extends Service {
       try {
         listener()
       } catch (error) {
-        caller.logger.warn(`dsh-tui: tuiStatus listener failed: ${error instanceof Error ? error.message : String(error)}`)
+        caller.logger.warn(`dsh-cli: tuiStatus listener failed: ${error instanceof Error ? error.message : String(error)}`)
       }
     }
     const dispose = statusStateFor(this).store.subscribe(wrapped)

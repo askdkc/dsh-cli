@@ -6,7 +6,7 @@
  * session projection and the host ships that value to clients; this dock entry
  * reads it through the session standard kit's `useProjection` and owns no
  * store, no refresh chain, and no event listener. Nothing is appended to the
- * session log — the reason dsh-tui mounts this plugin with `publish: false`.
+ * session log — the reason dsh-cli mounts this plugin with `publish: false`.
  *
  * Mount contract (see the root README's "Web UI 集成" section): the web
  * client's client-modules host scans loader entries for `dsh.client`

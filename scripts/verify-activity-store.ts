@@ -28,9 +28,9 @@
  *    nothing at all.
  * 10. **Real host re-render.** The REAL registry + REAL projection re-render
  *     the value on every read, which is the exact feature the tick exists for.
- * 11. **User preferences.** The parsed `~/.dsh-tui/working-activity.json`
+ * 11. **User preferences.** The parsed `~/.dsh-cli/working-activity.json`
  *     reaches the mounted plugin config under the row's explicit values.
- * @module dsh-tui/scripts/verify-activity-store
+ * @module dsh-cli/scripts/verify-activity-store
  */
 
 import assert from 'node:assert/strict'

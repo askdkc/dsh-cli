@@ -106,7 +106,7 @@ const hostThemes = new WeakMap<TuiThemeRuntime, ThemeState>()
 
 function warn(ctx: Context, message: string): void {
   try {
-    ctx.logger.warn(`dsh-tui: ${message}`)
+    ctx.logger.warn(`dsh-cli: ${message}`)
   } catch {
     // A logger is observability only; malformed plugin data must stay inert.
   }
@@ -375,7 +375,7 @@ export class TuiThemeRuntime extends Service {
       return dispose
     } catch {
       try {
-        this.ctx.logger.warn('dsh-tui: tuiThemes.register rejected malformed data')
+        this.ctx.logger.warn('dsh-cli: tuiThemes.register rejected malformed data')
       } catch {
         // Never let a malformed plugin descriptor crash the TUI.
       }

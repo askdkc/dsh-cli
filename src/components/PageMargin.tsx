@@ -10,16 +10,16 @@ import {
   resolvePageMargin,
   subscribePageMargin,
   type PageMarginSetting,
-} from '../tuiDisplayPrefs.js'
+} from '../cliDisplayPrefs.js'
 
 /**
  * 整页边距（页边距 / page margin）：有些终端（Windows Terminal 的
  * PowerShell 等 profile 默认 8px padding、GUI 终端）自带内缩，另一些
  * （裸 WSL、tmux、SSH、部分嵌入宿主）完全没有——文字直接贴着屏幕四边，
  * 观感压抑。TUI 无法读取终端的 padding，所以在根布局自备一层小"页边距"。
- * 设置（`dsh-tui.pageMargin`）可以是预设名 none / slim / normal（默认，
+ * 设置（`dsh-cli.pageMargin`）可以是预设名 none / slim / normal（默认，
  * 左右 2 列、上下 1 行）/ roomy，或自定义 `NxM`（左右各 N 列 × 上下各 M
- * 行，如 3x1）——解析与几何见 tuiDisplayPrefs。
+ * 行，如 3x1）——解析与几何见 cliDisplayPrefs。
  *
  * 实现策略（三层）：
  *
@@ -34,7 +34,7 @@ import {
  *    右键菜单）补偿——它们的锚点来自指针事件（屏幕坐标），而 absolute
  *    盒子相对的是内缩后的内容区原点。
  *
- * 模式来源是 tuiDisplayPrefs 的模块级 store（applyPageMargin），不是
+ * 模式来源是 cliDisplayPrefs 的模块级 store（applyPageMargin），不是
  * props：`.PageMargin` 位于 Chat 之上，/settings 的更改如果只走 channel
  * 的版本 bump 无法驱动它（那只重渲染 Chat 以下）。store 由 plugin 的
  * applyDisplay 镜像写入，模式变化时本组件重渲染并重布局。

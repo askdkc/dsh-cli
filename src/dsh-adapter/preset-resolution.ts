@@ -11,7 +11,7 @@ export interface AgentPresetInfo {
   readonly broken?: string
 }
 
-/** The `ctx.agentPresets` service surface dsh-tui consumes. */
+/** The `ctx.agentPresets` service surface dsh-cli consumes. */
 export interface AgentPresetsLike {
   readonly defaultId: string
   list(): Promise<readonly AgentPresetInfo[]>

@@ -22,8 +22,8 @@
  */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'kitty'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'en'
 
 const COLS = 108
 const ROWS = 34
@@ -95,7 +95,7 @@ const stderr = new FakeStderr() as never
 const stdin = new FakeStdin() as never
 
 // An empty settled session with the runtime's defaults: inline mode, whale
-// idle animation on (dsh-tui.whaleIdle defaults true), default status bar.
+// idle animation on (dsh-cli.whaleIdle defaults true), default status bar.
 // This is the shape that reproduced the churn — nothing is streaming, nothing
 // is typing, and the header's idle planner keeps a low-rate frame timer.
 const listeners = new Set<() => void>()

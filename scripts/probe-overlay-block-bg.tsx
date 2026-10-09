@@ -6,7 +6,7 @@
  * 运行：node --import tsx/esm scripts/probe-overlay-block-bg.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
+process.env.DSH_CLI_THEME = 'dark'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { completeCommands, LOCAL_COMMANDS }] = await Promise.all([
   import('node:stream'),

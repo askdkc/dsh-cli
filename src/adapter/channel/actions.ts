@@ -21,7 +21,7 @@ export function createChannelActions(
   token: symbol,
 ): HostChannelActionsPort {
   if (token !== CHANNEL_SPLIT_TOKEN) {
-    throw new Error('dsh-tui: Channel split actions require the internal host token')
+    throw new Error('dsh-cli: Channel split actions require the internal host token')
   }
   return Object.freeze({
     submit: text => channel.submit(text),

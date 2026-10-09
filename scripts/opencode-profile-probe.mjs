@@ -49,10 +49,10 @@ if(process.env.DSH_AUTH_TEST_PHASE!=='independent') {
   console.log('host-owned pi', pi.version)
 }
 const profile=loadProfile('probe','dsh-cli',new URL('./node_modules/@deepseek-ai/dsh/package.json',import.meta.url).pathname,process.env.DSH_HOME)
-const kept=new Set(['llm','commands','dsh-tui-auth'])
+const kept=new Set(['llm','commands','dsh-cli-auth'])
 const overlay=new URL('./probe-'+process.env.DSH_AUTH_TEST_PHASE+'.yml',import.meta.url).pathname
 const patches=composeEntries(profile.layers.map(layer=>layer.patches)).map(entry=>({id:entry.id,disabled:!kept.has(entry.id)}))
-if(process.env.DSH_AUTH_TEST_PHASE==='independent') patches.find(entry=>entry.id==='dsh-tui-auth').config={providers:['opencode','opencode-go']}
+if(process.env.DSH_AUTH_TEST_PHASE==='independent') patches.find(entry=>entry.id==='dsh-cli-auth').config={providers:['opencode','opencode-go']}
 await writeFile(overlay,JSON.stringify(patches))
 const timeout=setTimeout(()=>{console.error('profile boot timeout');process.exit(2)},30000)
 try {
@@ -81,8 +81,8 @@ if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
   if(process.env.DSH_AUTH_TEST_PHASE==='updated') {
     const carrier=join(process.env.DSH_HOME,'profiles/dsh-cli/node_modules/@askdkc/dsh-cli')
     const installed=JSON.parse(await readFile(join(carrier,'package.json'),'utf8'))
-    const {installedTuiVersion}=await import(pathToFileURL(join(carrier,'lib/types/package-version.js')).href)
-    assert.equal(installedTuiVersion(),installed.version,'actual tarball metadata must match its own manifest')
+    const {installedCliVersion}=await import(pathToFileURL(join(carrier,'lib/types/package-version.js')).href)
+    assert.equal(installedCliVersion(),installed.version,'actual tarball metadata must match its own manifest')
     const authModule=join(authRoot,'lib/pi-ai.js')
     const {adapterBuiltinProviders}=await import(pathToFileURL(authModule).href)
     const authRequire=createRequire(authModule)

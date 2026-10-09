@@ -15,6 +15,6 @@ if (!existsSync(probe)) {
   console.error('  - Installing as a plugin? Use the registry package instead:')
   console.error('      dsh plugin --profile dsh-cli add @askdkc/dsh-cli')
   console.error('  - Building from source? Clone recursively, then re-run:')
-  console.error('      git clone --recurse-submodules https://github.com/askdkc/dsh-TUI-fork')
+  console.error('      git clone --recurse-submodules https://github.com/askdkc/dsh-cli')
   process.exit(1)
 }

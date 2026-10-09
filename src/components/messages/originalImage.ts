@@ -30,7 +30,7 @@ export async function exportOriginalImage(image: TranscriptImage, signal?: Abort
       if (data.byteLength > IMAGE_ORIGINAL_MAX_BYTES) throw new Error('Original image byte budget exceeded')
       const extension = originalExtension(data)
       const digest = createHash('sha256').update(data).digest('hex')
-      directory ??= mkdtemp(join(tmpdir(), 'dsh-tui-original-')).then(async path => {
+      directory ??= mkdtemp(join(tmpdir(), 'dsh-cli-original-')).then(async path => {
         await chmod(path, 0o700)
         return path
       }).catch(error => { directory = undefined; throw error })

@@ -11,12 +11,12 @@ import { settled } from './lib/term-test.mjs'
 
 const directory = resolve(process.argv[2] ?? 'dist-standalone')
 const platform = `${process.platform === 'win32' ? 'win' : process.platform}-${process.arch}`
-const archive = join(directory, `dsh-tui-standalone-${platform}.${process.platform === 'win32' ? 'zip' : 'tar.gz'}`)
+const archive = join(directory, `dsh-cli-standalone-${platform}.${process.platform === 'win32' ? 'zip' : 'tar.gz'}`)
 const scratch = mkdtempSync(join(tmpdir(), 'dsh-artifact-'))
 const env = {
   SystemRoot: process.env.SystemRoot, HOME: scratch, USERPROFILE: scratch,
-  DSH_TUI_STANDALONE_HOME: join(scratch, 'home'),
-  DSH_TUI_STANDALONE_CACHE: join(scratch, 'cache'),
+  DSH_CLI_STANDALONE_HOME: join(scratch, 'home'),
+  DSH_CLI_STANDALONE_CACHE: join(scratch, 'cache'),
   DSH_TELEMETRY_MODE: 'DISABLED', NODE_ENV: 'production',
 }
 try {
@@ -28,7 +28,7 @@ try {
   } else {
     await extractTar({ file: archive, cwd: scratch, strict: true, preservePaths: false })
   }
-  const executable = join(scratch, process.platform === 'win32' ? 'dsh-tui.exe' : 'dsh-tui')
+  const executable = join(scratch, process.platform === 'win32' ? 'dsh-cli.exe' : 'dsh-cli')
   const run = (phase, timeout = 60000) => {
     const args = ['--dump-config']
     const started = performance.now()
@@ -46,7 +46,7 @@ try {
     assert.equal(config.status, 0, config.stderr)
     assert.match(config.stdout, /# == @askdkc\/dsh-cli/u)
   }
-  const manifestPath = join(env.DSH_TUI_STANDALONE_HOME, 'profiles/dsh-cli/package.json')
+  const manifestPath = join(env.DSH_CLI_STANDALONE_HOME, 'profiles/dsh-cli/package.json')
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   assert.deepEqual(manifest.dsh.profile.bundles, ['@deepseek-ai/dsh-base', '@askdkc/dsh-cli'])
   manifest.custom = 'preserved'
@@ -55,12 +55,12 @@ try {
   writeFileSync(patch, '# user overlay\n[]\n')
   const config = run('preserved profile')
   assert.equal(config.status, 0, config.stderr)
-  assert.match(config.stdout, /dsh-tui/u)
+  assert.match(config.stdout, /dsh-cli/u)
   assert.equal(JSON.parse(readFileSync(manifestPath, 'utf8')).custom, 'preserved')
   assert.equal(readFileSync(patch, 'utf8'), '# user overlay\n[]\n')
-  const cacheName = readdirSync(env.DSH_TUI_STANDALONE_CACHE).find(name => name.startsWith('tui-'))
+  const cacheName = readdirSync(env.DSH_CLI_STANDALONE_CACHE).find(name => name.startsWith('cli-'))
   assert.ok(cacheName, 'runtime cache was populated')
-  const runtime = join(env.DSH_TUI_STANDALONE_CACHE, cacheName)
+  const runtime = join(env.DSH_CLI_STANDALONE_CACHE, cacheName)
   const dshRoot = join(runtime, 'node_modules/@deepseek-ai/dsh')
   const dsh = JSON.parse(readFileSync(join(dshRoot, 'package.json'), 'utf8'))
   const entry = join(dshRoot, typeof dsh.bin === 'string' ? dsh.bin : dsh.bin.dsh)
@@ -73,7 +73,7 @@ try {
   const terminal = new xterm.Terminal({ cols: 100, rows: 32, allowProposedApi: true })
   const child = pty.spawn(executable, [], {
     name: 'xterm-256color', cols: 100, rows: 32, cwd: scratch,
-    env: { ...env, PATH: '', TERM: 'xterm-256color', DSH_TUI_PRESET: 'liangshen', DSH_TUI_SESSION_ROOT: join(scratch, 'sessions') },
+    env: { ...env, PATH: '', TERM: 'xterm-256color', DSH_CLI_PRESET: 'liangshen', DSH_CLI_SESSION_ROOT: join(scratch, 'sessions') },
   })
   let exit
   let output = ''

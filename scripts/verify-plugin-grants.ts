@@ -25,8 +25,8 @@ import { fileURLToPath } from 'node:url'
 const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-plugin-grants-home-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_LANG = 'zh'
-process.env.DSH_TUI_ADAPTER_MODE = 'new'
+process.env.DSH_CLI_LANG = 'zh'
+process.env.DSH_CLI_ADAPTER_MODE = 'new'
 
 const { Context } = await import('@deepseek-ai/cordis')
 const { parseGrantStore, readGrantStore, EXTENSION_GRANTS_FILE } = await import('../src/adapter/standard/grants.js')
@@ -799,7 +799,7 @@ check1('decision permission map is immutable',
     error = caught instanceof Error ? caught.message : String(caught)
   }
   check1('default descriptor passes vendored schema + validateHost', error === '', error)
-  check1('hostId is dsh-tui', d.hostId === 'dsh-tui')
+  check1('hostId is dsh-cli', d.hostId === 'dsh-cli')
   check1('hostVersion is the repo package version',
     d.hostVersion === JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version)
   check1('readOwnPackageVersion agrees', readOwnPackageVersion() === d.hostVersion)
@@ -904,9 +904,9 @@ check1('decision permission map is immutable',
   const patch = readFileSync(join(root, 'cordis.patch.yml'), 'utf8')
   const mirror = readFileSync(join(root, 'cordis.yml'), 'utf8')
   check1('patch mounts plugin-host BEFORE extensions',
-    patch.indexOf('dsh-tui-plugin-host') !== -1 && patch.indexOf('dsh-tui-plugin-host') < patch.indexOf('dsh-tui-extensions'))
+    patch.indexOf('dsh-cli-plugin-host') !== -1 && patch.indexOf('dsh-cli-plugin-host') < patch.indexOf('dsh-cli-extensions'))
   check1('cordis.yml mirrors the row BEFORE extensions',
-    mirror.indexOf('dsh-tui-plugin-host') !== -1 && mirror.indexOf('dsh-tui-plugin-host') < mirror.indexOf('dsh-tui-extensions'))
+    mirror.indexOf('dsh-cli-plugin-host') !== -1 && mirror.indexOf('dsh-cli-plugin-host') < mirror.indexOf('dsh-cli-extensions'))
   const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
   check1('exports exposes ./plugin-host',
     manifest.exports?.['./plugin-host']?.import === './lib/types/plugin-host.js')
@@ -919,8 +919,8 @@ check1('decision permission map is immutable',
     !publicHostDeclaration.includes('admitInternal') && !publicHostDeclaration.includes('TuiPluginHostRuntime'))
   const snapshot = JSON.parse(readFileSync(join(root, 'patch-surface.snapshot.json'), 'utf8'))
   check1('snapshot records the insert before extensions',
-    snapshot.inserts.indexOf('dsh-tui-plugin-host') !== -1
-    && snapshot.inserts.indexOf('dsh-tui-plugin-host') === snapshot.inserts.indexOf('dsh-tui-extensions') - 1)
+    snapshot.inserts.indexOf('dsh-cli-plugin-host') !== -1
+    && snapshot.inserts.indexOf('dsh-cli-plugin-host') === snapshot.inserts.indexOf('dsh-cli-extensions') - 1)
   // 入口行 inject 纪律（#183）：新服务绝不进入 entry-level inject。
   check1('entry inject list NOT extended with tuiPluginHost', !mirror.includes('tuiPluginHost'))
 }

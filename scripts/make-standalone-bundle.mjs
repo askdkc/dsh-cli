@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * 生成 dsh-TUI 便携包（Standalone Single Executable Bundles）。
+ * 生成 dsh-CLI 便携包（Standalone Single Executable Bundles）。
  *
  * 用法：
  *   node scripts/make-standalone-bundle.mjs [--out <dir>] [--targets <targets>]
  *
  * 产物：<out>/ 目录下各平台的压缩包：
- *   - dsh-tui-standalone-linux-x64.tar.gz  (内含 dsh-tui)
- *   - dsh-tui-standalone-linux-arm64.tar.gz (内含 dsh-tui)
- *   - dsh-tui-standalone-darwin-arm64.tar.gz (内含 dsh-tui)
- *   - dsh-tui-standalone-darwin-x64.tar.gz (内含 dsh-tui)
+ *   - dsh-cli-standalone-linux-x64.tar.gz  (内含 dsh-cli)
+ *   - dsh-cli-standalone-linux-arm64.tar.gz (内含 dsh-cli)
+ *   - dsh-cli-standalone-darwin-arm64.tar.gz (内含 dsh-cli)
+ *   - dsh-cli-standalone-darwin-x64.tar.gz (内含 dsh-cli)
  */
 import { execFileSync, execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -153,7 +153,7 @@ function syncReleaseAgeExcludes(versionsByName) {
 }
 
 console.log(`\n============================================`)
-console.log(`  dsh-TUI Standalone Bundle Builder`)
+console.log(`  dsh-CLI Standalone Bundle Builder`)
 console.log(`  Version: ${version}`)
 console.log(`  Targets: ${targets}`)
 console.log(`  Output:  ${outDir}`)
@@ -209,7 +209,7 @@ console.log('    正在执行 pnpm install…')
 execSync('pnpm install --frozen-lockfile', { cwd: standaloneDir, stdio: 'inherit' })
 const metadata = readRuntimeMetadata(standaloneDir)
 const smokeHome = join(temporaryDir, 'smoke-home')
-ensureProfile({ home: smokeHome, runtimeRoot: standaloneDir, tuiVersion: metadata.tuiVersion })
+ensureProfile({ home: smokeHome, runtimeRoot: standaloneDir, cliVersion: metadata.cliVersion })
 // Validate the real host graph before spending time archiving it. Keep resolved
 // config off stdout: a caller may have provider settings in the environment.
 const smokeEnv = {
@@ -230,7 +230,7 @@ prepareTargetPty(standaloneDir, target)
 console.log('    正在打包 node_modules 到 runtime.tar.gz…')
 createStandaloneArchive(runtimeTar, standaloneDir, ['node_modules'])
 const archiveDigest = createHash('sha256').update(readFileSync(runtimeTar)).digest('hex')
-metadata.bundleId = `tui-${metadata.tuiVersion}-dsh-${metadata.dshVersion}-${archiveDigest.slice(0, 16)}`
+metadata.bundleId = `cli-${metadata.cliVersion}-dsh-${metadata.dshVersion}-${archiveDigest.slice(0, 16)}`
 writeFileSync(join(standaloneDir, 'runtime-meta.json'), `${JSON.stringify(metadata, null, 2)}\n`)
 const tarStat = statSync(runtimeTar)
 console.log(`    [OK] runtime.tar.gz (${(tarStat.size / 1024 / 1024).toFixed(2)} MB)`)
@@ -285,11 +285,11 @@ const stagedFiles = readdirSync(stageDir)
 if (stagedFiles.length === 0) throw new Error('Standalone builder produced no executable')
 
 const targetMap = [
-  { match: /^entry-linux-arm64$/i, platform: 'linux-arm64', binary: 'dsh-tui', format: 'tar.gz' },
-  { match: /^(?:entry-linux(?:-x64)?|entry)$/i, platform: 'linux-x64', binary: 'dsh-tui', format: 'tar.gz' },
-  { match: /^entry-win(?:-x64)?(?:\.exe)?$/i, platform: 'win-x64', binary: 'dsh-tui.exe', format: 'zip' },
-  { match: /^entry-(?:macos|darwin)-arm64$/i, platform: 'darwin-arm64', binary: 'dsh-tui', format: 'tar.gz' },
-  { match: /^entry-(?:macos|darwin)(?:-x64)?$/i, platform: 'darwin-x64', binary: 'dsh-tui', format: 'tar.gz' },
+  { match: /^entry-linux-arm64$/i, platform: 'linux-arm64', binary: 'dsh-cli', format: 'tar.gz' },
+  { match: /^(?:entry-linux(?:-x64)?|entry)$/i, platform: 'linux-x64', binary: 'dsh-cli', format: 'tar.gz' },
+  { match: /^entry-win(?:-x64)?(?:\.exe)?$/i, platform: 'win-x64', binary: 'dsh-cli.exe', format: 'zip' },
+  { match: /^entry-(?:macos|darwin)-arm64$/i, platform: 'darwin-arm64', binary: 'dsh-cli', format: 'tar.gz' },
+  { match: /^entry-(?:macos|darwin)(?:-x64)?$/i, platform: 'darwin-x64', binary: 'dsh-cli', format: 'tar.gz' },
 ]
 
 for (const stagedFile of stagedFiles) {
@@ -302,7 +302,7 @@ for (const stagedFile of stagedFiles) {
     const target = /^node\d+-(linux|macos|win)-(x64|arm64)$/u.exec(targets)
     if (!target) throw new Error(`Unsupported standalone target: ${targets}`)
     const platform = `${target[1] === 'macos' ? 'darwin' : target[1]}-${target[2]}`
-    matched = { platform, binary: target[1] === 'win' ? 'dsh-tui.exe' : 'dsh-tui', format: target[1] === 'win' ? 'zip' : 'tar.gz' }
+    matched = { platform, binary: target[1] === 'win' ? 'dsh-cli.exe' : 'dsh-cli', format: target[1] === 'win' ? 'zip' : 'tar.gz' }
   }
   for (const item of targetMap) {
     if (matched) break
@@ -317,7 +317,7 @@ for (const stagedFile of stagedFiles) {
   }
 
   const { platform, binary: binaryName, format } = matched
-  const archiveName = `dsh-tui-standalone-${platform}.${format}`
+  const archiveName = `dsh-cli-standalone-${platform}.${format}`
   const archivePath = join(outDir, archiveName)
 
   // 临时存放二进制并赋权

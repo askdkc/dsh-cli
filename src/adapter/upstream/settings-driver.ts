@@ -103,10 +103,10 @@ export async function verifySettingsLiveForHost(
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiSettingsSections')]
   const missing: string[] = []
-  const ns = `dsh_tui_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+  const ns = `dsh_cli_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
   const section = {
     ns,
-    title: 'dsh-tui reversible settings probe',
+    title: 'dsh-cli reversible settings probe',
     fields: [],
   } as never
   let dispose: (() => void) | undefined
@@ -177,8 +177,8 @@ function createSettingsPort(host: TuiSettingsSectionsHost): HostSettingsPort {
 }
 
 export const settingsDriver: UpstreamDriver = {
-  id: 'dsh-tui-settings',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-settings',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.settings',
   mountEffectClass: 'register',
   detect: detectSettingsCapability,

@@ -1,5 +1,5 @@
 /**
- * dsh-tui plugin entry. The TUI implementation lives in `./plugin.ts` (its
+ * dsh-cli plugin entry. The TUI implementation lives in `./plugin.ts` (its
  * render path is JSX); this module owns the plugin surface (`name`/`inject`/
  * `Config`/`apply`) at the package entry module and delegates
  * `apply` through a dynamic import so entry-scanning tooling and the Loader
@@ -9,16 +9,16 @@
 import type { Context } from '@deepseek-ai/cordis'
 import Schema from '@deepseek-ai/schemastery'
 import type { SessionModeSpec } from '../sessionModes.js'
-import { DEFAULT_STATUS_BAR, normalizePageMargin, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../tuiDisplayPrefs.js'
+import { DEFAULT_STATUS_BAR, normalizePageMargin, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../cliDisplayPrefs.js'
 import { SHORTCUT_ACTIONS, type ShortcutActionId } from '../utils/keymap.js'
 import { editableConfig, type RuntimeConfig } from './compat/settings.js'
 
-export const name = 'dsh-tui'
+export const name = 'dsh-cli'
 // `tuiWorkspaces` must stay OUT of this code-level inject (issue #183): the
 // dsh CLI resolves the bundle's cordis.patch.yml from the FIRST copy of this
 // package found from its own install anchor (typically the global launcher),
 // while the Loader imports the plugin module from the profile's copy. When
-// the two copies skew, the patch may predate the dsh-tui-workspaces row — a
+// the two copies skew, the patch may predate the dsh-cli-workspaces row — a
 // hard inject here then deadlocks the whole tree at boot ("pending (waiting
 // for service: tuiWorkspaces)"). The bundle patch keeps tuiWorkspaces in the
 // row-level inject purely as an ordering guarantee when the row exists; when
@@ -26,7 +26,7 @@ export const name = 'dsh-tui'
 export const inject = ['agents']
 
 /**
- * dsh-tui plugin configuration: session attachment, model route, working
+ * dsh-cli plugin configuration: session attachment, model route, working
  * directory, and display preferences.
  */
 export interface Config {
@@ -34,7 +34,7 @@ export interface Config {
   sessionId?: string
   /** LLM provider route. The route resolves atomically (issue #67): when
    *  cordis.yml names BOTH `provider` and `model`, that pair wins; otherwise
-   *  the `/model` choice persisted in `~/.dsh-tui/model.json` wins whole;
+   *  the `/model` choice persisted in `~/.dsh-cli/model.json` wins whole;
    *  otherwise `agentDefaultModel` supplies the provider-neutral Harness
    *  default. A bare embedder without that service falls back to DeepSeek.
    *  A provider-only pin never half-overrides the persisted choice. */
@@ -66,7 +66,7 @@ export interface Config {
   activity?: boolean
   /** Working-activity indicator preset (`moon8`/`moon`/`comet`/`dots`/…
    *  or `random`; see activityFrames.ts). When absent, the `/activity`
-   *  choice persisted in `~/.dsh-tui/working-activity.json` wins, then the
+   *  choice persisted in `~/.dsh-cli/working-activity.json` wins, then the
    *  `moon8` default. */
   activityFrames?: string
   /** Show the segmented context bar (the band under the input with the
@@ -81,14 +81,14 @@ export interface Config {
   fullscreen?: boolean
   /** Allow terminal image previews when supported (default true). Saved
    *  /settings choices override this value after restart. The environment
-   *  override DSH_TUI_DISABLE_TERMINAL_IMAGES can always force previews off. */
+   *  override DSH_CLI_DISABLE_TERMINAL_IMAGES can always force previews off. */
   terminalImages?: boolean
-  /** UI language: `en` / `zh`. When absent, the `DSH_TUI_LANG` env var wins,
-   *  then the `/lang` choice persisted in `~/.dsh-tui/lang.json`, then the locale, falling back to `en`. */
+  /** UI language: `en` / `zh`. When absent, the `DSH_CLI_LANG` env var wins,
+   *  then the `/lang` choice persisted in `~/.dsh-cli/lang.json`, then the locale, falling back to `en`. */
   lang?: string
   /** Agent preset id new sessions compose from (standard/ptc/minimal/
    *  cordis/… when the roster is mounted). When absent, the `/preset` choice
-   *  persisted in `~/.dsh-tui/agent-preset.json` wins, then the roster
+   *  persisted in `~/.dsh-cli/agent-preset.json` wins, then the roster
    *  default (`standard`). */
   preset?: string
   /** Edit/Write diff presentation: `auto` picks side-by-side on wide
@@ -102,34 +102,34 @@ export interface Config {
   /** Tool-card background strength; defaults to no added background. */
   toolBackground?: ToolBackground
   /** What the fullscreen transcript's right gutter shows (settings
-   *  `dsh-tui.scrollGutter`): `timeline` turn rail (default), `scrollbar`
+   *  `dsh-cli.scrollGutter`): `timeline` turn rail (default), `scrollbar`
    *  proportional thumb, or `hidden`. */
   scrollGutter?: ScrollGutterMode
-  /** Root page inset (settings `dsh-tui.pageMargin`): a preset name
+  /** Root page inset (settings `dsh-cli.pageMargin`): a preset name
    *  (`none` / `slim` / `normal` (default) / `roomy`) or a custom `NxM`
    *  spec (columns per side × rows top/bottom) that insets the whole UI
    *  from the terminal edges. Terminals without their own viewport padding
    *  (bare WSL, tmux, SSH) otherwise hug the screen border. */
   pageMargin?: PageMarginSetting
-  /** Terminal-card header folding (settings `dsh-tui.foldTerminalCommand`):
+  /** Terminal-card header folding (settings `dsh-cli.foldTerminalCommand`):
    *  `true` collapses a multi-line command title to its first line plus a
    *  `+N lines` hint; Ctrl+O / clicking the card expands it. Default off —
    *  the full title keeps rendering. */
   foldTerminalCommand?: boolean
   /** Show the session name as a chip on the prompt top border's right side
-   *  (settings `dsh-tui.promptSessionLabel`); off by default. */
+   *  (settings `dsh-cli.promptSessionLabel`); off by default. */
   promptSessionLabel?: boolean
-  /** Fullscreen draft editor (settings `dsh-tui.expandEditor`): the ⛶
+  /** Fullscreen draft editor (settings `dsh-cli.expandEditor`): the ⛶
    *  affordance in the input row and the expandEditor shortcut (default
    *  Ctrl+Shift+E) expand the draft into a whole-screen editor. On by
    *  default; off removes both entry points. */
   expandEditor?: boolean
-  /** Smooth streaming reveal (settings `dsh-tui.smoothStreaming`): live
+  /** Smooth streaming reveal (settings `dsh-cli.smoothStreaming`): live
    *  assistant text, expanded thinking, and tool call bodies paint through
    *  a ~30fps reveal instead of jumping per provider burst — bursty or
    *  one-shot deliveries read as an even flow. On by default. */
   smoothStreaming?: boolean
-  /** Mermaid diagrams (settings `dsh-tui.mermaidDiagrams`): ```mermaid
+  /** Mermaid diagrams (settings `dsh-cli.mermaidDiagrams`): ```mermaid
    *  fences in replies render as Unicode box-drawing art — flowcharts,
    *  sequence/state/class/ER diagrams, pie, mindmap, timeline, gitGraph —
    *  laid out in-process, no browser or image protocol. A diagram wider
@@ -234,7 +234,7 @@ export const Config: Schema<Config, RuntimeConfig<Config>> = editableConfig<Conf
  * Start the interactive TUI front door, delegating to the JSX implementation
  * in `./plugin.ts` (see its module doc for the full contract).
  * @param ctx - the plugin context.
- * @param config - the validated dsh-tui configuration.
+ * @param config - the validated dsh-cli configuration.
  * @returns a promise settling when the Loader entry has scheduled its runtime.
  */
 export async function apply(ctx: Context, config: RuntimeConfig<Config>): Promise<void> {
@@ -248,7 +248,7 @@ export async function apply(ctx: Context, config: RuntimeConfig<Config>): Promis
   void ctx.fiber.await().then(() => {
     if (disposed) return
     return ctx.plugin({
-      name: 'dsh-tui-runtime',
+      name: 'dsh-cli-runtime',
       apply: (runtimeCtx: Context) => tuiApply(runtimeCtx, config, ctx),
     })
   }).catch(error => {

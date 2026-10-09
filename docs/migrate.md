@@ -7,9 +7,9 @@
 历史上下文。
 
 ```sh
-dsh-tui migrate                # 列出各源可扫描的会话文件数（不写入）
-dsh-tui migrate claude-code    # 导入 Claude Code 的全部对话
-dsh-tui migrate codex --dry-run  # 只预览将落盘的内容，不写入
+dsh-cli migrate                # 列出各源可扫描的会话文件数（不写入）
+dsh-cli migrate claude-code    # 导入 Claude Code 的全部对话
+dsh-cli migrate codex --dry-run  # 只预览将落盘的内容，不写入
 ```
 
 TUI 内等效入口：`/migrate`。裸 `/migrate` 弹出**多选源选择器**——每行一个代理
@@ -72,9 +72,9 @@ TUI 启动约 12 秒后做一次后台检测：任一源在最近 20 分钟内�
 
 ## 故障排查
 
-- **`unknown agent`**：源名以 `dsh-tui migrate` 无参输出的名单为准。
+- **`unknown agent`**：源名以 `dsh-cli migrate` 无参输出的名单为准。
 - **`needs the profile's compiled copy`**：profile 内编译产物缺失或过旧，
-  先运行 `dsh-tui update`。
+  先运行 `dsh-cli update`。
 - **导入数低于扫描计数**：扫描计数是候选文件数（按文件名匹配），
   导入会过滤解析失败与空对话，略低属正常。
 - **全新 `DSH_HOME` 首跑报 installation rejected**：profile 自举撞上

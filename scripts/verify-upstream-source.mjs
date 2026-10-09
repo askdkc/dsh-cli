@@ -108,7 +108,7 @@ try {
     throw new Error('upstream input validation failed')
   }
   const projects = [
-    { label: 'dsh-tui', config: join(tuiRoot, 'tsconfig.json') },
+    { label: 'dsh-cli', config: join(tuiRoot, 'tsconfig.json') },
     { label: 'dsh-auth', config: join(tuiRoot, 'dsh-auth/tsconfig.json') },
   ]
   const failures = []

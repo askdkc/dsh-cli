@@ -125,7 +125,7 @@ export class TuiRendererRuntime extends Service {
     try {
       caller = requirePluginCaller(this.ctx, 'tuiRenderers.register', this)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiRenderers.register requires a live non-root plugin activation')
+      this.ctx.logger.warn('dsh-cli: tuiRenderers.register requires a live non-root plugin activation')
       return () => {}
     }
     const state = rendererStateFor(this)
@@ -133,11 +133,11 @@ export class TuiRendererRuntime extends Service {
     try {
       normalized = String(type ?? '').trim().toLowerCase()
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiRenderers.register rejected an uncoercible event type')
+      this.ctx.logger.warn('dsh-cli: tuiRenderers.register rejected an uncoercible event type')
       return () => {}
     }
     if (!TYPE_PATTERN.test(normalized)) {
-      this.ctx.logger.warn('dsh-tui: tuiRenderers.register rejected an invalid event type')
+      this.ctx.logger.warn('dsh-cli: tuiRenderers.register rejected an invalid event type')
       return () => {}
     }
     // The channel's own projection (its renderEvent switch plus special-
@@ -146,11 +146,11 @@ export class TuiRendererRuntime extends Service {
     // KNOWN_SESSION_EVENT_TYPES, which plugins must extend with their own
     // types (see BUILTIN_SESSION_EVENT_TYPES above).
     if (BUILTIN_SESSION_EVENT_TYPES.has(normalized) || normalized === 'agent-preset/selected') {
-      this.ctx.logger.warn(`dsh-tui: tuiRenderers.register rejected "${normalized}" — built-in event types keep their own projection`)
+      this.ctx.logger.warn(`dsh-cli: tuiRenderers.register rejected "${normalized}" — built-in event types keep their own projection`)
       return () => {}
     }
     if (state.renderers.has(normalized)) {
-      this.ctx.logger.warn(`dsh-tui: tuiRenderers.register rejected "${normalized}" — already registered`)
+      this.ctx.logger.warn(`dsh-cli: tuiRenderers.register rejected "${normalized}" — already registered`)
       this.ctx.get('tuiEffectLedger')?.record(
         {
           operation: 'create',
@@ -163,7 +163,7 @@ export class TuiRendererRuntime extends Service {
       return () => {}
     }
     if (typeof renderer !== 'function') {
-      this.ctx.logger.warn(`dsh-tui: tuiRenderers.register rejected "${normalized}" — renderer must be a function`)
+      this.ctx.logger.warn(`dsh-cli: tuiRenderers.register rejected "${normalized}" — renderer must be a function`)
       return () => {}
     }
     state.renderers.set(normalized, renderer)
@@ -221,7 +221,7 @@ function renderEntry(runtime: TuiRendererRuntime, type: string, payload: unknown
   } catch (error) {
     if (!state.failedTypes.has(type)) {
       state.failedTypes.add(type)
-      state.logger.warn(`dsh-tui: renderer for "${type}" threw; its entries are skipped: %o`, error)
+      state.logger.warn(`dsh-cli: renderer for "${type}" threw; its entries are skipped: %o`, error)
     }
     return undefined
   }

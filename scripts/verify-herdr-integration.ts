@@ -78,8 +78,8 @@ class TestBlockingStore extends ObservableState {
     file: 'C:\\Tools\\herdr.exe',
     args: [
       'pane', 'report-agent', 'w1:p2',
-      '--source', 'custom:dsh-tui',
-      '--agent', 'dsh-tui',
+      '--source', 'custom:dsh-cli',
+      '--agent', 'dsh-cli',
       '--state', 'idle',
       '--seq', String(initialSequence),
     ],
@@ -91,8 +91,8 @@ class TestBlockingStore extends ObservableState {
   assert.equal(calls.length, 2)
   assert.deepEqual(calls[1]?.args, [
     'pane', 'report-agent', 'w1:p2',
-    '--source', 'custom:dsh-tui',
-    '--agent', 'dsh-tui',
+    '--source', 'custom:dsh-cli',
+    '--agent', 'dsh-cli',
     '--state', 'working',
     '--seq', String(initialSequence + 1),
   ])
@@ -102,8 +102,8 @@ class TestBlockingStore extends ObservableState {
   await integration.settled()
   assert.deepEqual(calls[2]?.args, [
     'pane', 'report-agent', 'w1:p2',
-    '--source', 'custom:dsh-tui',
-    '--agent', 'dsh-tui',
+    '--source', 'custom:dsh-cli',
+    '--agent', 'dsh-cli',
     '--state', 'blocked',
     '--message', 'Waiting for user input',
     '--seq', String(initialSequence + 2),
@@ -138,8 +138,8 @@ class TestBlockingStore extends ObservableState {
   await integration.dispose()
   assert.deepEqual(calls[5]?.args, [
     'pane', 'release-agent', 'w1:p2',
-    '--source', 'custom:dsh-tui',
-    '--agent', 'dsh-tui',
+    '--source', 'custom:dsh-cli',
+    '--agent', 'dsh-cli',
     '--seq', String(initialSequence + 5),
   ])
   await integration.dispose()
@@ -487,7 +487,7 @@ if (command === 'pane' && subcommand === 'report-agent') {
     const specialPane = `pane & echo injected > ${injectionMarker}`
     const special = await execFileNoThrow(stubBin, [
       'pane', 'report-agent', specialPane,
-      '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--state', 'idle', '--seq', '1',
+      '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--state', 'idle', '--seq', '1',
     ], { timeout: 2000 })
     assert.equal(special.code, 0, special.stderr)
     assert.equal(existsSync(injectionMarker), false, 'cmd metacharacters in argv must remain data')
@@ -496,17 +496,17 @@ if (command === 'pane' && subcommand === 'report-agent') {
   // --- CLI Contract Gates: Verify that invalid argument shapes are strictly rejected ---
   const invalidContractCalls: Array<string[]> = [
     // Missing required flags
-    ['pane', 'report-agent', 'w1:p2', '--agent', 'dsh-tui', '--state', 'idle', '--seq', '1'],
-    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--state', 'idle', '--seq', '1'],
-    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--seq', '1'],
+    ['pane', 'report-agent', 'w1:p2', '--agent', 'dsh-cli', '--state', 'idle', '--seq', '1'],
+    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--state', 'idle', '--seq', '1'],
+    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--seq', '1'],
     // Invalid state enum
-    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--state', 'unknown-state', '--seq', '1'],
+    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--state', 'unknown-state', '--seq', '1'],
     // Invalid seq
-    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--state', 'idle', '--seq', 'not-a-number'],
+    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--state', 'idle', '--seq', 'not-a-number'],
     // Unknown option
-    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--state', 'idle', '--seq', '1', '--unknown-flag'],
+    ['pane', 'report-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--state', 'idle', '--seq', '1', '--unknown-flag'],
     // Invalid release-agent options
-    ['pane', 'release-agent', 'w1:p2', '--source', 'custom:dsh-tui', '--agent', 'dsh-tui', '--seq', '1', '--invalid'],
+    ['pane', 'release-agent', 'w1:p2', '--source', 'custom:dsh-cli', '--agent', 'dsh-cli', '--seq', '1', '--invalid'],
   ]
 
   for (const args of invalidContractCalls) {
@@ -539,9 +539,9 @@ if (command === 'pane' && subcommand === 'report-agent') {
     const res = await execFileNoThrow(stubBin, ['agent', 'get', testPane], { timeout: 2000 })
     assert.equal(res.code, 0, `agent get failed: ${res.stderr}`)
     const parsed = JSON.parse(res.stdout.trim()) as { agent: string; agent_status: string; source: string }
-    assert.equal(parsed.agent, 'dsh-tui')
+    assert.equal(parsed.agent, 'dsh-cli')
     assert.equal(parsed.agent_status, expectedStatus)
-    assert.equal(parsed.source, 'custom:dsh-tui')
+    assert.equal(parsed.source, 'custom:dsh-cli')
   }
 
   // 1. Initial idle state
@@ -576,9 +576,9 @@ if (command === 'pane' && subcommand === 'report-agent') {
 }
 
 // -----------------------------------------------------------------------------
-// 7. Live Herdr environment check (when DSH_TUI_HERDR_E2E=1)
+// 7. Live Herdr environment check (when DSH_CLI_HERDR_E2E=1)
 // -----------------------------------------------------------------------------
-if (process.env.DSH_TUI_HERDR_E2E === '1') {
+if (process.env.DSH_CLI_HERDR_E2E === '1') {
   const executable = process.env.HERDR_BIN_PATH
   const paneId = process.env.HERDR_PANE_ID
   assert.ok(executable && paneId, 'real Herdr verification requires HERDR_BIN_PATH and HERDR_PANE_ID')
@@ -597,7 +597,7 @@ if (process.env.DSH_TUI_HERDR_E2E === '1') {
     await real.settled()
     const result = await execFileNoThrow(executable, ['agent', 'get', paneId], { timeout: 2000 })
     assert.equal(result.code, 0, result.stderr)
-    assert.match(result.stdout, new RegExp(`"agent":"dsh-tui".*"agent_status":"${state}"`))
+    assert.match(result.stdout, new RegExp(`"agent":"dsh-cli".*"agent_status":"${state}"`))
   }
 
   await expectRealState('idle')

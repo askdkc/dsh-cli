@@ -8,7 +8,7 @@ export function packagedPresetRoot(moduleUrl: string = import.meta.url): string 
   const candidates = [join(directory, '../../presets'), join(directory, '../../../presets')]
   const found = candidates.find(candidate => existsSync(candidate))
   if (found === undefined) {
-    throw new Error(`dsh-tui: packaged preset root is missing (checked ${candidates.join(', ')})`)
+    throw new Error(`dsh-cli: packaged preset root is missing (checked ${candidates.join(', ')})`)
   }
   return found
 }

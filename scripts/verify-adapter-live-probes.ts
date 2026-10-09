@@ -658,7 +658,7 @@ async function main(): Promise<void> {
       const { markDecisionDispatchTopology, unmarkDecisionDispatchTopology } = await import('../src/dsh-adapter/decision-guard.js')
       const decisionCtx = new Context()
       decisionCtx.logger.warn = () => undefined
-      decisionCtx.plugin({ name: 'dsh-tui-plugin-host', apply: (c: InstanceType<typeof Context>) => {
+      decisionCtx.plugin({ name: 'dsh-cli-plugin-host', apply: (c: InstanceType<typeof Context>) => {
         new TuiPluginHostRuntime(c)
       } })
       await new Promise(resolve => setTimeout(resolve, 30))

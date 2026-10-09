@@ -63,7 +63,7 @@ export type Config = {
   customActions?: Record<string, string[]>
   /** Inject the `⏵` self-narration contract into the system prompt and surface it. */
   narrate?: boolean
-  /** UI language: `auto` follows `DSH_TUI_LANG` → `~/.dsh-tui/lang.json` →
+  /** UI language: `auto` follows `DSH_CLI_LANG` → `~/.dsh-cli/lang.json` →
    *  OS locale → zh; `zh`/`en` pin the copy directly. */
   lang?: 'auto' | 'zh' | 'en' | 'ja' | 'input'
   /** Default frame preset name (informational for UI consumers; the TUI
@@ -109,7 +109,7 @@ export const Config: Schemastery<Config> = z.object({
   debugLog: z.boolean().default(false),
 })
 
-/** Structural view of the TUI prompt service; the real type lives in dsh-tui. */
+/** Structural view of the TUI prompt service; the real type lives in dsh-cli. */
 interface TuiPromptLike {
   register(name: string, initialValue?: string): {
     set(value: string | undefined): void
@@ -166,11 +166,11 @@ export function apply(ctx: Context, config: Config = {}): void {
     workRemindAt: config.workRemindAt ?? 0,
     debugLog: config.debugLog ?? false,
   }
-  // Trace target for {@link traceLine}: `~/.dsh-tui` mirrors where the UI keeps
+  // Trace target for {@link traceLine}: `~/.dsh-cli` mirrors where the UI keeps
   // this plugin's config file; the env var redirects it (tests, bug reports).
   const debugLogPath = resolved.debugLog
     ? process.env.DSH_WORKING_ACTIVITY_DEBUG_LOG
-      ?? join(homedir(), '.dsh-tui', 'working-activity-debug.log')
+      ?? join(homedir(), '.dsh-cli', 'working-activity-debug.log')
     : undefined
   // A pinned plugin-level language beats the env/file chain; releasing it on
   // dispose restores `auto` for any other composition in the process.

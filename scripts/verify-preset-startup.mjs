@@ -16,13 +16,13 @@ import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
 import { composePreset } from '../lib/types/dsh-adapter/presets.js'
 import { settled } from './lib/term-test.mjs'
 
-const fixtureKey = Symbol.for('dsh-tui.verify-preset-startup')
+const fixtureKey = Symbol.for('dsh-cli.verify-preset-startup')
 const runtimeUrl = new URL('../lib/types/dsh-adapter/plugin.js', import.meta.url).href
 const hooks = registerHooks({
   load(url, context, nextLoad) {
     if (url !== runtimeUrl) return nextLoad(url, context)
     return { format: 'module', shortCircuit: true, source: `
-      const fixture = globalThis[Symbol.for('dsh-tui.verify-preset-startup')]
+      const fixture = globalThis[Symbol.for('dsh-cli.verify-preset-startup')]
       export const apply = (...args) => fixture.start(...args)
       export const handleStartupError = (...args) => fixture.fail(...args)
     ` }
@@ -113,7 +113,7 @@ try {
 
   // Exercise the real error funnel in a subprocess: it must restore terminal
   // modes, report the failure, dispose Cordis effects, and exit nonzero.
-  const home = mkdtempSync(join(tmpdir(), 'dsh-tui-startup-'))
+  const home = mkdtempSync(join(tmpdir(), 'dsh-cli-startup-'))
   try {
     const failed = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import { Context } from '@deepseek-ai/cordis'
@@ -124,7 +124,7 @@ try {
     `], { encoding: 'utf8', timeout: 10000, env: { ...process.env, HOME: home, USERPROFILE: home, DSH_HOME: home } })
     assert.equal(failed.error, undefined)
     assert.equal(failed.status, 1, failed.stderr)
-    assert.match(failed.stderr, /dsh-tui startup failed: fixture startup failure/u)
+    assert.match(failed.stderr, /dsh-cli startup failed: fixture startup failure/u)
     assert.match(failed.stderr, /fixture disposed/u)
     assert.ok(failed.stdout.includes('\u001b[?1049l'), 'failure leaves the alternate screen')
     assert.ok(failed.stdout.includes('\u001b[?25h'), 'failure restores the cursor')

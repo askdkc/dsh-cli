@@ -1,7 +1,7 @@
 /**
  * Opt-in real-profile startup check, not a headless component fixture.
  * Run: node scripts/verify-installed-startup.mjs
- * Requires installed dsh/dsh-tui launchers and the host's node-pty dependency.
+ * Requires installed dsh/dsh-cli launchers and the host's node-pty dependency.
  * Copies profile composition into an isolated HOME, reuses installed packages,
  * waits for the post-render injection endpoint, then sends only /quit.
  * Does not copy the credential store or submit a model request. Failed probes keep a
@@ -19,7 +19,7 @@ import { settled } from './lib/term-test.mjs'
 const isWin = process.platform === 'win32'
 /**
  * Resolve an installed launcher through PATH. POSIX npm publishes a symlink to
- * the package's JS entry; Windows publishes `dsh.cmd` / `dsh-tui.cmd` shims
+ * the package's JS entry; Windows publishes `dsh.cmd` / `dsh-cli.cmd` shims
  * plus an extensionless sh script, so walk PATHEXT and keep the shim path.
  */
 const executable = name => {
@@ -36,19 +36,19 @@ const executable = name => {
 const packageEntry = (shim, scope, name, ...rest) =>
   isWin ? join(dirname(shim), 'node_modules', scope, name, ...rest) : shim
 const dsh = executable('dsh')
-const launcherShim = executable('dsh-tui')
+const launcherShim = executable('dsh-cli')
 // Spawn the JS entry rather than the `.cmd` shim: node-pty would have to route
 // it through cmd.exe and re-quote the payload. The shim itself is covered by
 // scripts/verify-launcher.mjs; this probe is about the installed profile.
-const launcher = packageEntry(launcherShim, 'dsh-cli', 'bin', 'dsh-tui.js')
+const launcher = packageEntry(launcherShim, 'dsh-cli', 'bin', 'dsh-cli.js')
 const dshEntry = packageEntry(dsh, '@deepseek-ai', 'dsh', 'lib', 'bin.js')
 /**
  * node-pty is a native dependency of the installed dsh, not of this repo.
- * DSH_TUI_NODE_PTY points at a built node-pty directory (the layer holding its
+ * DSH_CLI_NODE_PTY points at a built node-pty directory (the layer holding its
  * package.json) for hosts where neither anchor resolves.
  */
 const pty = (() => {
-  const override = process.env.DSH_TUI_NODE_PTY
+  const override = process.env.DSH_CLI_NODE_PTY
   for (const anchor of override === undefined ? [dshEntry, launcher] : [override]) {
     try {
       return createRequire(anchor)('node-pty')
@@ -56,13 +56,13 @@ const pty = (() => {
       // Try the next anchor.
     }
   }
-  throw new Error('cannot resolve node-pty from the installed dsh; set DSH_TUI_NODE_PTY to a built node-pty directory')
+  throw new Error('cannot resolve node-pty from the installed dsh; set DSH_CLI_NODE_PTY to a built node-pty directory')
 })()
 const sourceHome = process.env.DSH_HOME ?? join(homedir(), '.dsh')
-const profile = join(sourceHome, 'profiles', 'dsh-tui')
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-startup-'))
+const profile = join(sourceHome, 'profiles', 'dsh-cli')
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-startup-'))
 const targetHome = join(root, '.dsh')
-const targetProfile = join(targetHome, 'profiles', 'dsh-tui')
+const targetProfile = join(targetHome, 'profiles', 'dsh-cli')
 mkdirSync(targetProfile, { recursive: true, mode: 0o700 })
 for (const name of ['package.json', 'cordis.yml', 'cordis.patch.yml']) {
   if (existsSync(join(profile, name))) cpSync(join(profile, name), join(targetProfile, name))
@@ -78,17 +78,17 @@ const env = {
   HOME: root,
   USERPROFILE: root,
   DSH_HOME: targetHome,
-  DSH_TUI_SESSION_ROOT: join(root, 'sessions'),
-  DSH_TUI_WORKSPACE_TARGET: process.cwd(),
-  DSH_TUI_PRESET: 'liangshen',
-  DSH_TUI_LANG: 'zh',
+  DSH_CLI_SESSION_ROOT: join(root, 'sessions'),
+  DSH_CLI_WORKSPACE_TARGET: process.cwd(),
+  DSH_CLI_PRESET: 'liangshen',
+  DSH_CLI_LANG: 'zh',
   DSH_TELEMETRY_MODE: 'DISABLED',
   NODE_ENV: 'production',
   TERM: 'xterm-256color',
 }
-delete env.DSH_TUI_RESUME_SESSION
-delete env.DSH_TUI_RESTART_CHILD
-delete env.DSH_TUI_RESTART_SESSION
+delete env.DSH_CLI_RESUME_SESSION
+delete env.DSH_CLI_RESTART_CHILD
+delete env.DSH_CLI_RESTART_SESSION
 const startedAt = Date.now()
 const child = pty.spawn(process.execPath, [launcher], {
   name: 'xterm-256color', cols: 100, rows: 32, cwd: process.cwd(), env,
@@ -103,7 +103,7 @@ const screen = () => {
   const buffer = terminal.buffer.active
   return Array.from({ length: 32 }, (_, index) => buffer.getLine(buffer.baseY + index)?.translateToString(true) ?? '').join('\n')
 }
-const discovery = join(root, '.dsh-tui', 'inject', 'servers.json')
+const discovery = join(root, '.dsh-cli', 'inject', 'servers.json')
 const ready = () => {
   try { return JSON.parse(readFileSync(discovery, 'utf8')).length > 0 }
   catch { return false }
@@ -113,7 +113,7 @@ try {
   assert.ok(await settled(() => exit !== undefined || ready(), { timeoutMs: 30000 }), 'timed out before UI mount')
   assert.equal(exit, undefined, `profile exited before UI mount (code ${exit?.exitCode})`)
   assert.ok(ready(), 'post-render injection endpoint is missing')
-  assert.ok(await settled(() => screen().includes('\u276f') && screen().includes('dsh-TUI'), { timeoutMs: 5000 }), 'prompt has not painted')
+  assert.ok(await settled(() => screen().includes('\u276f') && screen().includes('dsh-CLI'), { timeoutMs: 5000 }), 'prompt has not painted')
   const bootMs = Date.now() - startedAt
   child.write('/quit')
   assert.ok(await settled(() => screen().includes('/quit'), { timeoutMs: 5000 }), 'prompt did not accept /quit')

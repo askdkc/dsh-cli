@@ -1,4 +1,4 @@
-# dsh-TUI Deslop 判据与最小清理协议
+# dsh-CLI Deslop 判据与最小清理协议
 仅降已证仓库熵，不猜作者、不包装审美。下称“红线”指 references/redlines.md，“行为/流程”指 references/evidence-base.md，“验证映射”指 references/verification-map.md。
 
 ## 优先级
@@ -47,7 +47,7 @@ finding 外还须删除/合并证明及可信工作树前后验证；缺证据�
 ### 超范围 churn
 用 issue/PR 主张及变更面映射证与主题无关：本地编辑器/包管理配置、整棵上游同步树、顺手修别的 bug、vendor/Ink 大重排、格式化未改逻辑、无用于主题的新框架/脚本/文档。建议拆分/恢复无关路径，不扩大 patch 顺手清理。
 
-## dsh-TUI Golden Principles
+## dsh-CLI Golden Principles
 优先检查点按以下唯一真源核验，不另造规则副本：
 - 会话事实、职责/owner、终端安静/净化/单元上限、可审/可回滚范围 → 红线 2、3/12、5/7、13；增量：screen/component 不另建平行兼容层，不以两个布尔量镜像同模式，不混并行方案。
 - 当前 exports/features/plugin-host 全集提取 → references/contract-gates.md 门 1/5；事件全集 → 验证映射“独立 oracle”，不长期手抄计数。

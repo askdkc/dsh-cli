@@ -11,7 +11,7 @@
   leaving `dsh-working-activity` unresolvable inside the profile — the TUI
   then exits right after startup with almost no error output (issue #60, see
   Troubleshooting below).
-- An interactive terminal TTY. `dsh-tui` cannot start with stdout redirected.
+- An interactive terminal TTY. `dsh-cli` cannot start with stdout redirected.
 - `DEEPSEEK_API_KEY`. Set `DEEPSEEK_BASE_URL` as well when using a compatible
   custom endpoint.
 
@@ -39,8 +39,8 @@ npm install -g @deepseek-ai/dsh
 # Install pnpm if needed (or use: corepack enable pnpm)
 npm install -g pnpm
 
-# Add dsh-cli to the dsh-tui profile
-dsh plugin --profile dsh-tui add dsh-cli
+# Add dsh-cli to the dsh-cli profile
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
 ```
 
 From a checkout, the repository helper wraps the profile command:
@@ -59,26 +59,26 @@ Earlier releases used the unscoped `dsh-cc-tui` package and a `cc-tui` profile:
 - `CC_TUI_*`/`DSH_CC_*` environment variables.
 - a `~/.dsh-cc` data directory.
 
-This fork uses `dsh-cli` in a `dsh-tui` profile, with `DSH_TUI_*` variables
-and the `~/.dsh-tui` data directory.
+This fork uses `dsh-cli` in a `dsh-cli` profile, with `DSH_CLI_*` variables
+and the `~/.dsh-cli` data directory.
 
-If that profile already contains `@deepseek-harness-tui/dsh-tui`, remove the
+If that profile already contains `@deepseek-harness-tui/dsh-cli`, remove the
 old package before adding `dsh-cli`; `plugin update` does not rename a package:
 
 ```sh
-dsh plugin --profile dsh-tui remove @deepseek-harness-tui/dsh-tui
+dsh plugin --profile dsh-cli remove @deepseek-harness-tui/dsh-cli
 ```
 
 Install `dsh-cli` with:
 
 ```sh
-dsh plugin --profile dsh-tui add dsh-cli
-dsh --profile dsh-tui
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
+dsh --profile dsh-cli
 ```
 
 The current release no longer reads the old names and does not migrate data
 automatically. After first launch, copy themes, configuration and history
-files from the old data directory (`~/.dsh-cc`) into `~/.dsh-tui` yourself.
+files from the old data directory (`~/.dsh-cc`) into `~/.dsh-cli` yourself.
 
 Once the new profile works:
 
@@ -88,9 +88,9 @@ Once the new profile works:
 
 ## What installation does
 
-On the first `dsh plugin --profile dsh-tui add dsh-cli`, the official CLI:
+On the first `dsh plugin --profile dsh-cli add @askdkc/dsh-cli`, the official CLI:
 
-1. Initializes `$DSH_HOME/profiles/dsh-tui/`. When `DSH_HOME` is unset, the
+1. Initializes `$DSH_HOME/profiles/dsh-cli/`. When `DSH_HOME` is unset, the
    default root is normally `~/.dsh`.
 2. Uses `@deepseek-ai/dsh-base` as the first profile bundle.
 3. Installs `dsh-cli` inside the profile with pnpm.
@@ -109,13 +109,13 @@ dsh-base -> other bundles -> dsh-cli patch -> user profile patch
   session persistence, and live activity row.
 
 `dsh-working-activity` is already a dependency of this package and is inserted
-by the `dsh-tui` patch. Do not separately add `dsh-working-activity` to the
+by the `dsh-cli` patch. Do not separately add `dsh-working-activity` to the
 same profile or duplicate rows may be mounted.
 
 ## Start the TUI
 
 ```sh
-dsh --profile dsh-tui
+dsh --profile dsh-cli
 ```
 
 The process starts in the current directory, which is also the Agent's default
@@ -124,38 +124,38 @@ workspace. Change into the target project before starting it.
 On Windows, the checkout also provides:
 
 ```bat
-dsh-tui.cmd
-dsh-tui.cmd --resume
+dsh-cli.cmd
+dsh-cli.cmd --resume
 ```
 
-- `--resume` reads `%USERPROFILE%\.dsh-tui\resume.txt` and restores the
+- `--resume` reads `%USERPROFILE%\.dsh-cli\resume.txt` and restores the
   session last selected by the TUI.
-- Set `DSH_TUI_WORKSPACE` to override the working directory used by the batch
+- Set `DSH_CLI_WORKSPACE` to override the working directory used by the batch
   launcher.
 
 ## CLI subcommands
 
-`dsh-tui help` (or `dst help`) prints the full usage; the `dst` alias accepts
+`dsh-cli help` (or `dst help`) prints the full usage; the `dst` alias accepts
 the same commands:
 
 | Command | Purpose |
 | --- | --- |
-| `dsh-tui update` | Update the profile to the latest release and align the launcher (same install logic as the in-TUI `/update`, without restarting into the TUI) |
-| `dsh-tui doctor` | Environment checks: dsh/pnpm, profile install and version alignment, whether the API key is set (state only, never the value), config file presence; complements the in-TUI `/doctor` session diagnostics |
-| `dsh-tui safe` | Safe mode: read-only diagnostics, inventory, repair guidance (`safe --rescue` also creates/verifies the clean rescue profile) |
-| `dsh-tui version` | Show the launcher and profile versions (`--version`/`-v` are equivalent) |
-| `dsh-tui help` | Show usage (`--help`/`-h` are equivalent) |
+| `dsh-cli update` | Update the profile to the latest release and align the launcher (same install logic as the in-TUI `/update`, without restarting into the TUI) |
+| `dsh-cli doctor` | Environment checks: dsh/pnpm, profile install and version alignment, whether the API key is set (state only, never the value), config file presence; complements the in-TUI `/doctor` session diagnostics |
+| `dsh-cli safe` | Safe mode: read-only diagnostics, inventory, repair guidance (`safe --rescue` also creates/verifies the clean rescue profile) |
+| `dsh-cli version` | Show the launcher and profile versions (`--version`/`-v` are equivalent) |
+| `dsh-cli help` | Show usage (`--help`/`-h` are equivalent) |
 
 `help`/`version` work even when dsh is missing or the profile is not
 initialized; every other argument is forwarded verbatim to
-`dsh --profile dsh-tui`.
+`dsh --profile dsh-cli`.
 
-## Safe mode (`dsh-tui safe`)
+## Safe mode (`dsh-cli safe`)
 
 When dsh exits unexpectedly, safe mode provides read-only environment
 diagnostics, a profile plugin inventory, and repair guidance.
 
-- **Two entries**: run `dsh-tui safe` manually; or accept the prompt after
+- **Two entries**: run `dsh-cli safe` manually; or accept the prompt after
   dsh exits with a non-zero code.
   - The prompt only appears in interactive terminals; scripts and pipes get
     a single hint line and keep the exit code.
@@ -165,7 +165,7 @@ diagnostics, a profile plugin inventory, and repair guidance.
   exceptions:
   - Retry normal startup.
   - Create/reuse the rescue profile, writing only to
-    `$DSH_HOME/profiles/dsh-tui-safe/`.
+    `$DSH_HOME/profiles/dsh-cli-safe/`.
   Note: every dsh launch writes `$DSH_HOME/profiles/node_modules` fallback
   links and the pnpm global store (not introduced by safe mode).
 - **The rescue profile must be clean, or it refuses to start**. Each check
@@ -173,23 +173,23 @@ diagnostics, a profile plugin inventory, and repair guidance.
   - The candidate directory exists but is not a recognizable profile.
   - The existing profile's root manifest declares third-party plugins.
   - `$DSH_HOME/cordis.patch.yml` (home layer): **rejects if it exists**.
-  - `dsh-tui-safe/cordis.patch.yml` (profile layer): **rejects only if it has
+  - `dsh-cli-safe/cordis.patch.yml` (profile layer): **rejects only if it has
     entries**; the default "comments + `[]`" does not count as entries.
   Before deleting or rebuilding a rescue profile, it checks the top-level
   entries by **name and shape**; any other name or shape makes it refuse and
   list them — never silently deleting your files.
-- **Non-interactive**: `dsh-tui safe --rescue` runs the same gate plus
+- **Non-interactive**: `dsh-cli safe --rescue` runs the same gate plus
   create/reuse and only reports the verdict (exit 0 when ready, 1 when
   refused).
 - **Outdated launcher**: upgrade first when the profile copy is unreadable or
   too old:
-  `npm install -g --legacy-peer-deps dsh-cli@<version>`.
+  `npm install -g --legacy-peer-deps @askdkc/dsh-cli@<version>`.
 - **Run repair commands yourself** (safe mode only lists them):
-  - `dsh plugin --profile dsh-tui remove <third-party plugin>` removes
+  - `dsh plugin --profile dsh-cli remove <third-party plugin>` removes
     suspects one by one;
-  - `dsh plugin --profile dsh-tui add dsh-cli@<version>`
+  - `dsh plugin --profile dsh-cli add @askdkc/dsh-cli@<version>`
     reinstalls/aligns;
-  - `dsh-tui doctor` runs environment diagnostics.
+  - `dsh-cli doctor` runs environment diagnostics.
 
 ## Running in VS Code / Herdr
 
@@ -197,7 +197,7 @@ diagnostics, a profile plugin inventory, and repair guidance.
   `dsh-tui-vscode` companion extension on the Marketplace (real terminal
   sessions, session history, specific-session resume, IDE selection channel).
   See [VS Code guide](vscode.en.md).
-- **Herdr**: run `dsh-tui` directly in a [Herdr](https://herdr.dev) pane with
+- **Herdr**: run `dsh-cli` directly in a [Herdr](https://herdr.dev) pane with
   no extra setup; dsh-cli reports `idle` / `working` / `blocked` through
   Herdr's local integration API (questionnaires and tool approvals count as
   `blocked`), and stays completely inactive outside Herdr.
@@ -208,7 +208,7 @@ The project moves fast. Updating reuses the install command with an explicit
 `@latest`:
 
 ```sh
-dsh plugin --profile dsh-tui add dsh-cli@latest
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli@latest
 ```
 
 - Without `@latest`, pnpm resolves within the version range already recorded
@@ -235,7 +235,7 @@ allowBuilds:
   protobufjs: false
 ```
 
-`/update` and `dsh-tui update` seed this configuration automatically — no
+`/update` and `dsh-cli update` seed this configuration automatically — no
 manual step needed.
 
 Updates also maintain `ignoredOptionalDependencies` covering foreign-platform
@@ -260,7 +260,7 @@ Updates also maintain `ignoredOptionalDependencies` covering foreign-platform
 The user override file is:
 
 ```text
-$DSH_HOME/profiles/dsh-tui/cordis.patch.yml
+$DSH_HOME/profiles/dsh-cli/cordis.patch.yml
 ```
 
 When overriding a row, its `config` block is replaced as a whole rather than
@@ -322,12 +322,12 @@ pnpm dev
 the OS-managed file ACL.
 
 `pnpm dev` uses isolated `HOME`, `DSH_HOME`, and session directories, leaving
-the normal `~/.dsh/profiles/dsh-tui`, `~/.dsh-tui`, and sessions untouched. The
+the normal `~/.dsh/profiles/dsh-cli`, `~/.dsh-cli`, and sessions untouched. The
 test root defaults to:
 
-- `$XDG_CACHE_HOME/dsh-tui-dev` on Unix (`~/.cache/dsh-tui-dev` when unset).
-- `%LOCALAPPDATA%\dsh-tui-dev` on Windows.
-- Override it with `DSH_TUI_DEV_ROOT`.
+- `$XDG_CACHE_HOME/dsh-cli-dev` on Unix (`~/.cache/dsh-cli-dev` when unset).
+- `%LOCALAPPDATA%\dsh-cli-dev` on Windows.
+- Override it with `DSH_CLI_DEV_ROOT`.
 
 To verify only the build, pack, and install path without launching the TUI,
 run:
@@ -346,24 +346,24 @@ node --import tsx/esm scripts/repro-toolcards.tsx
 
 The `pnpm tui` script invokes `scripts/run.ts`, which directly composes
 DeepSeek Harness source patches and assumes a Harness monorepo `packages/*`
-layout by default. A standalone checkout must set `DSH_TUI_DEV_WORKSPACE` to
+layout by default. A standalone checkout must set `DSH_CLI_DEV_WORKSPACE` to
 the Harness root. To test only this repository's current source, prefer
 `pnpm dev`; it uses the same profile installation path as an end-user install.
 
 ## Troubleshooting
 
-### `dsh-tui requires an interactive terminal`
+### `dsh-cli requires an interactive terminal`
 
 stdout is not a TTY. Start the process directly in a terminal rather than
 redirecting its main output to another command or file.
 
-dsh-tui detects two things: stdout is not a TTY, and the process was not
-started by the `dsh-tui` launcher. When both hold, it silently skips the TUI
-frontend (no error, the host keeps booting). That is the case when dsh-tui is
+dsh-cli detects two things: stdout is not a TTY, and the process was not
+started by the `dsh-cli` launcher. When both hold, it silently skips the TUI
+frontend (no error, the host keeps booting). That is the case when dsh-cli is
 only installed in a profile and a non-terminal host (Web / Tauri / GUI, stdout
 piped or null) starts the DSH composition.
 
-The error above only appears when `dsh-tui` (or the standalone portable build)
+The error above only appears when `dsh-cli` (or the standalone portable build)
 was explicitly launched without a TTY.
 
 ### `dsh` or `pnpm` cannot be found
@@ -376,7 +376,7 @@ registers `dsh-cli` in `~/.local/bin` (Windows:
 `%LOCALAPPDATA%\dsh-cli\bin`). It adds that directory to the user PATH for
 zsh, bash, fish, or Windows when needed. Open a new terminal before using
 `dsh-cli`. Registration failures do not stop the TUI; follow the startup
-warning. `DSH_TUI_AUTO_REGISTER_CLI=0` disables registration. To undo it,
+warning. `DSH_CLI_AUTO_REGISTER_CLI=0` disables registration. To undo it,
 remove the generated command and `dsh-cli managed PATH` block (Windows: the
 user PATH entry).
 
@@ -389,7 +389,7 @@ the resume hint and exits (issue #60). Upgrade pnpm to 10+ and reinstall:
 
 ```sh
 npm install -g pnpm@latest
-dsh plugin --profile dsh-tui add dsh-cli@latest
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli@latest
 ```
 
 ### The model reports missing credentials
@@ -400,12 +400,12 @@ Check `DEEPSEEK_BASE_URL` too when using a custom endpoint.
 ### The activity row appears twice
 
 Check whether `dsh-working-activity` was added separately to the profile. Keep
-the row inserted by the dsh-tui patch and remove the duplicate bundle entry.
+the row inserted by the dsh-cli patch and remove the duplicate bundle entry.
 
 ### The TUI is misaligned or leaves terminal state behind
 
 Run `/doctor`, record the terminal and mode, then consult
 [Interaction and commands](interaction.en.md) and
-[Architecture and limitations](architecture.en.md). `DSH_TUI_RENDER_LOG` can
+[Architecture and limitations](architecture.en.md). `DSH_CLI_RENDER_LOG` can
 capture raw frames for rendering bugs, but those frames may contain visible
 conversation content and should be handled as sensitive data.

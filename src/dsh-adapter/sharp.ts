@@ -1,7 +1,7 @@
 /**
  * Host-first `sharp` loader.
  *
- * dsh-tui runs inside the dsh process, and the host attachment service
+ * dsh-cli runs inside the dsh process, and the host attachment service
  * (`@deepseek-ai/dsh-attachment-local`) already loads its own `sharp`. Loading
  * a second copy from this package's optional dependency puts two libvips
  * dylibs into one process; on macOS the Objective-C runtime reports the

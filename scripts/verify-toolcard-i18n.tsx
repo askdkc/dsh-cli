@@ -18,7 +18,7 @@
  * Exits non-zero on any failed assertion (CI convention).
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ Writable }, React, { Terminal: XTerm }, { render }, { AssistantToolUseMessage }, { setLang }, { settled }] = await Promise.all([
   import('node:stream'),

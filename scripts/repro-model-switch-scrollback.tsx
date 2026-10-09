@@ -12,10 +12,10 @@
  */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'WezTerm'  // DEC-2026 同步输出路径
-process.env.DSH_TUI_THEME = 'dark'     // 跳过 OSC 11 探测，保持确定性
-process.env.DSH_TUI_LANG = 'zh'        // 固定中文 UI（splash 标语断言）
+process.env.DSH_CLI_THEME = 'dark'     // 跳过 OSC 11 探测，保持确定性
+process.env.DSH_CLI_LANG = 'zh'        // 固定中文 UI（splash 标语断言）
 
-// 隔离家目录：switchModel 会把 picker 选择写进 ~/.dsh-tui/model.json
+// 隔离家目录：switchModel 会把 picker 选择写进 ~/.dsh-cli/model.json
 // （modelPrefs.PREFS_DIR 在模块加载时按 homedir() 解析），不隔离会把
 // fake-provider 写进真机配置——真机下一次启动所有回合报
 // "no adapter registered for provider fake-provider"。必须在 import src 之前。
@@ -24,7 +24,7 @@ process.env.DSH_TUI_LANG = 'zh'        // 固定中文 UI（splash 标语断言�
 const { mkdtempSync, readFileSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const reproHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-repro-home-'))
+const reproHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-repro-home-'))
 process.env.HOME = reproHome
 process.env.USERPROFILE = reproHome
 
@@ -227,7 +227,7 @@ check('検索結果に DeepSeek が表示される', fullBufferLines().some(line
 check('検索語 Enter だけでは切り替えない', channel.model === 'deepseek-v4-flash', `実際 ${channel.model}`)
 stdin.write('\x06')        // Ctrl+F: 現在の候補をお気に入りへ
 await sleep(200) // 固定窗:pacing お気に入りの再描画まで
-const favoriteFile = joinPath(reproHome, '.dsh-tui', 'model-favorites.json')
+const favoriteFile = joinPath(reproHome, '.dsh-cli', 'model-favorites.json')
 check('Ctrl+F がお気に入りを保存する', readFileSync(favoriteFile, 'utf8').includes('deepseek-v4-flash'))
 check('お気に入りの星が表示される', fullBufferLines().some(line => line.includes('★') && line.includes('DeepSeek V4 Flash')))
 stdin.write('\x06')

@@ -27,19 +27,19 @@
  *   node --import tsx/esm scripts/verify-composer-draft-screen-switch.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const { mkdtempSync, rmSync, writeFileSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join } = await import('node:path')
 // Isolate HOME before importing the app: i18n / preferences resolve at import.
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-composer-draft-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-composer-draft-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 // The composer's staged-image chip colour is part of the assertion below; the
 // terminal-image renderer itself is irrelevant here (and wants a real TTY).
-process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
 /**
  * A real on-disk 1x1 PNG for the staged-image paste path: `parsePastedImagePath`
  * stats the path, `readBoundedRegularFile` reads the bytes and the channel stub
@@ -90,7 +90,7 @@ const BIG_PASTE = Array.from({ length: 12 }, (_, i) => `fold-line-${String(i).pa
 const STAGED_IMAGE_TOKEN = '[Image #1]'
 
 /**
- * Renderer errors (`logError` -> `process.stderr` with a `[dsh-tui]` prefix)
+ * Renderer errors (`logError` -> `process.stderr` with a `[dsh-cli]` prefix)
  * are collected instead of swallowed: an error in the scenario must fail the
  * run even when the screen happens to recover.
  *
@@ -113,7 +113,7 @@ const realStderrWrite = process.stderr.write.bind(process.stderr)
   ...rest: unknown[]
 ) => {
   const text = typeof chunk === 'string' ? chunk : String(chunk)
-  if (text.includes('[dsh-tui]')) runtimeErrors.push(text.trim())
+  if (text.includes('[dsh-cli]')) runtimeErrors.push(text.trim())
   stderrChunks.push(text)
   return (realStderrWrite as (...args: unknown[]) => unknown)(chunk, ...rest)
 }) as typeof process.stderr.write
@@ -128,7 +128,7 @@ function unexpectedStderrLines(chunks: readonly string[]): string[] {
     .map(line => line.trim())
     .filter(line =>
       line !== ''
-        && !line.includes('[dsh-tui]')
+        && !line.includes('[dsh-cli]')
         && !line.includes(WHITELISTED_STDERR),
     )
 }

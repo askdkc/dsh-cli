@@ -153,11 +153,11 @@ export function createChannelActionReadiness() {
   let delegates: ChannelActionDelegates | undefined
   return {
     install(next: ChannelActionDelegates): void {
-      if (delegates !== undefined) throw new Error('dsh-tui: Channel actions are already installed')
+      if (delegates !== undefined) throw new Error('dsh-cli: Channel actions are already installed')
       delegates = Object.freeze(next)
     },
     getReadyActions(): ChannelActionDelegates {
-      if (delegates === undefined) throw new Error('dsh-tui: Channel actions are not installed')
+      if (delegates === undefined) throw new Error('dsh-cli: Channel actions are not installed')
       return delegates
     },
   }

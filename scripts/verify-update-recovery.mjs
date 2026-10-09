@@ -11,13 +11,13 @@
  * - HOME/USERPROFILE/DSH_HOME point into a sandbox BEFORE the compiled
  *   module is imported, so the stale-install removal and the restart
  *   diagnostics only ever touch sandbox paths.
- * - The /update restart tail (now the hardened restartTui handoff)
+ * - The /update restart tail (now the hardened restartCli handoff)
  *   re-invokes THIS script as the replacement process; the child guard
  *   at the top records the env contract it received and exits 0.
  *
  * Scenarios:
  *   A  EEXIST on first run  -> stale install + staging dirs cleared,
- *      rerun succeeds, replacement receives DSH_TUI_UPDATED_FROM.
+ *      rerun succeeds, replacement receives DSH_CLI_UPDATED_FROM.
  *   B  transient ENOENT, plain retry fails EEXIST -> escalates to the
  *      same recovery (three dsh calls total).
  *   C  genuine 404 failure -> NO retry, NO destructive removal, the
@@ -30,13 +30,13 @@
 // ---- child guard: this script re-invoked as the /update replacement ----
 // Must run before any sandbox setup — the replacement only records the env
 // contract (resume session id + updated-from stamp) and exits cleanly.
-if (process.env.DSH_TUI_UPDATED_FROM !== undefined) {
-  const out = process.env.DSH_TUI_RECOVERY_CHILD_MARKER
+if (process.env.DSH_CLI_UPDATED_FROM !== undefined) {
+  const out = process.env.DSH_CLI_RECOVERY_CHILD_MARKER
   if (out !== undefined) {
     const { writeFileSync } = await import('node:fs')
     writeFileSync(out, JSON.stringify({
-      updatedFrom: process.env.DSH_TUI_UPDATED_FROM,
-      resumeSession: process.env.DSH_TUI_RESUME_SESSION,
+      updatedFrom: process.env.DSH_CLI_UPDATED_FROM,
+      resumeSession: process.env.DSH_CLI_RESUME_SESSION,
     }))
   }
   process.exit(0)
@@ -73,15 +73,15 @@ mkdirSync(fakeHome, { recursive: true })
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
 
-const { updateTuiAndRestart } = await import('../lib/types/update.js')
+const { updateCliAndRestart } = await import('../lib/types/update.js')
 
 const EEXIST_STDERR =
   "ERR_PNPM_EEXIST  EEXIST: file already exists, rename " +
-  "'/root/.dsh/profiles/dsh-tui/node_modules/@askdkc/dsh-cli/node_modules' " +
-  "-> '/root/.dsh/profiles/dsh-tui/node_modules/@askdkc/dsh-cli_tmp_2424672_1/node_modules'"
+  "'/root/.dsh/profiles/dsh-cli/node_modules/@askdkc/dsh-cli/node_modules' " +
+  "-> '/root/.dsh/profiles/dsh-cli/node_modules/@askdkc/dsh-cli_tmp_2424672_1/node_modules'"
 const TRANSIENT_STDERR =
-  "[ERR_PNPM_ENOENT] [importPackage D:\\p\\node_modules\\@deepseek-harness-tui\\dsh-tui] " +
-  "ENOENT: no such file or directory, scandir 'D:\\p\\dsh-tui_tmp_40044_1\\node_modules'"
+  "[ERR_PNPM_ENOENT] [importPackage D:\\p\\node_modules\\@deepseek-harness-tui\\dsh-cli] " +
+  "ENOENT: no such file or directory, scandir 'D:\\p\\dsh-cli_tmp_40044_1\\node_modules'"
 const REAL_FAILURE_STDERR =
   'ERR_PNPM_FETCH_404 GET https://registry.npmjs.org/x: Not Found - 404'
 
@@ -126,7 +126,7 @@ function makeScenario(name, plan) {
   }
 
   // Profile layout with the stale install + leftover staging (#479 shape).
-  const scope = join(dshHome, 'profiles', 'dsh-tui', 'node_modules', '@askdkc')
+  const scope = join(dshHome, 'profiles', 'dsh-cli', 'node_modules', '@askdkc')
   const stalePkg = join(scope, 'dsh-cli')
   mkdirSync(join(stalePkg, 'lib'), { recursive: true })
   writeFileSync(join(stalePkg, 'package.json'), JSON.stringify({ name: '@askdkc/dsh-cli', version: '0.8.7' }))
@@ -144,8 +144,8 @@ async function runScenario(scenario, sessionId) {
   process.env.FAKE_DSH_DIR = scenario.fakeDir
   process.env.PATH = `${scenario.fakeDir}${delimiter}${PATH_BACKUP}`
   const childMarker = join(scenario.dir, 'child-marker.json')
-  process.env.DSH_TUI_RECOVERY_CHILD_MARKER = childMarker
-  const result = await updateTuiAndRestart(sessionId, 'dsh-tui')
+  process.env.DSH_CLI_RECOVERY_CHILD_MARKER = childMarker
+  const result = await updateCliAndRestart(sessionId, 'dsh-cli')
   const calls = Number.parseInt(readFileSync(join(scenario.fakeDir, 'calls'), 'utf8'), 10)
   return { result, calls, childMarker }
 }
@@ -188,7 +188,7 @@ try {
       child = JSON.parse(readFileSync(childMarker, 'utf8'))
     } catch {}
     check(
-      'A: replacement received DSH_TUI_UPDATED_FROM + resume contract',
+      'A: replacement received DSH_CLI_UPDATED_FROM + resume contract',
       child !== undefined && child.updatedFrom === repoVersion
         && child.resumeSession === 'session-a',
       `child=${JSON.stringify(child)}`,
@@ -236,7 +236,7 @@ try {
   else process.env.DSH_HOME = DSH_HOME_BACKUP
   process.env.PATH = PATH_BACKUP
   delete process.env.FAKE_DSH_DIR
-  delete process.env.DSH_TUI_RECOVERY_CHILD_MARKER
+  delete process.env.DSH_CLI_RECOVERY_CHILD_MARKER
   rmSync(sandbox, { recursive: true, force: true })
 }
 

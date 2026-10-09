@@ -16,8 +16,8 @@ import { isUserInvocable } from '@deepseek-ai/dsh-skill'
 // its own source kind, as required by 0.1.7 (the old catch-all was removed).
 declare module '@deepseek-ai/dsh-llm' {
   interface MessageSourceMap {
-    'dsh-tui-btw': { kind: 'dsh-tui-btw' }
-    'dsh-tui-recap': { kind: 'dsh-tui-recap' }
+    'dsh-cli-btw': { kind: 'dsh-cli-btw' }
+    'dsh-cli-recap': { kind: 'dsh-cli-recap' }
   }
 }
 
@@ -160,7 +160,7 @@ export function createSessionMetadataActions(ctx: Context, deps: {
       stream: llm.stream.bind(llm),
       options: llmRequest(capture, [
         ...capture.agent.session.deriveMessages(),
-        createUserMessage({ content: [{ type: 'text', text: wrapSideQuestion(question) }], source: { kind: 'dsh-tui-btw' } }),
+        createUserMessage({ content: [{ type: 'text', text: wrapSideQuestion(question) }], source: { kind: 'dsh-cli-btw' } }),
       ], true, signal),
       // Do not let an old session append streamed UI facts after a switch.
       onText: delta => { if (current(capture) && !options?.signal?.aborted) options?.onText?.(delta) },
@@ -182,7 +182,7 @@ export function createSessionMetadataActions(ctx: Context, deps: {
     const outcome = await runSideQuestion({
       stream: llm.stream.bind(llm),
       options: llmRequest(capture, [
-        createUserMessage({ content: [{ type: 'text', text: wrapRecapPrompt(activity) }], source: { kind: 'dsh-tui-recap' } }),
+        createUserMessage({ content: [{ type: 'text', text: wrapRecapPrompt(activity) }], source: { kind: 'dsh-cli-recap' } }),
       ], false, signal),
       onText: delta => { if (current(capture) && !options?.signal?.aborted) options?.onText?.(delta) },
       signal,

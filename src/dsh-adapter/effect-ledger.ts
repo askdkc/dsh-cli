@@ -1,7 +1,7 @@
 /**
  * Effect ledger (C-060): an append-only JSONL journal of plugin-visible
- * effects at `~/.dsh-tui/effect-ledger.jsonl`, mounted by the
- * dsh-tui-plugin-host row as `ctx.tuiEffectLedger`.
+ * effects at `~/.dsh-cli/effect-ledger.jsonl`, mounted by the
+ * dsh-cli-plugin-host row as `ctx.tuiEffectLedger`.
  *
  * Every record carries the lifecycle triple:
  *
@@ -162,7 +162,7 @@ export class TuiEffectLedgerRuntime extends Service {
       if (state.ledgerSchema === undefined) {
         if (!state.schemaWarned) {
           state.schemaWarned = true
-          state.hostContext.logger.warn('dsh-tui: effect ledger schema unavailable - suppressing all ledger writes (fail-closed)')
+          state.hostContext.logger.warn('dsh-cli: effect ledger schema unavailable - suppressing all ledger writes (fail-closed)')
         }
         return
       }
@@ -201,7 +201,7 @@ export class TuiEffectLedgerRuntime extends Service {
         check(record, state.ledgerSchema, state.ledgerSchema)
       } catch (error) {
         state.hostContext.logger.warn(
-          `dsh-tui: effect ledger record dropped (schema: ${error instanceof Error ? error.message : String(error)})`,
+          `dsh-cli: effect ledger record dropped (schema: ${error instanceof Error ? error.message : String(error)})`,
         )
         return
       }
@@ -209,7 +209,7 @@ export class TuiEffectLedgerRuntime extends Service {
       appendFileSync(state.file, `${JSON.stringify(record)}\n`, { mode: 0o600 })
       state.sequence += 1
     } catch (error) {
-      state.hostContext.logger.warn('dsh-tui: effect ledger write failed')
+      state.hostContext.logger.warn('dsh-cli: effect ledger write failed')
     }
   }
 

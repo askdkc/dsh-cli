@@ -9,4 +9,4 @@
  * themselves import it.
  */
 
-export const CHANNEL_SPLIT_TOKEN: unique symbol = Symbol('dsh-tui.channel-split-token')
+export const CHANNEL_SPLIT_TOKEN: unique symbol = Symbol('dsh-cli.channel-split-token')

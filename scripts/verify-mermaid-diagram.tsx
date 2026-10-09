@@ -5,7 +5,7 @@
  * node --import tsx/esm scripts/verify-mermaid-diagram.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   assertModule,
@@ -28,7 +28,7 @@ const [
   import('../src/components/MermaidDiagram.js'),
   import('../src/components/Markdown.js'),
   import('../src/terminal-utils/mermaid.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
 ])
 const assert = assertModule.default
 

@@ -35,7 +35,7 @@
  * record written by this process would not prove the cross-process guarantee,
  * and would pass even if publishing never worked.
  *
- * Uses a temp HOME so the real ~/.dsh-tui is never touched. The module reads
+ * Uses a temp HOME so the real ~/.dsh-cli is never touched. The module reads
  * `homedir()` at import time, so HOME/USERPROFILE are set BEFORE the dynamic
  * import, and the spawned peer inherits them.
  *
@@ -64,8 +64,8 @@ const {
   reserveMount,
 } = await import('../src/sessionMounts.ts')
 
-const LEDGER = join(tmpHome, '.dsh-tui', 'session-mounts.json')
-const LOCK = join(tmpHome, '.dsh-tui', 'session-mounts.lock')
+const LEDGER = join(tmpHome, '.dsh-cli', 'session-mounts.json')
+const LOCK = join(tmpHome, '.dsh-cli', 'session-mounts.lock')
 
 let failures = 0
 function check(name, cond) {
@@ -78,7 +78,7 @@ function check(name, cond) {
 
 /** Write a raw ledger document, bypassing the module, to stage a peer claim. */
 function writeRaw(owners, version = 1) {
-  mkdirSync(join(tmpHome, '.dsh-tui'), { recursive: true })
+  mkdirSync(join(tmpHome, '.dsh-cli'), { recursive: true })
   writeFileSync(LEDGER, JSON.stringify({ version, owners }, null, 2), 'utf8')
 }
 

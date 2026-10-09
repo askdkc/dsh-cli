@@ -8,9 +8,9 @@ them by their original working directory — switching agents no longer costs
 your history.
 
 ```sh
-dsh-tui migrate                # list per-agent scannable file counts (writes nothing)
-dsh-tui migrate claude-code    # import every Claude Code conversation
-dsh-tui migrate codex --dry-run  # preview what would land, write nothing
+dsh-cli migrate                # list per-agent scannable file counts (writes nothing)
+dsh-cli migrate claude-code    # import every Claude Code conversation
+dsh-cli migrate codex --dry-run  # preview what would land, write nothing
 ```
 
 In-TUI equivalent: `/migrate`. Bare `/migrate` opens a **multi-select source
@@ -86,9 +86,9 @@ with that source pre-checked; any other key dismisses it.
 ## Troubleshooting
 
 - **`unknown agent`**: the authoritative source list is what bare
-  `dsh-tui migrate` prints.
+  `dsh-cli migrate` prints.
 - **`needs the profile's compiled copy`**: the profile's compiled output is
-  missing or too old — run `dsh-tui update` first.
+  missing or too old — run `dsh-cli update` first.
 - **Imports fewer than the scan count**: the scan count matches candidate
   files by name; import additionally filters unreadable and empty
   conversations, so landing slightly lower is expected.

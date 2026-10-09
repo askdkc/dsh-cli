@@ -233,7 +233,7 @@ function verifyChannelLiveSync(ctx: unknown): CapabilityLifecycle[] {
 function requireChannel(ctx: unknown): Channel {
   const channel = channelFor(ctx)
   if (channel === undefined) {
-    throw new Error('dsh-tui: live TUI Channel is not registered for this composition root')
+    throw new Error('dsh-cli: live TUI Channel is not registered for this composition root')
   }
   return channel
 }
@@ -260,10 +260,10 @@ function createChannelPortLease(
   let releaseOwnerLease: (() => void) | undefined
   const cleanups = new Set<() => void>()
   const assertActive = (): void => {
-    if (!active || !isDriverActive()) throw new Error('dsh-tui: Channel driver has been disposed')
+    if (!active || !isDriverActive()) throw new Error('dsh-cli: Channel driver has been disposed')
     if (captured !== undefined && getTuiChannelRegistration(ctx) !== captured) {
       dispose()
-      throw new Error('dsh-tui: Channel port lifetime has ended')
+      throw new Error('dsh-cli: Channel port lifetime has ended')
     }
   }
   const dispose = (): void => {
@@ -273,7 +273,7 @@ function createChannelPortLease(
     for (const cleanup of [...cleanups]) {
       try { cleanup() } catch (error) { failures.push(error) }
     }
-    throwCleanupFailures(failures, 'dsh-tui: Channel port cleanup failed')
+    throwCleanupFailures(failures, 'dsh-cli: Channel port cleanup failed')
   }
   const own = (cleanup: () => void): (() => void) => {
     let released = false
@@ -291,7 +291,7 @@ function createChannelPortLease(
     assertActive()
     const current = getTuiChannelRegistration(ctx)
     if (current === undefined || current.channel === null || typeof current.channel !== 'object') {
-      throw new Error('dsh-tui: live TUI Channel is not registered for this composition root')
+      throw new Error('dsh-cli: live TUI Channel is not registered for this composition root')
     }
     if (captured === undefined) {
       captured = current
@@ -302,7 +302,7 @@ function createChannelPortLease(
     }
     if (captured !== current) {
       dispose()
-      throw new Error('dsh-tui: Channel port lifetime has ended')
+      throw new Error('dsh-cli: Channel port lifetime has ended')
     }
     // Registering with an already released owner revokes synchronously.
     assertActive()
@@ -318,7 +318,7 @@ function createChannelPortLease(
     for (const cleanup of [unsubscribe, dispose]) {
       try { cleanup() } catch (error) { failures.push(error) }
     }
-    throwCleanupFailures(failures, 'dsh-tui: Channel driver cleanup failed')
+    throwCleanupFailures(failures, 'dsh-cli: Channel driver cleanup failed')
   })
   return { assertActive, channel, own, dispose }
 }
@@ -405,8 +405,8 @@ function createChannelPort(ctx: unknown, own: (dispose: () => void) => void, isA
 }
 
 export const channelDriver: UpstreamDriver = {
-  id: 'dsh-tui-channel',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-channel',
+  upstreamFamily: 'dsh-cli',
   capability: CAPABILITY,
   mountEffectClass: 'read-only',
   detect: detectChannelCapability,
@@ -422,7 +422,7 @@ export const channelDriver: UpstreamDriver = {
           try { dispose() } catch (error) { failures.push(error) }
         }
         disposers.clear()
-        throwCleanupFailures(failures, 'dsh-tui: Channel driver cleanup failed')
+        throwCleanupFailures(failures, 'dsh-cli: Channel driver cleanup failed')
       },
       ports: { channel: createChannelPort(context, dispose => { disposers.add(dispose) }, () => active) },
     }

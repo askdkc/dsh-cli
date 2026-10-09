@@ -93,7 +93,7 @@ export function createForkSessionAction(
     try {
       await detached.release()
     } catch (error: unknown) {
-      ctx.logger.warn('dsh-tui: forked session dispose failed: %o', error)
+      ctx.logger.warn('dsh-cli: forked session dispose failed: %o', error)
     }
     try {
       const sourceTitle = state.sessionTitle.trim()

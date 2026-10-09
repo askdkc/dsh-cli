@@ -11,9 +11,9 @@
  */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'WezTerm'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
-import type { PageMarginSetting } from '../src/tuiDisplayPrefs.js'
+import type { PageMarginSetting } from '../src/cliDisplayPrefs.js'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { PageMargin }, { applyPageMargin }] = await Promise.all([
   import('node:stream'),
@@ -23,7 +23,7 @@ const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, Alternat
   import('../src/screens/Chat.js'),
   import('../src/dsh-adapter/questions.js'),
   import('../src/components/PageMargin.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
 ])
 
 const COLS = 110

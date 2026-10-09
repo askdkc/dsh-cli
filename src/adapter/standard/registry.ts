@@ -1,4 +1,4 @@
-/** Load and verify the pinned dsh-TUI admission profile. */
+/** Load and verify the pinned dsh-CLI admission profile. */
 
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
@@ -173,7 +173,7 @@ export function verifyRegistry(data: SpecData): string[] {
     if (coordinates.has(key)) failures.push(`${key}: duplicate registry coordinate`)
     coordinates.add(key)
     if ('authority' in entry && !entry.coordinates.apiVersion.startsWith('tui.dsh/')) {
-      failures.push(`${key}: dsh-tui definition must use the private protocol group`)
+      failures.push(`${key}: dsh-cli definition must use the private protocol group`)
     }
     if (!protocols.understands(entry.coordinates)) failures.push(`${key}: ProtocolCatalog definition unavailable`)
     if ('profile' in entry) {

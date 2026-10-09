@@ -6,9 +6,9 @@
  * to stored secrets. dsh resolves those refs into a session at launch, so an
  * environment-only check reports "missing" for a key that works. This module
  * only ever answers "is a ref declared": the value is never read, formatted, or
- * logged. The launcher keeps a mirror of this check in `bin/dsh-tui.js` (it is
+ * logged. The launcher keeps a mirror of this check in `bin/dsh-cli.js` (it is
  * dependency-free and cannot import `lib/`); the two must not diverge.
- * @module dsh-tui/utils/credentials
+ * @module dsh-cli/utils/credentials
  */
 import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'

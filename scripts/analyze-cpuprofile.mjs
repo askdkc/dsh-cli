@@ -23,7 +23,7 @@ for (const [id, us] of self) {
   const n = byId.get(id)
   if (!n) continue
   const cf = n.callFrame
-  const key = `${cf.functionName || '(anon)'} @ ${(cf.url || '').replace(/^.*node_modules\//, 'nm/').replace(/^.*dsh-tui./, '')}:${cf.lineNumber + 1}`
+  const key = `${cf.functionName || '(anon)'} @ ${(cf.url || '').replace(/^.*node_modules\//, 'nm/').replace(/^.*dsh-cli./, '')}:${cf.lineNumber + 1}`
   rows.push([key, us])
 }
 rows.sort((a, b) => b[1] - a[1])

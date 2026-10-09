@@ -22,7 +22,7 @@ export function createDetachedHandleFactory(owner: Pick<ChannelOwner, 'assertAct
       handle = await create()
       if (!owner.current()) {
         await release()
-        throw new Error('dsh-tui: Channel lifetime has ended')
+        throw new Error('dsh-cli: Channel lifetime has ended')
       }
       return {
         handle,

@@ -1,5 +1,5 @@
 // Vendored from cross-spawn@7 (lib/util/escape.js, MIT). This helper must run
-// before the first build, so it cannot import dsh-tui's generated lib/types.
+// before the first build, so it cannot import dsh-cli's generated lib/types.
 const CMD_META_CHARS = /([()\][%!^"`<>&|;, *?])/g
 
 function cmdEscapeCommand(command) {

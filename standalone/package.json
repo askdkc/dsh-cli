@@ -1,5 +1,5 @@
 {
-  "name": "dsh-tui-standalone-runtime",
+  "name": "dsh-cli-standalone-runtime",
   "private": true,
   "type": "module",
   "dependencies": {

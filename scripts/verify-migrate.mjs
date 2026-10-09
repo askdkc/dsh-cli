@@ -417,7 +417,7 @@ const root = mkdtempSync(join(tmpdir(), 'verify-migrate-'))
   writeFileSync(join(ccDir, `${firstUuid()}.jsonl`), [
     // 合法 JSON null 行（codex 对抗审核：不得终止扫描）
     'null',
-    // 合法 JSON 的 null 子对象（dsh-tui-df 独立测试 CONFIRMED：不得让 discover 抛
+    // 合法 JSON 的 null 子对象（dsh-cli-df 独立测试 CONFIRMED：不得让 discover 抛
     // 未捕获 TypeError——typeof null === 'object' 骗过旧守卫）
     JSON.stringify({ type: 'user', timestamp: '2026-01-01T00:00:00Z', cwd: '/tmp/cc', message: null }),
     JSON.stringify({ type: 'assistant', timestamp: '2026-01-01T00:00:00Z', cwd: '/tmp/cc', message: null }),

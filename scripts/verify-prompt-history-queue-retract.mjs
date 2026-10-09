@@ -24,7 +24,7 @@ import { settled, sleep, viewportLines } from './lib/term-test.mjs'
 // `DATA_DIR` is resolved at module load from the home directory, so the temp
 // HOME has to be in place before the harness imports the compiled app: this
 // regression must never touch the real input history (it holds raw inputs).
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-queue-retract-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-queue-retract-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 

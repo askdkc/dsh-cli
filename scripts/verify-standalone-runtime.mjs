@@ -28,7 +28,7 @@ try {
   assert.equal(metadata.binPath, 'node_modules/@deepseek-ai/dsh/cli/launch.mjs')
   assert.equal(metadata.dshVersion, '0.2.1-alpha')
   const home = join(scratch, 'home')
-  const options = { home, runtimeRoot, tuiVersion: metadata.tuiVersion }
+  const options = { home, runtimeRoot, cliVersion: metadata.cliVersion }
   const profile = ensureProfile(options)
   const manifestPath = join(profile, 'package.json')
   const patchPath = join(profile, 'cordis.patch.yml')
@@ -38,7 +38,7 @@ try {
   write(manifestPath, { ...readManifest(), custom: 'preserve', dsh: { feature: true, profile: { bundles: ['user-bundle', '@deepseek-ai/dsh-base', tui, tui], custom: true } } })
   write(patchPath, '- id: user-override\n  disabled: true\n')
   write(join(home, 'sessions/keep.json'), 'session-data')
-  ensureProfile({ ...options, tuiVersion: '9.1.0' })
+  ensureProfile({ ...options, cliVersion: '9.1.0' })
   assert.equal(readManifest().custom, 'preserve')
   assert.equal(readManifest().dsh.feature, true)
   assert.equal(readManifest().dsh.profile.custom, true)
@@ -86,13 +86,13 @@ try {
   write(join(stage, 'runtime-meta.json'), { ...metadata, bundleId: 'fixture-alpha' })
   createStandaloneArchive(join(stage, 'runtime.tar.gz'), runtimeRoot, ['node_modules'])
   const cache = join(scratch, 'bootstrap-cache')
-  const env = { ...process.env, PATH: '', DSH_TUI_STANDALONE_CACHE: cache, DSH_TUI_STANDALONE_HOME: join(scratch, 'bootstrap-home') }
+  const env = { ...process.env, PATH: '', DSH_CLI_STANDALONE_CACHE: cache, DSH_CLI_STANDALONE_HOME: join(scratch, 'bootstrap-home') }
   const run = () => spawnSync(process.execPath, [join(stage, 'entry.cjs'), '--help'], { env, encoding: 'utf8', timeout: 30000 })
   for (let attempt = 0; attempt < 2; attempt++) {
     const result = run()
     assert.equal(result.status, 0, result.stderr)
     assert.deepEqual(JSON.parse(result.stdout).argv, ['--profile', 'dsh-cli', '--help'])
-    assert.equal(JSON.parse(result.stdout).home, env.DSH_TUI_STANDALONE_HOME)
+    assert.equal(JSON.parse(result.stdout).home, env.DSH_CLI_STANDALONE_HOME)
   }
   write(join(cache, 'fixture-alpha', metadata.binPath), 'throw new Error("tampered")\n')
   assert.equal(run().status, 0, 'manifest-derived entry must be hashed and restored')

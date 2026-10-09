@@ -9,7 +9,7 @@
  *
  * IMPORTANT trust boundary:
  *
- * This module is NOT a security boundary. dsh-TUI's plugin model is
+ * This module is NOT a security boundary. dsh-CLI's plugin model is
  * trusted-in-process; any code running in the same process can locate the
  * package root through `package.json` and absolutely import the compiled
  * internal file (for example `lib/adapter/kernel/host-probe-access.js`).
@@ -31,7 +31,7 @@
  */
 
 /** Opaque host-only token. Module-local; deliberately not exported. */
-const HOST_PROBE_TOKEN: unique symbol = Symbol('dsh-tui.host-probe-token')
+const HOST_PROBE_TOKEN: unique symbol = Symbol('dsh-cli.host-probe-token')
 
 export interface CommandLiveProbeResult {
   readonly ok: true
@@ -123,7 +123,7 @@ export function hasMessageLiveProbe(service: unknown): boolean {
 
 function assertOptionalHostToken(token: unknown): void {
   if (token !== undefined && token !== HOST_PROBE_TOKEN) {
-    throw new Error('dsh-tui: host-only live probe access denied')
+    throw new Error('dsh-cli: host-only live probe access denied')
   }
 }
 
@@ -131,7 +131,7 @@ export async function runCommandLiveProbe(service: unknown, token?: unknown): Pr
   assertOptionalHostToken(token)
   const key = unwrapService(service)
   const runner = key === undefined ? undefined : commandRunners.get(key)
-  if (runner === undefined) throw new Error('dsh-tui: host command live probe accessor is not registered')
+  if (runner === undefined) throw new Error('dsh-cli: host command live probe accessor is not registered')
   return runner(token)
 }
 
@@ -139,7 +139,7 @@ export async function runStorageLiveProbe(service: unknown, token?: unknown): Pr
   assertOptionalHostToken(token)
   const key = unwrapService(service)
   const runner = key === undefined ? undefined : storageRunners.get(key)
-  if (runner === undefined) throw new Error('dsh-tui: host storage live probe accessor is not registered')
+  if (runner === undefined) throw new Error('dsh-cli: host storage live probe accessor is not registered')
   return runner(token)
 }
 
@@ -147,6 +147,6 @@ export async function runMessageLiveProbe(service: unknown, token?: unknown): Pr
   assertOptionalHostToken(token)
   const key = unwrapService(service)
   const runner = key === undefined ? undefined : messageRunners.get(key)
-  if (runner === undefined) throw new Error('dsh-tui: host message live probe accessor is not registered')
+  if (runner === undefined) throw new Error('dsh-cli: host message live probe accessor is not registered')
   return runner(token)
 }

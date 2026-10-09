@@ -6,13 +6,13 @@ import { join, win32 } from 'node:path'
 import { commandInvocation } from './dev-command.mjs'
 import { copyDevConfig, resolveDevPaths } from './dev-copy-config.mjs'
 
-const unixArgs = ['--profile', 'dsh-tui', '/tmp/work tree']
+const unixArgs = ['--profile', 'dsh-cli', '/tmp/work tree']
 assert.deepEqual(commandInvocation('dsh', unixArgs, 'linux'), ['dsh', unixArgs])
 assert.deepEqual(commandInvocation('dsh', unixArgs, 'darwin'), ['dsh', unixArgs])
 
 const [windowsCommand, windowsArgs] = commandInvocation(
   'dsh',
-  ['--profile', 'dsh-tui', String.raw`C:\work tree\a&b`],
+  ['--profile', 'dsh-cli', String.raw`C:\work tree\a&b`],
   'win32',
 )
 assert.deepEqual(windowsArgs, [])
@@ -23,19 +23,19 @@ assert.doesNotMatch(windowsCommand, /C:\\work tree\\a&b/u)
 assert.deepEqual(
   resolveDevPaths({ XDG_CACHE_HOME: '/cache', DSH_SOURCE_HOME: '/source' }, '/home/dev', 'linux'),
   {
-    devRoot: '/cache/dsh-tui-dev',
+    devRoot: '/cache/dsh-cli-dev',
     sourceHome: '/source',
-    isolatedHome: '/cache/dsh-tui-dev/home',
-    dshHome: '/cache/dsh-tui-dev/dsh-home',
-    sessionRoot: '/cache/dsh-tui-dev/sessions',
+    isolatedHome: '/cache/dsh-cli-dev/home',
+    dshHome: '/cache/dsh-cli-dev/dsh-home',
+    sessionRoot: '/cache/dsh-cli-dev/sessions',
   },
 )
 assert.equal(
   resolveDevPaths({ LOCALAPPDATA: String.raw`C:\Users\dev\AppData\Local` }, String.raw`C:\Users\dev`, 'win32').devRoot,
-  win32.resolve(String.raw`C:\Users\dev\AppData\Local\dsh-tui-dev`),
+  win32.resolve(String.raw`C:\Users\dev\AppData\Local\dsh-cli-dev`),
 )
 
-const fixture = mkdtempSync(join(tmpdir(), 'dsh-tui-dev-config-'))
+const fixture = mkdtempSync(join(tmpdir(), 'dsh-cli-dev-config-'))
 try {
   const sourceHome = join(fixture, 'source')
   const devRoot = join(fixture, 'dev')
@@ -44,7 +44,7 @@ try {
   writeFileSync(join(sourceHome, '.credentials.yaml'), 'test: secret\n')
   writeFileSync(join(sourceHome, 'cordis.patch.yml'), 'must not copy\n')
 
-  const copied = copyDevConfig({ DSH_TUI_DEV_ROOT: devRoot, DSH_SOURCE_HOME: sourceHome })
+  const copied = copyDevConfig({ DSH_CLI_DEV_ROOT: devRoot, DSH_SOURCE_HOME: sourceHome })
   assert.deepEqual(copied.copied, ['settings.yaml', '.credentials.yaml'])
   assert.equal(readFileSync(join(copied.dshHome, 'settings.yaml'), 'utf8'), 'providers: {}\n')
   assert.equal(readFileSync(join(copied.dshHome, '.credentials.yaml'), 'utf8'), 'test: secret\n')

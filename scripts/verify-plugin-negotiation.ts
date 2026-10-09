@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url'
 const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-plugin-negotiation-home-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const { pluginsInfoLines, PLUGINS_MATRIX_MAX_ROWS } = await import('../src/dsh-adapter/plugins-info.js')
 const { readGrantStore } = await import('../src/adapter/standard/grants.js')

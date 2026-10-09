@@ -25,8 +25,8 @@
  * Exits 1 on any failed assertion.
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
-// Redirect ~/.dsh-tui away from the real home before any module import
+process.env.DSH_CLI_LANG = 'en'
+// Redirect ~/.dsh-cli away from the real home before any module import
 // resolves utils/paths.js.
 const [{ mkdtempSync, rmSync }, { tmpdir }, { join }] = await Promise.all([
   import('node:fs'),
@@ -47,7 +47,7 @@ const [{ PassThrough, Writable }, React, { Terminal: XTerm }, ui, tooltip, termT
   import('../src/components/messages/UserPromptMessage.js'),
   import('../src/ink/instances.js'),
   import('../src/components/PageMargin.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
 ])
 
 const { sleep, settle, settled, screenHas, findText, viewportLines } = termTest

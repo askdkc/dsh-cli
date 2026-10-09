@@ -11,7 +11,7 @@ export type SelectOption = {
 }
 
 /**
- * A single-choice select list with the standard dsh-TUI visual treatment:
+ * A single-choice select list with the standard dsh-CLI visual treatment:
  * ListItem rows with ❯ focus pointer, ✓ selected checkmark, descriptions,
  * scroll arrows). Keyboard navigation is owned by the parent dialog, which
  * passes focus/selection indices back in.

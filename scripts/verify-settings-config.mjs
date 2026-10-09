@@ -17,7 +17,7 @@ import { configValues, createSettingsScope, editableConfig, resolveSettingsNames
 import { createSettingsHosts } from '../src/dsh-adapter/channel/settings-host.ts'
 import { SettingsForm } from '../src/dsh-adapter/settingsEditor.ts'
 import TuiSettingsSectionsRuntime, { getHostSettingsSections, getLocalSettingsSectionsHost } from '../src/dsh-adapter/settings-sections.ts'
-import { DEFAULT_PAGE_MARGIN, DEFAULT_STATUS_BAR, isPageMarginMode, normalizePageMargin, parsePageMarginSpec } from '../src/tuiDisplayPrefs.ts'
+import { DEFAULT_PAGE_MARGIN, DEFAULT_STATUS_BAR, isPageMarginMode, normalizePageMargin, parsePageMarginSpec } from '../src/cliDisplayPrefs.ts'
 import { getLang, isLang } from '../src/i18n.ts'
 import { SHORTCUT_ACTIONS, setKeymapOverrides, resetKeymapOverrides, effectiveComboString, parseComboDraft, draftComboConflicts } from '../src/utils/keymap.ts'
 
@@ -112,9 +112,9 @@ const javascript = ts.transpileModule(`
 `, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText
 const bindSettings = dependencies => new Function(...Object.keys(dependencies), javascript)(...Object.values(dependencies))
 
-for (const registry of ['service', 'local']) for (const entryId of ['dsh-tui', 'custom-tui', '1234abcd', 'Custom.TUI', ' custom-tui ']) {
+for (const registry of ['service', 'local']) for (const entryId of ['dsh-cli', 'custom-tui', '1234abcd', 'Custom.TUI', ' custom-tui ']) {
   const root = new Context()
-  const home = mkdtempSync(join(tmpdir(), 'dsh-tui-settings-'))
+  const home = mkdtempSync(join(tmpdir(), 'dsh-cli-settings-'))
   const observed = []
   const notices = []
   let owner, child, liveScope, applyShortcuts, runtime

@@ -6,7 +6,7 @@
  * Run: node --import tsx/esm scripts/verify-help-scroll.tsx
  */
 process.env.FORCE_COLOR = '0'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [
   { PassThrough, Writable },

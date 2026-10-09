@@ -1,7 +1,7 @@
 /**
  * Working-activity user configuration, mirroring the pi extension's
- * `~/.pi/agent/working-activity.json` shape: the UI owns the file (dsh-tui
- * persists `frames` at `~/.dsh-tui/working-activity.json`) and consumers use
+ * `~/.pi/agent/working-activity.json` shape: the UI owns the file (dsh-cli
+ * persists `frames` at `~/.dsh-cli/working-activity.json`) and consumers use
  * the pure parser here to honor `mode` / `features` / `customPhrases` /
  * `customActions` without duplicating validation. No I/O — filesystem
  * ownership stays with the host.

@@ -174,25 +174,25 @@ export class TuiShortcutRuntime extends Service {
     try {
       caller = requirePluginCaller(this.ctx, 'tuiShortcuts.register', this)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiShortcuts.register requires a live non-root plugin activation')
+      this.ctx.logger.warn('dsh-cli: tuiShortcuts.register requires a live non-root plugin activation')
       return () => {}
     }
     const state = shortcutStateFor(this)
     const owner = activationFiber(caller)
     if (owner === undefined) {
-      this.ctx.logger.warn('dsh-tui: tuiShortcuts.register requires a live activation')
+      this.ctx.logger.warn('dsh-cli: tuiShortcuts.register requires a live activation')
       return () => {}
     }
     let parsed: ParsedCombo | undefined
     try {
       parsed = parseShortcutCombo(combo)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiShortcuts.register rejected an uncoercible combo')
+      this.ctx.logger.warn('dsh-cli: tuiShortcuts.register rejected an uncoercible combo')
       return () => {}
     }
     if (parsed === undefined) {
       this.ctx.logger.warn(
-        'dsh-tui: tuiShortcuts.register rejected an invalid combo — need ctrl/alt plus one key (e.g. "ctrl+shift+p")',
+        'dsh-cli: tuiShortcuts.register rejected an invalid combo — need ctrl/alt plus one key (e.g. "ctrl+shift+p")',
       )
       return () => {}
     }
@@ -210,11 +210,11 @@ export class TuiShortcutRuntime extends Service {
       FIXED_RESERVED_CANONICAL.has(key) || FIXED_RESERVED_CANONICAL.has(shiftlessKey) ||
       actionReserved.has(key) || actionReserved.has(shiftlessKey)
     ) {
-      this.ctx.logger.warn(`dsh-tui: tuiShortcuts.register rejected "${parsed.raw}" — reserved by a built-in binding`)
+      this.ctx.logger.warn(`dsh-cli: tuiShortcuts.register rejected "${parsed.raw}" — reserved by a built-in binding`)
       return () => {}
     }
     if (state.shortcuts.has(key)) {
-      this.ctx.logger.warn(`dsh-tui: tuiShortcuts.register rejected "${parsed.raw}" — already registered`)
+      this.ctx.logger.warn(`dsh-cli: tuiShortcuts.register rejected "${parsed.raw}" — already registered`)
       this.ctx.get('tuiEffectLedger')?.record(
         {
           operation: 'bind',
@@ -232,11 +232,11 @@ export class TuiShortcutRuntime extends Service {
       description = cleanScalarText(options?.description, 120)
       handler = options?.handler
     } catch {
-      this.ctx.logger.warn(`dsh-tui: tuiShortcuts.register rejected "${parsed.raw}" — malformed options`)
+      this.ctx.logger.warn(`dsh-cli: tuiShortcuts.register rejected "${parsed.raw}" — malformed options`)
       return () => {}
     }
     if (typeof handler !== 'function' || description === '') {
-      this.ctx.logger.warn(`dsh-tui: tuiShortcuts.register rejected "${parsed.raw}" — needs a description and a handler`)
+      this.ctx.logger.warn(`dsh-cli: tuiShortcuts.register rejected "${parsed.raw}" — needs a description and a handler`)
       return () => {}
     }
     const entry: RegisteredShortcut = { combo: parsed, description, handler }
@@ -300,7 +300,7 @@ function dispatchShortcut(runtime: TuiShortcutRuntime, input: string, key: TuiSh
       .then(() => entry.handler())
       .catch((error: unknown) => {
         state.onError?.(entry.combo.raw, error)
-        state.logger.warn(`dsh-tui: shortcut "${entry.combo.raw}" handler failed: %o`, error)
+        state.logger.warn(`dsh-cli: shortcut "${entry.combo.raw}" handler failed: %o`, error)
       })
     return true
   }

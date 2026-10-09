@@ -33,7 +33,7 @@
 | `Shift+Up` | Enter message selection; arrows move, `Enter` expands one row, `Esc` exits |
 
 **Remapping shortcuts**: paste, history search, external editor, `Ctrl+O/T/P/R/L`,
-subagent dashboard, show-all, and todo fold are remappable in `/settings` → `dsh-tui` →
+subagent dashboard, show-all, and todo fold are remappable in `/settings` → `dsh-cli` →
 `Shortcuts`.
 
 - Enter combos like `alt+v`; comma-separate several; leave blank to restore defaults. Saves apply live.
@@ -125,7 +125,7 @@ Long drafts stop squeezing into the 5-row window. `Ctrl+Shift+E` (remappable) or
 editor that shares the exact editing state (caret/selection/fold/vim mode) with the inline
 prompt.
 
-- Turn it off in `/settings` → `dsh-tui` (`expandEditor`, on by default); both entry points (the `⛶` affordance and the shortcut) then disappear.
+- Turn it off in `/settings` → `dsh-cli` (`expandEditor`, on by default); both entry points (the `⛶` affordance and the shortcut) then disappear.
 - **Chrome**:
   - A round border following the session accent / plan color.
   - A line-number gutter on the left (width scales with the row count; the caret row's number is highlighted).
@@ -204,8 +204,8 @@ Click a staged `[Image #N]` token or a transcript thumbnail to open one shared, 
 
 `/lang` toggles the UI between Simplified Chinese and English (affects all UI strings); the choice persists across restarts (0.3.7+).
 
-- The **dsh-tui → Language** select in `/settings` switches it too: applies immediately and saves `dsh-tui.lang` in the active profile config (`~/.dsh/settings.yaml` on older hosts).
-- The `DSH_TUI_LANG` env var always wins.
+- The **dsh-cli → Language** select in `/settings` switches it too: applies immediately and saves `dsh-cli.lang` in the active profile config (`~/.dsh/settings.yaml` on older hosts).
+- The `DSH_CLI_LANG` env var always wins.
 
 ## Message delivery semantics
 
@@ -267,14 +267,14 @@ The rail's menu has four entries:
 - **rename**.
 - **remove from list** — the registration only; the directory and every session log survive.
 
-A workspace joins by *starting dsh-tui in that directory* (the startup attach); there is no "add workspace" picker on this screen.
+A workspace joins by *starting dsh-cli in that directory* (the startup attach); there is no "add workspace" picker on this screen.
 
 A session row's live state comes from the channel's own agent-view projection — the same
 source as the status bar's "needs input" hint: working / needs input / idle / completed /
 failed / stopped, and the session this terminal is attached to is marked `current`.
 
 - Clicking a row enters that session (same as `Enter`).
-- Clicking the in-row `★`/`☆` toggles the pin only (persisted in `~/.dsh-tui/session-pins.json`) and never enters the session.
+- Clicking the in-row `★`/`☆` toggles the pin only (persisted in `~/.dsh-cli/session-pins.json`) and never enters the session.
 
 A session held by **another** TUI terminal is still listed, but the row turns red, ends
 with `held by pid <pid>`, and **cannot be clicked**: two processes driving one append-only
@@ -304,7 +304,7 @@ those sessions as usual — "no registration" is not "no history".
   the `Space` peek panel, and `Shift+Enter` dispatch-and-attach. After `/bg`, reach a
   background session by pressing `Enter` on it in the workspace list.
 
-On Windows, `dsh-tui.cmd --resume` uses the session ID last written to `~/.dsh-tui/resume.txt`.
+On Windows, `dsh-cli.cmd --resume` uses the session ID last written to `~/.dsh-cli/resume.txt`.
 
 ### Background sessions
 
@@ -373,7 +373,7 @@ A full-screen scene (no scrollback pollution) over the whole session timeline:
 `/settings` opens the plugin settings editor, read/edit by namespace.
 
 - Edits **auto-save**: `↑`/`↓` to move, `Enter` to expand/toggle/edit, booleans/selects write on the spot, text drafts confirm on Enter, `Esc` just exits.
-- Fields under the dsh-tui namespace are written to the active profile config (legacy: settings.yaml user layer) and take **effect immediately** (`lang`, `statusBar.*`, …).
+- Fields under the dsh-cli namespace are written to the active profile config (legacy: settings.yaml user layer) and take **effect immediately** (`lang`, `statusBar.*`, …).
 - Namespaces without a declared TUI section are listed read-only and need manual edits to the profile config (`~/.dsh/settings.yaml` on older hosts).
 
 ### Model and preset
@@ -399,7 +399,7 @@ After `/workspace `, the completion menu includes both built-in and plugin-contr
 - Type a prefix and press Tab, for example `/workspace rem`.
 - Plugin aliases participate in matching as well.
 
-The launcher accepts the same target, for example `dsh-tui .`, `dsh-tui ../project`, or `dsh-tui file:///path/to/project`.
+The launcher accepts the same target, for example `dsh-cli .`, `dsh-cli ../project`, or `dsh-cli file:///path/to/project`.
 
 - Without any workspace plugin installed, local paths, `!command`, and all normal TUI session flows remain available.
 
@@ -417,7 +417,7 @@ In inline mode, the terminal emulator owns native scrollback and selection.
   notch on the timeline, ±1 in hotspot; scrolls the detail while expanded). Walks the
   focused row in /settings.
 - **Drag** — Select text, copy on release, then clear the selection; a "Copied N characters"
-  notice pops up. With `dsh-tui.scrollGutter: scrollbar`, the right-edge scrollbar is a drag
+  notice pops up. With `dsh-cli.scrollGutter: scrollbar`, the right-edge scrollbar is a drag
   target: an unmodified left drag scrubs the transcript to the track position (same mapping
   as a track click — drag to point), while `Shift`/`Alt`/`Ctrl`+drag still selects text (the
   drag protocol opens only for unmodified left presses).
@@ -487,7 +487,7 @@ native scrollback and selection stay in charge.
 
 - Copy prefers OSC 52.
 - Local fallbacks include `wl-copy`, `xclip`, and `xsel`; tmux uses `load-buffer -w`.
-- Set `DSH_TUI_DISABLE_MOUSE=1` to temporarily disable fullscreen mouse handling.
+- Set `DSH_CLI_DISABLE_MOUSE=1` to temporarily disable fullscreen mouse handling.
 
 ## `ask_user_question` questionnaires
 
@@ -605,7 +605,7 @@ The command menu merges local commands with the DSH command registry. Type `/` t
 
 > Unknown commands are sent to the model as ordinary messages (e.g. in a composition where `/permission` is not mounted).
 
-dsh-TUI does not preinstall general-purpose skills; DSH and the active composition own skill content and discovery.
+dsh-CLI does not preinstall general-purpose skills; DSH and the active composition own skill content and discovery.
 
 Additional forms:
 
@@ -620,7 +620,7 @@ Additional forms:
 - `/preset <id>` and `/preset status` are described in the configuration guide.
 - `/effort` opens the reasoning-effort slider (←/→ adjusts live); `/effort <id>` sets a level directly; `/effort status` reports the current one.
 - `/model` opens a centered model dialog. `/model <words>` starts with those words in search; `/model provider/model-id` switches directly only when the complete route exists. Words match in any order, so `seek deep` finds DeepSeek.
-  - With an empty search, Favorites, Recent, then all provider groups appear. The last 10 used models are persisted at `~/.dsh-tui/model-recents.json`; favorites are persisted at `~/.dsh-tui/model-favorites.json`.
+  - With an empty search, Favorites, Recent, then all provider groups appear. The last 10 used models are persisted at `~/.dsh-cli/model-recents.json`; favorites are persisted at `~/.dsh-cli/model-favorites.json`.
   - Arrow keys and PageUp/PageDown move among models; `Enter` selects, `Ctrl+F` toggles a favorite, `Ctrl+A` opens provider setup, and `Esc` closes the dialog.
   - Switching = fork continuation, history preserved.
 - `/theme <name>` and `/theme status` are described in the theme guide.

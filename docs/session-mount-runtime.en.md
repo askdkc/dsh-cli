@@ -89,7 +89,7 @@ writes into **one append-only event log** and corrupt the transcript.
 
 That is not a UX problem; it is data loss.
 
-### 3.2 Who owns what: `~/.dsh-tui/session-mounts.json`
+### 3.2 Who owns what: `~/.dsh-cli/session-mounts.json`
 
 Every TUI process publishes one record naming the sessions it currently has
 mounted:
@@ -298,9 +298,9 @@ rather than creating a new subscription.
 TUIs created by dpx are **fully isolated** from each other, and isolated runtime
 state is written under **each environment's own home path**:
 
-- The session ledger path is `join(homedir(), '.dsh-tui')`
+- The session ledger path is `join(homedir(), '.dsh-cli')`
   (`src/utils/paths.ts`), and a dpx isolation rewrites `HOME` / `USERPROFILE`,
-  so each environment's `.dsh-tui` naturally lands inside its own environment
+  so each environment's `.dsh-cli` naturally lands inside its own environment
   root and **cannot** see another environment's mount records.
 - The session-log root is `$DSH_HOME/sessions`, again per-environment.
 

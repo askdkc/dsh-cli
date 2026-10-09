@@ -1,7 +1,7 @@
 /**
  * Geometry forensics — per-frame scroll-geometry trace (issues #421/#433).
  *
- * `DSH_TUI_GEOMETRY_TRACE=<file>` appends one JSON line per painted frame:
+ * `DSH_CLI_GEOMETRY_TRACE=<file>` appends one JSON line per painted frame:
  * the frame's trigger cause, every ScrollBox's resolved geometry (scrollTop
  * before/after follow + drain + virtual clamp, scrollHeight/maxScroll
  * prev/cur, sticky/shrunk/grew flags, clamp bounds), the MessageList
@@ -29,10 +29,10 @@ export type FrameCause =
   | 'reanchor'
   | 'immediate'
 
-export const GEOMETRY_TRACE_ENABLED = process.env.DSH_TUI_GEOMETRY_TRACE !== undefined &&
-  process.env.DSH_TUI_GEOMETRY_TRACE !== ''
+export const GEOMETRY_TRACE_ENABLED = process.env.DSH_CLI_GEOMETRY_TRACE !== undefined &&
+  process.env.DSH_CLI_GEOMETRY_TRACE !== ''
 
-const TRACE_PATH = process.env.DSH_TUI_GEOMETRY_TRACE ?? ''
+const TRACE_PATH = process.env.DSH_CLI_GEOMETRY_TRACE ?? ''
 
 export type ScrollGeometryNote = {
   sticky: boolean

@@ -521,7 +521,7 @@ export interface PromptInputProps {
 }
 
 /**
- * dsh-TUI prompt input: rounded border box (top+bottom borders
+ * dsh-CLI prompt input: rounded border box (top+bottom borders
  * only), `❯ ` prompt char (dimmed while a turn is working), the text with a
  * block cursor at the cursor position, and above it the slash-command /
  * file-completion suggestion card (SuggestionCard: rounded panel with the
@@ -696,7 +696,7 @@ export function PromptInput({
   const [, setExpandedTick] = React.useState(0)
   const prevExpandedRef = React.useRef(false)
   /**
-   * Feature gate (settings `dsh-tui.expandEditor`, on by default; a mock
+   * Feature gate (settings `dsh-cli.expandEditor`, on by default; a mock
    * channel without the field also reads as on). Off hides the ✎
    * affordance and refuses the shortcut — the editor cannot open.
    */
@@ -3498,7 +3498,7 @@ export function PromptInput({
     (helpOpen || channel.pending.length > 0 || fileOverlayOpen || overlayOpen || peekOpen)
   // 顶边框右侧的会话名标签 chip：色随强调色；超宽截断，宽度
   // 随终端列数伸缩但不超过 28 显示单元。默认关闭——`/settings` 的
-  // 「会话名标签」开关（dsh-tui.promptSessionLabel）开启后显示。
+  // 「会话名标签」开关（dsh-cli.promptSessionLabel）开启后显示。
   const sessionTitle = channel.sessionTitle ?? ''
   const topRightLabel: InputBorderLabel | undefined =
     channel.promptSessionLabel === true && sessionTitle !== ''

@@ -9,7 +9,7 @@
 - `pnpm` **10 或更高**（CI 使用 11）。`dsh plugin` 把 profile 内的包安装
   交给 pnpm；pnpm 9 的传递依赖提升行为不同，会让 `dsh-working-activity`
   解析不到，表现为启动后立刻退出且几乎无报错（issue #60，见下方常见问题）。
-- 支持交互输入的终端 TTY。`dsh-tui` 不支持把 stdout 重定向后启动。
+- 支持交互输入的终端 TTY。`dsh-cli` 不支持把 stdout 重定向后启动。
 - `DEEPSEEK_API_KEY`。用自定义兼容端点时还可设置 `DEEPSEEK_BASE_URL`。
 
 macOS/Linux：
@@ -28,18 +28,18 @@ $env:DEEPSEEK_API_KEY = 'your-key'
 
 ## 安装
 
-最快路径（全局安装后自带 `dsh-tui` 直达命令）：
+最快路径（全局安装后自带 `dsh-cli` 直达命令）：
 
 ```sh
 # 官方 CLI + 本插件
-npm install -g @deepseek-ai/dsh dsh-cli
+npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
 
 # pnpm 未安装时任选一种方式（首次启动自动初始化 profile 时需要）
 npm install -g pnpm
 # 或：corepack enable pnpm
 
-# 启动：首次运行自动执行 dsh plugin --profile dsh-tui add dsh-cli@<版本>
-dsh-tui
+# 启动：首次运行自动执行 dsh plugin --profile dsh-cli add @askdkc/dsh-cli@<版本>
+dsh-cli
 ```
 
 手工分步（等价）：
@@ -51,8 +51,8 @@ npm install -g @deepseek-ai/dsh
 npm install -g pnpm
 # 或：corepack enable pnpm
 
-dsh plugin --profile dsh-tui add dsh-cli
-dsh --profile dsh-tui   # 或 dsh-tui
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
+dsh --profile dsh-cli   # 或 dsh-cli
 ```
 
 从仓库检出运行时，也可以执行：
@@ -71,25 +71,25 @@ sh install.sh
 - 环境变量前缀为 `CC_TUI_*`/`DSH_CC_*`。
 - 数据目录为 `~/.dsh-cc`。
 
-此分支使用 `dsh-cli` 包与 `dsh-tui` profile。
+此分支使用 `dsh-cli` 包与 `dsh-cli` profile。
 
-如果这个 profile 已安装 `@deepseek-harness-tui/dsh-tui`，先移除旧包。
+如果这个 profile 已安装 `@deepseek-harness-tui/dsh-cli`，先移除旧包。
 `plugin update` 不会把旧包重命名为 `dsh-cli`：
 
 ```sh
-dsh plugin --profile dsh-tui remove @deepseek-harness-tui/dsh-tui
+dsh plugin --profile dsh-cli remove @deepseek-harness-tui/dsh-cli
 ```
 
 然后安装 `dsh-cli`：
 
 ```sh
-dsh plugin --profile dsh-tui add dsh-cli
-dsh --profile dsh-tui
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
+dsh --profile dsh-cli
 ```
 
-新版本只使用 `DSH_TUI_*` 环境变量与 `~/.dsh-tui` 数据目录，旧名不再被读取，
+新版本只使用 `DSH_CLI_*` 环境变量与 `~/.dsh-cli` 数据目录，旧名不再被读取，
 也不自动迁移数据。首次启动后，请把旧数据目录（`~/.dsh-cc` 等）中的主题、
-配置与历史文件自行复制到 `~/.dsh-tui`。
+配置与历史文件自行复制到 `~/.dsh-cli`。
 
 确认新 profile 正常后：
 
@@ -98,10 +98,10 @@ dsh --profile dsh-tui
 
 ## 安装命令做了什么
 
-首次执行 `dsh plugin --profile dsh-tui add dsh-cli` 时，
+首次执行 `dsh plugin --profile dsh-cli add @askdkc/dsh-cli` 时，
 官方 CLI 会：
 
-1. 在 `$DSH_HOME/profiles/dsh-tui/` 初始化 profile。未设置 `DSH_HOME` 时，
+1. 在 `$DSH_HOME/profiles/dsh-cli/` 初始化 profile。未设置 `DSH_HOME` 时，
    默认根目录通常是 `~/.dsh`。
 2. 让 profile 的第一层 bundle 使用 `@deepseek-ai/dsh-base`。
 3. 在 profile 内通过 pnpm 安装 `dsh-cli`。
@@ -117,13 +117,13 @@ dsh-base -> 其他 bundle -> dsh-cli patch -> 用户 profile patch
 - 本插件的 patch 覆盖或插入 TUI、Agent preset 名册、SQLite 会话持久化与
   工作状态行。
 
-`dsh-working-activity` 已经是本包依赖，并由 `dsh-tui` 的 patch 自动插入。
+`dsh-working-activity` 已经是本包依赖，并由 `dsh-cli` 的 patch 自动插入。
 不要对同一个 profile 再单独执行 `add dsh-working-activity`，否则可能出现重复行。
 
 ## 启动
 
 ```sh
-dsh --profile dsh-tui
+dsh --profile dsh-cli
 ```
 
 命令从当前目录启动，因此 Agent 的默认工作区也是当前目录。进入目标项目目录后再
@@ -132,65 +132,65 @@ dsh --profile dsh-tui
 Windows 仓库检出还提供：
 
 ```bat
-dsh-tui.cmd
-dsh-tui.cmd --resume
+dsh-cli.cmd
+dsh-cli.cmd --resume
 ```
 
-- `--resume` 会读取 `%USERPROFILE%\.dsh-tui\resume.txt`，恢复 TUI 最近选择的
+- `--resume` 会读取 `%USERPROFILE%\.dsh-cli\resume.txt`，恢复 TUI 最近选择的
   会话。
-- 设置 `DSH_TUI_WORKSPACE` 可以覆盖批处理启动器采用的工作目录。
+- 设置 `DSH_CLI_WORKSPACE` 可以覆盖批处理启动器采用的工作目录。
 
 ## CLI 子命令
 
-`dsh-tui help`（或 `dst help`）打印完整用法，`dst` 别名接受相同命令：
+`dsh-cli help`（或 `dst help`）打印完整用法，`dst` 别名接受相同命令：
 
 | 命令 | 作用 |
 | --- | --- |
-| `dsh-tui update` | 更新 profile 到最新版本并对齐启动器（与 TUI 内 `/update` 同一安装逻辑，不进入 TUI） |
-| `dsh-tui doctor` | 环境检查：dsh/pnpm、profile 安装与版本对齐、API key 是否设置（只报状态不读值）、配置文件存在性；与 TUI 内 `/doctor` 会话诊断互补 |
-| `dsh-tui safe` | 安全模式：只读诊断、插件清单与修复指引（`safe --rescue` 还会创建/校验干净的救援 profile） |
-| `dsh-tui version` | 显示启动器与 profile 版本（`--version`/`-v` 等价） |
-| `dsh-tui help` | 显示用法（`--help`/`-h` 等价） |
+| `dsh-cli update` | 更新 profile 到最新版本并对齐启动器（与 TUI 内 `/update` 同一安装逻辑，不进入 TUI） |
+| `dsh-cli doctor` | 环境检查：dsh/pnpm、profile 安装与版本对齐、API key 是否设置（只报状态不读值）、配置文件存在性；与 TUI 内 `/doctor` 会话诊断互补 |
+| `dsh-cli safe` | 安全模式：只读诊断、插件清单与修复指引（`safe --rescue` 还会创建/校验干净的救援 profile） |
+| `dsh-cli version` | 显示启动器与 profile 版本（`--version`/`-v` 等价） |
+| `dsh-cli help` | 显示用法（`--help`/`-h` 等价） |
 
 `help`/`version` 在 dsh 缺失或 profile 未初始化时也能用；其余参数原样转发给
-`dsh --profile dsh-tui`。
+`dsh --profile dsh-cli`。
 
-## 安全模式（`dsh-tui safe`）
+## 安全模式（`dsh-cli safe`）
 
 dsh 意外结束时，安全模式提供只读的环境诊断、profile 插件清单与修复指引。
 
-- **两个入口**：手动运行 `dsh-tui safe`；或 dsh 非零退出后按提示进入。
+- **两个入口**：手动运行 `dsh-cli safe`；或 dsh 非零退出后按提示进入。
   - 提示仅出现在交互终端；脚本/管道只加一行提示、退出码不变。
   - 只覆盖最终 dsh 子进程的非零退出码，不含启动挂起（启动失败按退出码 1）。
 - **只读边界**：诊断/清单/指引不改状态。两个例外：
   - 重试正常启动。
-  - 创建/复用救援 profile，只写 `$DSH_HOME/profiles/dsh-tui-safe/`。
+  - 创建/复用救援 profile，只写 `$DSH_HOME/profiles/dsh-cli-safe/`。
   注：每次 dsh 启动仍会写 `$DSH_HOME/profiles/node_modules` 回退链接与
   pnpm 全局 store（非安全模式引入）。
 - **救援 profile 必须干净，证不出就拒绝**。逐条校验，任一不成立即拒绝：
   - 候选目录已存在，但不是可识别的 profile。
   - 既有 profile 的根 manifest 声明了第三方插件。
   - `$DSH_HOME/cordis.patch.yml`（home 层）**存在即拒绝**。
-  - `dsh-tui-safe/cordis.patch.yml`（profile 层）**有条目即拒绝**；dsh 默认
+  - `dsh-cli-safe/cordis.patch.yml`（profile 层）**有条目即拒绝**；dsh 默认
     生成的「注释 + `[]`」不算条目。
   删除/重建救援 profile 前会**按名字与形态核对顶层条目**，发现别的名字或
   形态不符就拒绝并列出，**不会静默删你的文件**。
-- **非交互**：`dsh-tui safe --rescue` 跑同一套门禁与创建/复用，只报结论
+- **非交互**：`dsh-cli safe --rescue` 跑同一套门禁与创建/复用，只报结论
   （就绪退出 0，拒绝退出 1）。
 - **旧全局启动器**：profile 副本不可读或过旧时，先升级：
-  `npm install -g --legacy-peer-deps dsh-cli@<版本>`。
+  `npm install -g --legacy-peer-deps @askdkc/dsh-cli@<版本>`。
 - **修复命令需自行执行**（安全模式只列出）：
-  - `dsh plugin --profile dsh-tui remove <第三方插件>` 逐个移除可疑插件；
-  - `dsh plugin --profile dsh-tui add dsh-cli@<版本>`
+  - `dsh plugin --profile dsh-cli remove <第三方插件>` 逐个移除可疑插件；
+  - `dsh plugin --profile dsh-cli add @askdkc/dsh-cli@<版本>`
     重装对齐；
-  - `dsh-tui doctor` 环境诊断。
+  - `dsh-cli doctor` 环境诊断。
 
 ## 在 VS Code / Herdr 中运行
 
 - **VS Code**：可在集成终端直接运行，或用已上架 Marketplace 的 companion 扩展
   `dsh-tui-vscode`（真实终端会话、会话历史、指定会话恢复、IDE 选区通道）。
   见 [VS Code 使用指南](vscode.md)。
-- **Herdr**：直接在 [Herdr](https://herdr.dev) 窗格中运行 `dsh-tui`，无需额外
+- **Herdr**：直接在 [Herdr](https://herdr.dev) 窗格中运行 `dsh-cli`，无需额外
   配置；dsh-cli 经 Herdr 本地集成 API 报告 `idle` / `working` / `blocked`
   （问卷与工具审批记为 `blocked`），在 Herdr 之外不做任何事。
 
@@ -200,23 +200,23 @@ dsh 意外结束时，安全模式提供只读的环境诊断、profile 插件�
 
 ```sh
 # 更新 Profile runtime（TUI 内 /update 做的就是这件事）
-dsh plugin --profile dsh-tui add dsh-cli@latest
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli@latest
 ```
 
-通过全局 `dsh-tui` 命令启动时，还需要让 Launcher 对齐（TUI 内的
+通过全局 `dsh-cli` 命令启动时，还需要让 Launcher 对齐（TUI 内的
 `/update` 只更新 profile，不会动全局安装）：
 
 ```sh
-npm install -g dsh-cli@latest
+npm install -g @askdkc/dsh-cli@latest
 # 或（原本用 pnpm 全局安装时）
-pnpm add -g dsh-cli@latest
+pnpm add -g @askdkc/dsh-cli@latest
 ```
 
 - 不带 `@latest` 时 pnpm 会按 profile `package.json` 里已记录的版本范围
   （如 `^0.1.4`）就地解析，可能停留在旧的主线上——这是"重复执行安装命令
   但版本没变"的常见原因。
 - 修复"版本不一致"时，优先使用启动器打印的"精确版本"命令（例如
-  `npm install -g dsh-cli@0.8.3`）；日常主动升级才
+  `npm install -g @askdkc/dsh-cli@0.8.3`）；日常主动升级才
   使用 `@latest`。
 - 确认生效：启动横幅右上角显示当前版本（`✦ dsh-CLI vX.Y.Z`）。
 - 用户覆盖层 `cordis.patch.yml` 在更新中原样保留。
@@ -235,7 +235,7 @@ allowBuilds:
   protobufjs: false
 ```
 
-`/update` 与 `dsh-tui update` 会自动写入这份配置，无需手工处理。
+`/update` 与 `dsh-cli update` 会自动写入这份配置，无需手工处理。
 
 更新时还会维护 `ignoredOptionalDependencies`（忽略异平台的 `@img/sharp-*`
 原生包）：
@@ -256,7 +256,7 @@ allowBuilds:
 用户覆盖文件位于：
 
 ```text
-$DSH_HOME/profiles/dsh-tui/cordis.patch.yml
+$DSH_HOME/profiles/dsh-cli/cordis.patch.yml
 ```
 
 配置一个节点时，`config` 块是整段替换，不是逐字段深合并。复制示例时需要保留
@@ -313,11 +313,11 @@ pnpm dev
 文件 ACL。
 
 `pnpm dev` 使用独立的 `HOME`、`DSH_HOME` 和会话目录，不覆盖正式
-`~/.dsh/profiles/dsh-tui`、`~/.dsh-tui` 或正式会话。默认测试目录：
+`~/.dsh/profiles/dsh-cli`、`~/.dsh-cli` 或正式会话。默认测试目录：
 
-- Unix：`$XDG_CACHE_HOME/dsh-tui-dev`（未设置时为 `~/.cache/dsh-tui-dev`）。
-- Windows：`%LOCALAPPDATA%\dsh-tui-dev`。
-- 可通过 `DSH_TUI_DEV_ROOT` 覆盖。
+- Unix：`$XDG_CACHE_HOME/dsh-cli-dev`（未设置时为 `~/.cache/dsh-cli-dev`）。
+- Windows：`%LOCALAPPDATA%\dsh-cli-dev`。
+- 可通过 `DSH_CLI_DEV_ROOT` 覆盖。
 
 不启动 TUI、只验证构建、打包和安装流程时运行：
 
@@ -335,7 +335,7 @@ node --import tsx/esm scripts/repro-toolcards.tsx
 
 `pnpm tui` 调用的 `scripts/run.ts` 直接组合 DeepSeek Harness 源码 patch，默认
 假设包位于 Harness monorepo 的 `packages/*` 布局中；独立 checkout 需要另外
-设置 `DSH_TUI_DEV_WORKSPACE` 指向 Harness 根目录。只测试本仓库当前源码时，
+设置 `DSH_CLI_DEV_WORKSPACE` 指向 Harness 根目录。只测试本仓库当前源码时，
 优先使用上述 `pnpm dev`，它会走与用户安装一致的 profile 路径。
 
 ## 常见问题
@@ -357,18 +357,18 @@ Git URL（如 `https://github.com/askdkc/dsh-cli`）安装不受支持，报以�
 请安装 registry 包：
 
 ```sh
-dsh plugin --profile dsh-tui add dsh-cli
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
 ```
 
-### `dsh-tui requires an interactive terminal`
+### `dsh-cli requires an interactive terminal`
 
 stdout 不是 TTY。请直接在终端中启动，不要把主进程输出管道到文件或其他命令。
 
-如果 dsh-tui 只是装在某个 profile 里、而实际由 Web / Tauri / GUI 等非终端
-宿主启动 DSH，dsh-tui 会检测到 stdout 不是 TTY 且并非由 `dsh-tui` launcher
+如果 dsh-cli 只是装在某个 profile 里、而实际由 Web / Tauri / GUI 等非终端
+宿主启动 DSH，dsh-cli 会检测到 stdout 不是 TTY 且并非由 `dsh-cli` launcher
 启动，自动跳过 TUI 前端（不报错、不影响宿主启动）。
 
-只有显式执行 `dsh-tui`（含 standalone 便携版）却没有 TTY 时，才会报上面的
+只有显式执行 `dsh-cli`（含 standalone 便携版）却没有 TTY 时，才会报上面的
 错误。
 
 ### 找不到 `dsh` 或 `pnpm`
@@ -377,7 +377,7 @@ stdout 不是 TTY。请直接在终端中启动，不要把主进程输出管道
 `~/.local/bin`（Windows：`%LOCALAPPDATA%\dsh-cli\bin`），必要时自动将该目录
 加入 zsh、bash、fish 或 Windows 的用户 PATH。打开新终端后再运行 `dsh-cli`。
 注册失败不会阻止 TUI 启动；按启动警告修复。设置
-`DSH_TUI_AUTO_REGISTER_CLI=0` 可关闭注册。撤销时删除生成的命令与
+`DSH_CLI_AUTO_REGISTER_CLI=0` 可关闭注册。撤销时删除生成的命令与
 `dsh-cli managed PATH` 区块（Windows 删除用户 PATH 条目）。
 
 确认全局 npm bin 目录在 `PATH` 中，并重新打开终端。`install.sh` 会在安装前
@@ -391,7 +391,7 @@ loader 可解析的位置，模块解析失败导致整棵插件树被回收，T
 
 ```sh
 npm install -g pnpm@latest
-dsh plugin --profile dsh-tui add dsh-cli@latest
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli@latest
 ```
 
 ### 模型启动失败或提示没有凭证
@@ -407,5 +407,5 @@ dsh plugin --profile dsh-tui add dsh-cli@latest
 ### TUI 显示错位或终端退出后状态异常
 
 先运行 `/doctor`，记录终端类型和模式，再参考[交互文档](interaction.md)与
-[架构文档](architecture.md)。渲染问题可使用 `DSH_TUI_RENDER_LOG` 采集原始帧，
+[架构文档](architecture.md)。渲染问题可使用 `DSH_CLI_RENDER_LOG` 采集原始帧，
 但日志可能包含会话可见内容，应妥善处理。

@@ -15,7 +15,7 @@ export function resolveDevPaths(
     ? environment.LOCALAPPDATA.trim()
     : environment.XDG_CACHE_HOME?.trim() || pathApi.join(userHome, '.cache')
   const devRoot = pathApi.resolve(
-    environment.DSH_TUI_DEV_ROOT?.trim() || pathApi.join(defaultCacheRoot, 'dsh-tui-dev'),
+    environment.DSH_CLI_DEV_ROOT?.trim() || pathApi.join(defaultCacheRoot, 'dsh-cli-dev'),
   )
   const sourceHome = pathApi.resolve(environment.DSH_SOURCE_HOME?.trim() || pathApi.join(userHome, '.dsh'))
   return {

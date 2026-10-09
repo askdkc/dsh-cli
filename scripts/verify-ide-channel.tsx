@@ -13,10 +13,10 @@
  *      坐标越界钳制 / 过期选区跳过断言，外加 loopback 收到的真实快照端到端
  *      构造 <attached-file … selection> 块、isEmpty 清空后守卫不产块。
  *
- * lock fixture 一律 mkdtempSync 临时目录，绝不写真实 ~/.dsh-tui（隔离策略，
+ * lock fixture 一律 mkdtempSync 临时目录，绝不写真实 ~/.dsh-cli（隔离策略，
  * DESIGN §7）。运行：node --import tsx/esm scripts/verify-ide-channel.tsx
  */
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 import { createHash } from 'node:crypto'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -216,22 +216,22 @@ async function main(): Promise<void> {
   const tmpRoot = mkdtempSync(join(tmpdir(), 'verify-ide-channel-'))
 
   // ── 1. envDirect：env 直连解析 ────────────────────────────────────────────
-  const directFull = mod.envDirect({ DSH_TUI_IDE_PORT: '41234', DSH_TUI_IDE_TOKEN: 'tok' })
+  const directFull = mod.envDirect({ DSH_CLI_IDE_PORT: '41234', DSH_CLI_IDE_TOKEN: 'tok' })
   check('envDirect: 完整 env → {port:41234, token:"tok"}',
     directFull !== undefined && directFull.port === 41234 && directFull.token === 'tok')
   check('envDirect: 空 env → undefined', mod.envDirect({}) === undefined)
-  check('envDirect: 缺 token → undefined', mod.envDirect({ DSH_TUI_IDE_PORT: '41234' }) === undefined)
+  check('envDirect: 缺 token → undefined', mod.envDirect({ DSH_CLI_IDE_PORT: '41234' }) === undefined)
   check('envDirect: 非数字端口 → undefined',
-    mod.envDirect({ DSH_TUI_IDE_PORT: 'abc', DSH_TUI_IDE_TOKEN: 'tok' }) === undefined)
+    mod.envDirect({ DSH_CLI_IDE_PORT: 'abc', DSH_CLI_IDE_TOKEN: 'tok' }) === undefined)
   check('envDirect: 端口越界(0) → undefined',
-    mod.envDirect({ DSH_TUI_IDE_PORT: '0', DSH_TUI_IDE_TOKEN: 'tok' }) === undefined)
+    mod.envDirect({ DSH_CLI_IDE_PORT: '0', DSH_CLI_IDE_TOKEN: 'tok' }) === undefined)
   check('envDirect: 端口越界(70000) → undefined',
-    mod.envDirect({ DSH_TUI_IDE_PORT: '70000', DSH_TUI_IDE_TOKEN: 'tok' }) === undefined)
+    mod.envDirect({ DSH_CLI_IDE_PORT: '70000', DSH_CLI_IDE_TOKEN: 'tok' }) === undefined)
   check('envDirect: 小数端口 → undefined',
-    mod.envDirect({ DSH_TUI_IDE_PORT: '123.5', DSH_TUI_IDE_TOKEN: 'tok' }) === undefined)
+    mod.envDirect({ DSH_CLI_IDE_PORT: '123.5', DSH_CLI_IDE_TOKEN: 'tok' }) === undefined)
 
   // ── 2. ideLockDir ─────────────────────────────────────────────────────────
-  check('ideLockDir: 默认落在 DATA_DIR/ide', mod.ideLockDir().endsWith(join('.dsh-tui', 'ide')))
+  check('ideLockDir: 默认落在 DATA_DIR/ide', mod.ideLockDir().endsWith(join('.dsh-cli', 'ide')))
   check('ideLockDir: 可注入自定义 dataDir',
     mod.ideLockDir(join(tmpRoot, 'data')) === join(tmpRoot, 'data', 'ide'))
 
@@ -427,7 +427,7 @@ async function main(): Promise<void> {
     const seen: Snapshot[] = []
     channel.onSelection(snapshot => seen.push(snapshot))
     await channel.start(
-      { DSH_TUI_IDE_PORT: String(envFixture.port), DSH_TUI_IDE_TOKEN: 'tok-env' },
+      { DSH_CLI_IDE_PORT: String(envFixture.port), DSH_CLI_IDE_TOKEN: 'tok-env' },
       join(tmpRoot, 'unused-locks'),
       '/somewhere',
     )
@@ -471,7 +471,7 @@ async function main(): Promise<void> {
     }))
     const channel = new mod.IdeChannel()
     await channel.start(
-      { DSH_TUI_IDE_PORT: String(wrongTokenFixture.port), DSH_TUI_IDE_TOKEN: 'tok-wrong' },
+      { DSH_CLI_IDE_PORT: String(wrongTokenFixture.port), DSH_CLI_IDE_TOKEN: 'tok-wrong' },
       dir,
       '/repo/fallback',
     )

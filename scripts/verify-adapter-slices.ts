@@ -277,23 +277,23 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
 {
   assert.equal(parseAdapterRuntime({}).mode, 'legacy')
   for (const mode of ['legacy', 'new', 'passive-shadow', 'replay-shadow']) {
-    assert.equal(parseAdapterRuntime({ DSH_TUI_ADAPTER_MODE: ` ${mode.toUpperCase()} ` }).mode, mode)
+    assert.equal(parseAdapterRuntime({ DSH_CLI_ADAPTER_MODE: ` ${mode.toUpperCase()} ` }).mode, mode)
   }
   for (const mode of ['passive_shadow', 'replay', 'bogus', '', '   ']) {
-    assert.throws(() => parseAdapterRuntime({ DSH_TUI_ADAPTER_MODE: mode }),
-      /unknown DSH_TUI_ADAPTER_MODE/u, `invalid mode ${JSON.stringify(mode)} must fail closed`)
+    assert.throws(() => parseAdapterRuntime({ DSH_CLI_ADAPTER_MODE: mode }),
+      /unknown DSH_CLI_ADAPTER_MODE/u, `invalid mode ${JSON.stringify(mode)} must fail closed`)
   }
   assert.deepEqual(normalizeAdapterSliceList([' Presentation ']), ['presentation'])
   assert.deepEqual(normalizeAdapterSliceList(['dialogs']), ['presentation'])
   assert.deepEqual(normalizeAdapterSliceList(['decision-events']), ['decisions'])
   assert.throws(() => normalizeAdapterSliceList(['bogus']), /unknown adapter slice/)
   assert.throws(() => parseAdapterRuntime({
-    DSH_TUI_ADAPTER_MODE: 'new',
-    DSH_TUI_ADAPTER_SLICES: 'bogus',
+    DSH_CLI_ADAPTER_MODE: 'new',
+    DSH_CLI_ADAPTER_SLICES: 'bogus',
   } as never), /unknown adapter slice/)
   const parsed = parseAdapterRuntime({
-    DSH_TUI_ADAPTER_MODE: ' NEW ',
-    DSH_TUI_ADAPTER_SLICES: ' scenes, SETTINGS ',
+    DSH_CLI_ADAPTER_MODE: ' NEW ',
+    DSH_CLI_ADAPTER_SLICES: ' scenes, SETTINGS ',
   } as never)
   assert.equal(parsed.mode, 'new')
   assert.deepEqual(parsed.slices, ['scenes', 'settings'])
@@ -307,8 +307,8 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
     slices: ['presentation'],
   })
   const presentationDriverIds = presentationOnly.diagnosticSnapshot().drivers.map(driver => driver.id)
-  assert.ok(presentationDriverIds.includes('dsh-tui-presentation'))
-  assert.ok(!presentationDriverIds.includes('dsh-tui-toast'),
+  assert.ok(presentationDriverIds.includes('dsh-cli-presentation'))
+  assert.ok(!presentationDriverIds.includes('dsh-cli-toast'),
     'presentation slice must not implicitly load toast')
   checks += 1
 
@@ -320,7 +320,7 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
     slices: ['messages'],
   })
   const messagesDriverIds = messagesOnly.diagnosticSnapshot().drivers.map(driver => driver.id)
-  assert.ok(!messagesDriverIds.includes('dsh-tui-decisions'),
+  assert.ok(!messagesDriverIds.includes('dsh-cli-decisions'),
     'messages slice must not implicitly load decisions')
   checks += 1
 }
@@ -329,8 +329,8 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
 // real Cordis composition with the host seam services, then verify the
 // non-legacy Kernel mounts all P3 Ports through the production facade.
 {
-  const previousMode = process.env.DSH_TUI_ADAPTER_MODE
-  process.env.DSH_TUI_ADAPTER_MODE = 'new'
+  const previousMode = process.env.DSH_CLI_ADAPTER_MODE
+  process.env.DSH_CLI_ADAPTER_MODE = 'new'
   try {
     const integrationCtx = new Context()
     integrationCtx.logger.warn = () => undefined
@@ -359,8 +359,8 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
     assert.ok(productionFacade.decisions !== undefined, 'production TuiPluginHostRuntime must mount decisions Port')
     checks += 1
   } finally {
-    if (previousMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = previousMode
+    if (previousMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = previousMode
   }
 }
 
@@ -369,10 +369,10 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
 // decision registries or local fallback registries. A brand-new composition
 // still reads the current environment.
 {
-  const previousMode = process.env.DSH_TUI_ADAPTER_MODE
-  const previousSlices = process.env.DSH_TUI_ADAPTER_SLICES
-  process.env.DSH_TUI_ADAPTER_MODE = 'passive-shadow'
-  delete process.env.DSH_TUI_ADAPTER_SLICES
+  const previousMode = process.env.DSH_CLI_ADAPTER_MODE
+  const previousSlices = process.env.DSH_CLI_ADAPTER_SLICES
+  process.env.DSH_CLI_ADAPTER_MODE = 'passive-shadow'
+  delete process.env.DSH_CLI_ADAPTER_SLICES
   try {
     const passiveCtx = new Context()
     passiveCtx.logger.warn = () => undefined
@@ -381,7 +381,7 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
     const passiveDecision = decisionRegistryOf(passiveCtx)
     assert.equal(passiveDecision.runtime.mode, 'passive-shadow')
 
-    process.env.DSH_TUI_ADAPTER_MODE = 'new'
+    process.env.DSH_CLI_ADAPTER_MODE = 'new'
     assert.equal(adapterRuntimeFor(passiveCtx), passiveRuntime,
       'same composition root must return the same immutable snapshot after env flip')
     assert.equal(adapterRuntimeFor(passiveCtx).mode, 'passive-shadow')
@@ -402,10 +402,10 @@ assert.ok(facadeAfter.settings === undefined, 'dispose must remove mounted setti
     assert.notEqual(passiveLocal, newLocal)
     checks += 1
   } finally {
-    if (previousMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = previousMode
-    if (previousSlices === undefined) delete process.env.DSH_TUI_ADAPTER_SLICES
-    else process.env.DSH_TUI_ADAPTER_SLICES = previousSlices
+    if (previousMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = previousMode
+    if (previousSlices === undefined) delete process.env.DSH_CLI_ADAPTER_SLICES
+    else process.env.DSH_CLI_ADAPTER_SLICES = previousSlices
   }
 }
 

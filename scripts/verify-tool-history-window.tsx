@@ -5,7 +5,7 @@
 import './lib/fake-home.mjs'
 import '../src/force-production-react.js'
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 import assert from 'node:assert/strict'
 import { PassThrough, Writable } from 'node:stream'

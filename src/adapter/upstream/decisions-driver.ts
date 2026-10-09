@@ -135,14 +135,14 @@ function createDecisionsPort(ctx: unknown): HostDecisionsPort {
       }
     },
     subscribe() {
-      throw new Error('dsh-tui: host.decisions.subscribe is staged; plugin subscriptions must use the mediated DecisionEvents API')
+      throw new Error('dsh-cli: host.decisions.subscribe is staged; plugin subscriptions must use the mediated DecisionEvents API')
     },
   })
 }
 
 export const decisionsDriver: UpstreamDriver = {
-  id: 'dsh-tui-decisions',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-decisions',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.decisions',
   mountEffectClass: 'read-only',
   detect: detectDecisionsCapability,

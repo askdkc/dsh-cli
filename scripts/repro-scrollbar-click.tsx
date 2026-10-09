@@ -10,9 +10,9 @@
  */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'WezTerm'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
-import type { PageMarginSetting } from '../src/tuiDisplayPrefs.js'
+import type { PageMarginSetting } from '../src/cliDisplayPrefs.js'
 import type { ParsedMouse } from '../src/ink/parse-keypress.js'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { PageMargin }, { applyPageMargin }, { handleMouseEvent }, { default: instances }, { hitTest }, { nodeCache }] = await Promise.all([
@@ -23,7 +23,7 @@ const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, Alternat
   import('../src/screens/Chat.js'),
   import('../src/dsh-adapter/questions.js'),
   import('../src/components/PageMargin.js'),
-  import('../src/tuiDisplayPrefs.js'),
+  import('../src/cliDisplayPrefs.js'),
   import('../src/ink/components/App.js'),
   import('../src/ink/instances.js'),
   import('../src/ink/hit-test.js'),

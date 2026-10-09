@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Summarize a DSH_TUI_GEOMETRY_TRACE jsonl: per-frame cause + list window + scroll geometry. */
+/** Summarize a DSH_CLI_GEOMETRY_TRACE jsonl: per-frame cause + list window + scroll geometry. */
 import { readFileSync } from 'node:fs'
 const lines = readFileSync(process.argv[2] ?? 'trace.jsonl', 'utf8').trim().split('\n').map(l => JSON.parse(l))
 const limit = Number(process.argv[3] ?? Infinity)

@@ -131,7 +131,7 @@ ok('assertShadowPolicy rejects disallowed combinations', () => {
   assert.doesNotThrow(() => assertShadowPolicy('read-only', 'replay-shadow'))
 })
 
-ok('DSH_TUI_ADAPTER_SLICES cannot bypass shadow-mode effect denial', () => {
+ok('DSH_CLI_ADAPTER_SLICES cannot bypass shadow-mode effect denial', () => {
   // Shadow modes are global: even a slice outside the allowlist is denied.
   assert.throws(() => assertCapabilityShadowPolicy('host.storage.open', 'passive-shadow', ['messages']), /shadow policy denies/)
   // In the active slice -> the unified shadow policy is enforced.

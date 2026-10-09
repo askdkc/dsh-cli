@@ -19,13 +19,13 @@
  */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'WezTerm'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 const { mkdtempSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-process.env.HOME = mkdtempSync(joinPath(tmpdir(), 'dshtui-edge-'))
+process.env.HOME = mkdtempSync(joinPath(tmpdir(), 'dshcli-edge-'))
 process.env.USERPROFILE = process.env.HOME
 
 const [{ Terminal: XTerm }, React, { settle, sleep, viewportLines }] = await Promise.all([

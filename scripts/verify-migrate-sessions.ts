@@ -13,7 +13,7 @@ import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SqliteSessionPersistence, { Context as LegacyContext, SessionStore, Session as LegacySession } from '../vendor/sqlite-island/index.js'
 import { settled } from './lib/term-test.mjs'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-migrate-test-'))
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-migrate-test-'))
 const from = join(root, 'source.sqlite')
 const to = join(root, 'sessions')
 const run = (args: string[] = [], expectedExit = 0) => {

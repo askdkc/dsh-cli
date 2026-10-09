@@ -17,14 +17,14 @@
  * Run: node --import tsx/esm scripts/verify-composer-image-tokens.tsx
  */
 import { fileURLToPath } from 'node:url'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
+process.env.DSH_CLI_THEME = 'dark'
 // fileURLToPath (not URL.pathname) keeps the drive letter intact on Windows.
-const imageTokensHome = fileURLToPath(new URL('../node_modules/.cache/dsh-tui-composer-tokens-home', import.meta.url))
+const imageTokensHome = fileURLToPath(new URL('../node_modules/.cache/dsh-cli-composer-tokens-home', import.meta.url))
 process.env.HOME = imageTokensHome
 process.env.USERPROFILE = imageTokensHome
-process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
 
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { PassThrough, Writable } from 'node:stream'

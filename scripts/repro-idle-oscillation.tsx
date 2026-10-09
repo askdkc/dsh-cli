@@ -6,7 +6,7 @@
  *   1) 风暴期间每帧 trace 的 renderScrollTop 恒定（几何不震荡）；
  *   2) 终端画面逐字节稳定（无 ±1 行视口滚动）；
  *   3) PromptInput 内容行数恒定。
- * 同时产出 DSH_TUI_GEOMETRY_TRACE 逐帧 JSONL，供真机复现 #433 时同一口径
+ * 同时产出 DSH_CLI_GEOMETRY_TRACE 逐帧 JSONL，供真机复现 #433 时同一口径
  * 对比（cause 字段定位 30ms 驱动源）。
  * 运行：node --import tsx/esm scripts/repro-idle-oscillation.tsx
  */
@@ -16,10 +16,10 @@ import { join } from 'node:path'
 
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'kitty'
-process.env.DSH_TUI_THEME = 'dark'
+process.env.DSH_CLI_THEME = 'dark'
 const TRACE_PATH = join(tmpdir(), 'dsh-geometry-trace.jsonl')
 rmSync(TRACE_PATH, { force: true })
-process.env.DSH_TUI_GEOMETRY_TRACE = TRACE_PATH
+process.env.DSH_CLI_GEOMETRY_TRACE = TRACE_PATH
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { default: instances }, { sleep }] = await Promise.all([
   import('node:stream'),

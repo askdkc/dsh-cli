@@ -21,11 +21,11 @@ import { logForDebugging } from '../../utils/debug.js'
 
 /**
  * Theme provider with terminal-background auto-detection. With no explicit
- * `theme` prop, no DSH_TUI_THEME override and no persisted choice
- * (~/.dsh-tui/theme.json), it queries the terminal's background color
+ * `theme` prop, no DSH_CLI_THEME override and no persisted choice
+ * (~/.dsh-cli/theme.json), it queries the terminal's background color
  * (OSC 11) before first paint and picks the Gentle Mist Blue `light` palette
  * on light backgrounds, `dark` otherwise. Priority: explicit `theme` prop >
- * DSH_TUI_THEME (built-in, static, or runtime plugin name) > persisted `/theme`
+ * DSH_CLI_THEME (built-in, static, or runtime plugin name) > persisted `/theme`
  * choice > OSC 11 detection. An invalid forced name is warned and skipped, so
  * detection still runs. Children render only after the theme settles, so
  * the first frame already carries the final palette — no dark→light flash.
@@ -34,7 +34,7 @@ import { logForDebugging } from '../../utils/debug.js'
  * setActiveThemeName() for non-React rendering (markdown inline code).
  *
  * The `auto` pseudo-theme turns that one-shot startup detection into a
- * standing choice: `auto` is valid everywhere a theme name is (DSH_TUI_THEME,
+ * standing choice: `auto` is valid everywhere a theme name is (DSH_CLI_THEME,
  * theme.json, /theme), defers first paint until detection settles like the
  * unforced path, and re-queries OSC 11 on every runtime switch to `auto` —
  * the detected base (light/dark) is mirrored via setAutoThemeBase() so
@@ -43,12 +43,12 @@ import { logForDebugging } from '../../utils/debug.js'
  * system light/dark mode.
  *
  * The context also exposes setTheme() for the runtime `/theme` picker: it
- * validates static or plugin names, persists the choice to ~/.dsh-tui/theme.json
+ * validates static or plugin names, persists the choice to ~/.dsh-cli/theme.json
  * and hot swaps the palette (and the module-level mirror) immediately. A
  * disappearing plugin theme falls back safely without erasing the request.
  */
 
-// Static user themes (~/.dsh-tui/themes/<name>.json) resolve through this
+// Static user themes (~/.dsh-cli/themes/<name>.json) resolve through this
 // registry; the optional runtime host resolver is installed by the Cordis
 // service. Together they serve every themed component and non-React rendering.
 registerCustomThemeResolver(resolveCustomTheme)
@@ -63,7 +63,7 @@ type ThemeContextValue = {
    */
   autoBase: 'light' | 'dark'
   /**
-   * Switch themes at runtime. Persists to ~/.dsh-tui/theme.json and hot
+   * Switch themes at runtime. Persists to ~/.dsh-cli/theme.json and hot
    * swaps the palette; false when the name is unknown or cannot persist.
    */
   setTheme: (name: string) => boolean
@@ -76,13 +76,13 @@ const ThemeContext = createContext<ThemeContextValue>({
 })
 
 /**
- * DSH_TUI_THEME skips terminal detection (tests, debugging). Accepts a
+ * DSH_CLI_THEME skips terminal detection (tests, debugging). Accepts a
  * built-in, static JSON, or runtime plugin theme name; invalid
  * values are warned and ignored by the caller, falling back to detection.
  * Exported for /reload, which must respect the env override's precedence.
  */
 export function envThemeOverride(): string | undefined {
-  const v = process.env.DSH_TUI_THEME
+  const v = process.env.DSH_CLI_THEME
   return v === undefined || v === '' ? undefined : v
 }
 
@@ -118,7 +118,7 @@ export function ThemeProvider({
     if (forced === undefined) return false
     if (isThemeAvailable(forced)) return true
     console.warn(
-      `[dsh-tui] theme "${forced}" not found (built-ins: auto, light, dark, dark-ansi; static ~/.dsh-tui/themes/*.json; runtime plugin themes); falling back to auto-detection`,
+      `[dsh-cli] theme "${forced}" not found (built-ins: auto, light, dark, dark-ansi; static ~/.dsh-cli/themes/*.json; runtime plugin themes); falling back to auto-detection`,
     )
     return false
   })
@@ -236,11 +236,11 @@ export function ThemeProvider({
   const setTheme = React.useCallback(
     (name: string): boolean => {
       if (!isThemeAvailable(name)) {
-        console.warn(`[dsh-tui] theme "${name}" not found`)
+        console.warn(`[dsh-cli] theme "${name}" not found`)
         return false
       }
       if (!writeThemePref(name)) {
-        console.warn('[dsh-tui] failed to write ~/.dsh-tui/theme.json')
+        console.warn('[dsh-cli] failed to write ~/.dsh-cli/theme.json')
         return false
       }
       requestedThemeRef.current = name

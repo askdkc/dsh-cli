@@ -1,4 +1,4 @@
-/** Build the current dsh-TUI Host Descriptor from live Kernel lifecycle evidence. */
+/** Build the current dsh-CLI Host Descriptor from live Kernel lifecycle evidence. */
 
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -382,7 +382,7 @@ export function buildHostDescriptor(options: HostDescriptorOptions): HostDescrip
 
   const descriptor: HostDescriptor = {
     $schema: 'urn:dsh-tui:host-descriptor:0.15',
-    hostId: options.hostId ?? 'dsh-tui',
+    hostId: options.hostId ?? 'dsh-cli',
     hostVersion: options.hostVersion ?? readOwnPackageVersion(),
     facetApiVersions: [...facetApiVersions],
     contracts,

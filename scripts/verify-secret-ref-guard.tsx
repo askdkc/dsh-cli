@@ -49,7 +49,7 @@ async function activate(root: CordisContext, dependencies: readonly string[]): P
 // ── 纯函数：保留名单边界 ───────────────────────────────────────────────
 assert.equal(isReservedCredentialRef('DEEPSEEK_API_KEY'), true, 'the main API key ref is reserved')
 assert.equal(isReservedCredentialRef('DEEPSEEK_BASE_URL'), true, 'DEEPSEEK_ prefix is reserved')
-assert.equal(isReservedCredentialRef('DSH_TUI_LANG'), true, 'DSH_ prefix is reserved')
+assert.equal(isReservedCredentialRef('DSH_CLI_LANG'), true, 'DSH_ prefix is reserved')
 assert.equal(isReservedCredentialRef('my-plugin/key'), false, 'plugin-namespace refs are free')
 assert.equal(isReservedCredentialRef('OPENAI_API_KEY'), false, 'only DEEPSEEK_/DSH_ namespaces are reserved')
 assert.equal(isReservedCredentialRef(''), false)
@@ -113,14 +113,14 @@ assert.equal(
 // (c) 宿主身份（无 owner 的 host 对象）→ 保留 ref 放行。
 const localHost = getLocalSettingsSectionsHost()
 const unregisterHost = localHost.register({
-  ns: 'dsh-tui',
-  title: 'dsh-tui',
+  ns: 'dsh-cli',
+  title: 'dsh-cli',
   fields: [
     { path: ['apiKey'], label: 'API key', kind: 'text', secret: { ref: 'DEEPSEEK_API_KEY' } },
   ],
 })
 assert.equal(
-  localHost.list().some(section => section.ns === 'dsh-tui'
+  localHost.list().some(section => section.ns === 'dsh-cli'
     && section.fields.some(field => field.secret?.ref === 'DEEPSEEK_API_KEY')),
   true,
   '(c) host-identity registration may keep reserved refs',

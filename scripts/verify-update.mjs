@@ -2,7 +2,7 @@
  * Pure-function verification for the /update machinery (real compiled lib,
  * no network, no child processes):
  *
- * - installedTuiVersion() finds the version in both the compiled-package
+ * - installedCliVersion() finds the version in both the compiled-package
  *   layout and the source-checkout layout, and prefers a matching manifest
  *   over a foreign one at the nearer level
  * - resolveRegistryBase() honors NPM_CONFIG_REGISTRY (both spellings), the
@@ -11,14 +11,14 @@
  * - update command args pin the preflight target version, with --latest as the
  *   fallback when preflight could not resolve one
  * - isBootDeadlockTarget() flags exactly the 0.7.0–0.7.1 hard-inject range
- * - DSH_TUI_UPDATED_FROM is stamped from the pre-update version: the stamp
+ * - DSH_CLI_UPDATED_FROM is stamped from the pre-update version: the stamp
  *   read happens before the first installer child runs and the restart env
  *   reuses that captured value (issue #307's new-vs-new false alarm)
  * - isEexistTmpRenameFailure() classifies the deterministic Linux rename
  *   collision (issue #479) — recovery territory, never a plain retry — and
  *   removeStalePackageInstall() clears the stale package dir plus leftover
  *   `_tmp_` staging dirs without traversing a junction/symlink
- * - the /update restart tail reuses the hardened restartTui handoff
+ * - the /update restart tail reuses the hardened restartCli handoff
  *   (issues #284/#307/#483) with kind: 'update'
  *
  * Run: node scripts/verify-update.mjs
@@ -35,13 +35,13 @@ function check(name, ok, extra = '') {
 }
 
 const {
-  installedTuiVersion,
+  installedCliVersion,
   resolveRegistryBase,
   isVersionNewer,
   isBootDeadlockTarget,
   resolveDshProfileName,
   shellQuote,
-  tuiUpdatePluginArgs,
+  cliUpdatePluginArgs,
   isTransientUpdateFailure,
   isEexistTmpRenameFailure,
   profilePackageDir,
@@ -75,10 +75,10 @@ function copyUpdateModule(dstDir) {
   cpSync(compiledPathsPath, join(dstDir, 'utils', 'paths.js'))
 }
 
-// ---- installedTuiVersion: compiled layout is this module's own real layout
-const compiled = installedTuiVersion()
+// ---- installedCliVersion: compiled layout is this module's own real layout
+const compiled = installedCliVersion()
 check(
-  'installedTuiVersion returns this package version',
+  'installedCliVersion returns this package version',
   compiled !== undefined && /^\d+\.\d+\.\d+/.test(compiled),
   `got ${compiled}`,
 )
@@ -95,9 +95,9 @@ try {
   writeFileSync(join(sourceRoot, 'package.json'), JSON.stringify({ name: '@askdkc/dsh-cli', version: '1.2.3', type: 'module' }))
   const sourceMod = await import(`${pathToFileURL(join(sourceRoot, 'src', 'update.js'))}?probe=1`)
   check(
-    'installedTuiVersion reads the source-checkout layout',
-    sourceMod.installedTuiVersion() === '1.2.3',
-    `got ${sourceMod.installedTuiVersion()}`,
+    'installedCliVersion reads the source-checkout layout',
+    sourceMod.installedCliVersion() === '1.2.3',
+    `got ${sourceMod.installedCliVersion()}`,
   )
 
   // Compiled layout with a foreign manifest at the near level: the root
@@ -108,9 +108,9 @@ try {
   writeFileSync(join(pkgRoot, 'lib', 'package.json'), JSON.stringify({ name: 'other-pkg', version: '9.9.9' }))
   const pkgMod = await import(`${pathToFileURL(join(pkgRoot, 'lib', 'types', 'update.js'))}?probe=2`)
   check(
-    'installedTuiVersion prefers the matching root manifest over a foreign near one',
-    pkgMod.installedTuiVersion() === '0.9.9',
-    `got ${pkgMod.installedTuiVersion()}`,
+    'installedCliVersion prefers the matching root manifest over a foreign near one',
+    pkgMod.installedCliVersion() === '0.9.9',
+    `got ${pkgMod.installedCliVersion()}`,
   )
 
   // A foreign name at BOTH levels must yield undefined, never a version.
@@ -120,9 +120,9 @@ try {
   writeFileSync(join(foreignRoot, 'lib', 'package.json'), JSON.stringify({ name: 'third-pkg', version: '8.8.8' }))
   const foreignMod = await import(`${pathToFileURL(join(foreignRoot, 'lib', 'types', 'update.js'))}?probe=3`)
   check(
-    'installedTuiVersion rejects foreign manifests entirely',
-    foreignMod.installedTuiVersion() === undefined,
-    `got ${foreignMod.installedTuiVersion()}`,
+    'installedCliVersion rejects foreign manifests entirely',
+    foreignMod.installedCliVersion() === undefined,
+    `got ${foreignMod.installedCliVersion()}`,
   )
 } finally {
   rmSync(scratch, { recursive: true, force: true })
@@ -208,13 +208,13 @@ check(
 )
 check(
   'profile: inner app args do not shadow the launcher flag',
-  resolveDshProfileName(['node', 'dsh', '--profile', 'dsh-tui', '--resume', 'sid', '--model', 'x']) === 'dsh-tui',
+  resolveDshProfileName(['node', 'dsh', '--profile', 'dsh-cli', '--resume', 'sid', '--model', 'x']) === 'dsh-cli',
 )
 
 // ---- shellQuote: cmd.exe safety for the .cmd path (P1 companion)
 check(
   'shellQuote: plain tokens pass through',
-  shellQuote(['plugin', '--profile', 'dsh-tui']).join(' ') === 'plugin --profile dsh-tui',
+  shellQuote(['plugin', '--profile', 'dsh-cli']).join(' ') === 'plugin --profile dsh-cli',
 )
 check(
   'shellQuote: spaces get quoted',
@@ -226,15 +226,15 @@ check(
 )
 
 // ---- pnpm args reuse the preflight result instead of resolving latest twice
-const exactUpdateArgs = tuiUpdatePluginArgs('dsh-tui', '0.7.2')
+const exactUpdateArgs = cliUpdatePluginArgs('dsh-cli', '0.7.2')
 check(
   'update command pins the preflight target version',
   JSON.stringify(exactUpdateArgs) === JSON.stringify([
-    'plugin', '--profile', 'dsh-tui', 'update', '@askdkc/dsh-cli@0.7.2',
+    'plugin', '--profile', 'dsh-cli', 'update', '@askdkc/dsh-cli@0.7.2',
   ]),
   `got ${JSON.stringify(exactUpdateArgs)}`,
 )
-const fallbackUpdateArgs = tuiUpdatePluginArgs('custom-profile')
+const fallbackUpdateArgs = cliUpdatePluginArgs('custom-profile')
 check(
   'update command falls back to --latest when preflight failed',
   JSON.stringify(fallbackUpdateArgs) === JSON.stringify([
@@ -421,8 +421,8 @@ check('deadlock: invalid input is never a deadlock target', !isBootDeadlockTarge
 const compiledSource = readFileSync(compiledModulePath, 'utf8')
 // P1: the node restart must NOT go through a shell — assert the compiled
 // restart spawn call has no shell option while the dsh call does. The
-// restart spawn now lives inside restartTui() (shared by /restart and the
-// /update restart tail); the dsh calls live in updateTuiAndRestart().
+// restart spawn now lives inside restartCli() (shared by /restart and the
+// /update restart tail); the dsh calls live in updateCliAndRestart().
 const dshSpawn = compiledSource.indexOf('runProcess(dsh')
 const nodeSpawn = compiledSource.indexOf('spawn(process.execPath')
 const dshSegment = compiledSource.slice(dshSpawn, nodeSpawn)
@@ -436,10 +436,10 @@ check(
   !/shell/.test(nodeSegment.replace(/shellQuote/g, '')),
 )
 
-// ---- DSH_TUI_UPDATED_FROM stamping (issue #307): the pre-update version is
+// ---- DSH_CLI_UPDATED_FROM stamping (issue #307): the pre-update version is
 // captured before the installer child runs and reused in the restart env —
 // a post-update read already sees the replaced manifest (new-vs-new).
-const stampRead = compiledSource.indexOf('const updatedFrom = installedTuiVersion()')
+const stampRead = compiledSource.indexOf('const updatedFrom = installedCliVersion()')
 check(
   'stamp: pre-update version is captured before the installer runs',
   stampRead !== -1 && stampRead < dshSpawn,
@@ -452,7 +452,7 @@ check(
 // The --latest fallback (preflight failed) can also land on the deadlock
 // range on a stale mirror: the post-install guard must refuse a restart
 // into a version that JUST moved into 0.7.0–0.7.1. Three occurrences = the
-// export + the post-install guard in updateTui + the CLI preflight refusal
+// export + the post-install guard in updateCli + the CLI preflight refusal
 // in cliUpdate — a plain count would pass with the guard deleted, so pin
 // the guard's own call shape too.
 check(
@@ -468,7 +468,7 @@ const compiledPluginPath = join(repoRoot, 'lib', 'types', 'dsh-adapter', 'plugin
 const compiledPluginSource = readFileSync(compiledPluginPath, 'utf8')
 check(
   'launcher bridge: runtime reads the launcher version marker',
-  compiledPluginSource.includes('DSH_TUI_LAUNCHER_VERSION'),
+  compiledPluginSource.includes('DSH_CLI_LAUNCHER_VERSION'),
 )
 check(
   'launcher bridge: old-launcher update path keeps a generic alignment hint',
@@ -483,12 +483,12 @@ check(
 check(
   'transient: pnpm tmp-rename ENOENT qualifies',
   isTransientUpdateFailure(
-    "[ERR_PNPM_ENOENT] [importPackage D:\\p\\node_modules\\dsh-tui] ENOENT: no such file or directory, scandir 'D:\\p\\node_modules\\dsh-tui_tmp_40044_1\\node_modules'",
+    "[ERR_PNPM_ENOENT] [importPackage D:\\p\\node_modules\\dsh-cli] ENOENT: no such file or directory, scandir 'D:\\p\\node_modules\\dsh-cli_tmp_40044_1\\node_modules'",
   ),
 )
 check(
   'transient: EPERM rename on a tmp staging dir qualifies',
-  isTransientUpdateFailure('EPERM: operation not permitted, rename D:\\p\\dsh-tui_tmp_123_4'),
+  isTransientUpdateFailure('EPERM: operation not permitted, rename D:\\p\\dsh-cli_tmp_123_4'),
 )
 check(
   'transient: plain resolution ENOENT without tmp token does not qualify',
@@ -506,8 +506,8 @@ check(
 // ---- isEexistTmpRenameFailure: the deterministic Linux flavor (issue #479)
 const eexistSample =
   "ERR_PNPM_EEXIST  EEXIST: file already exists, rename " +
-  "'/root/.dsh/profiles/dsh-tui/node_modules/@askdkc/dsh-cli/node_modules' " +
-  "-> '/root/.dsh/profiles/dsh-tui/node_modules/@askdkc/dsh-cli_tmp_2424672_1/node_modules'"
+  "'/root/.dsh/profiles/dsh-cli/node_modules/@askdkc/dsh-cli/node_modules' " +
+  "-> '/root/.dsh/profiles/dsh-cli/node_modules/@askdkc/dsh-cli_tmp_2424672_1/node_modules'"
 check(
   'eexist: pnpm tmp-rename EEXIST qualifies (#479 verbatim stderr)',
   isEexistTmpRenameFailure(eexistSample),
@@ -518,7 +518,7 @@ check(
 )
 check(
   'eexist: transient ENOENT is not the EEXIST flavor',
-  !isEexistTmpRenameFailure("[ERR_PNPM_ENOENT] [importPackage] ENOENT: scandir 'D:\\p\\dsh-tui_tmp_40044_1\\node_modules'"),
+  !isEexistTmpRenameFailure("[ERR_PNPM_ENOENT] [importPackage] ENOENT: scandir 'D:\\p\\dsh-cli_tmp_40044_1\\node_modules'"),
 )
 check(
   'transient: EEXIST is NOT plain-retry transient (needs stale-install recovery, #479)',
@@ -533,8 +533,8 @@ try {
   process.env.DSH_HOME = sandboxRoot
   check(
     'profilePackageDir: DSH_HOME root wins',
-    profilePackageDir('dsh-tui') === join(sandboxRoot, 'profiles', 'dsh-tui', 'node_modules', '@askdkc', 'dsh-cli'),
-    `got ${profilePackageDir('dsh-tui')}`,
+    profilePackageDir('dsh-cli') === join(sandboxRoot, 'profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli'),
+    `got ${profilePackageDir('dsh-cli')}`,
   )
   delete process.env.DSH_HOME
   check(
@@ -545,7 +545,7 @@ try {
   process.env.DSH_HOME = sandboxRoot
 
   // ---- removeStalePackageInstall: clears the package dir + tmp staging dirs
-  const scope = join(sandboxRoot, 'profiles', 'dsh-tui', 'node_modules', '@askdkc')
+  const scope = join(sandboxRoot, 'profiles', 'dsh-cli', 'node_modules', '@askdkc')
   const pkgDir = join(scope, 'dsh-cli')
   mkdirSync(join(pkgDir, 'lib'), { recursive: true })
   writeFileSync(join(pkgDir, 'lib', 'marker.txt'), 'stale install')
@@ -554,7 +554,7 @@ try {
   // Look-alike dirs must survive: other packages and foreign tmp names.
   mkdirSync(join(scope, 'unrelated-pkg'))
   mkdirSync(join(scope, 'other_tmp_999_1'))
-  const removal = removeStalePackageInstall('dsh-tui')
+  const removal = removeStalePackageInstall('dsh-cli')
   check(
     'stale: package dir removed',
     !existsSync(pkgDir),
@@ -579,7 +579,7 @@ try {
   mkdirSync(join(precious, 'src'), { recursive: true })
   writeFileSync(join(precious, 'src', 'keep.txt'), 'do not delete')
   symlinkSync(precious, pkgDir, process.platform === 'win32' ? 'junction' : 'dir')
-  const linkRemoval = removeStalePackageInstall('dsh-tui')
+  const linkRemoval = removeStalePackageInstall('dsh-cli')
   check(
     'stale: link at the package dir is unlinked',
     !existsSync(pkgDir),
@@ -605,11 +605,11 @@ try {
 }
 
 // ---- recovery wiring (issue #479): the EEXIST signature and the stale
-// install removal must be reachable from the shared install half (updateTui,
-// which updateTuiAndRestart delegates to), and the /update restart tail must
-// ride the hardened restartTui handoff (#483).
-const updateFnStart = compiledSource.indexOf('export async function updateTui')
-const restartFnStart = compiledSource.indexOf('export async function restartTui')
+// install removal must be reachable from the shared install half (updateCli,
+// which updateCliAndRestart delegates to), and the /update restart tail must
+// ride the hardened restartCli handoff (#483).
+const updateFnStart = compiledSource.indexOf('export async function updateCli')
+const restartFnStart = compiledSource.indexOf('export async function restartCli')
 const updateSegment = compiledSource.slice(updateFnStart, restartFnStart)
 check(
   'recovery: EEXIST failure routes to the stale-install removal (#479)',
@@ -620,32 +620,32 @@ check(
   updateSegment.includes('isTransientUpdateFailure(updateStderr)'),
 )
 check(
-  'update restart: reuses the hardened restartTui handoff with kind update (#483)',
-  updateSegment.includes("kind: 'update'") && updateSegment.includes('restartTui(sessionId, {'),
+  'update restart: reuses the hardened restartCli handoff with kind update (#483)',
+  updateSegment.includes("kind: 'update'") && updateSegment.includes('restartCli(sessionId, {'),
 )
 check(
-  'restartTui: update kind skips the /restart boot-diagnosis marker',
+  'restartCli: update kind skips the /restart boot-diagnosis marker',
   /kind === 'restart' \? \{ \[RESTART_CHILD_ENV\]: '1' \} : \{\}/.test(compiledSource),
 )
 
 // ---- CLI update（issue #509）：安装半程与 /update 共用同一实现 ----------------
-// updateTui 是 updateTuiAndRestart 的安装半程，cliUpdate 是 bin 启动器
-// 动态 import 的无头入口——两者必须存在于编译产物，且 updateTuiAndRestart
-// 委托 updateTui 而不是保留一份拷贝（DRY 契约：装机逻辑只有一份）。
+// updateCli 是 updateCliAndRestart 的安装半程，cliUpdate 是 bin 启动器
+// 动态 import 的无头入口——两者必须存在于编译产物，且 updateCliAndRestart
+// 委托 updateCli 而不是保留一份拷贝（DRY 契约：装机逻辑只有一份）。
 {
   const mod = await import('../lib/types/update.js')
-  check('cli: updateTui is exported from the compiled lib', typeof mod.updateTui === 'function')
+  check('cli: updateCli is exported from the compiled lib', typeof mod.updateCli === 'function')
   check('cli: cliUpdate is exported from the compiled lib', typeof mod.cliUpdate === 'function')
   check(
-    'cli: updateTuiAndRestart delegates to updateTui (single install path)',
-    /updateTuiAndRestart[\s\S]{0,400}await updateTui\(/.test(compiledSource),
+    'cli: updateCliAndRestart delegates to updateCli (single install path)',
+    /updateCliAndRestart[\s\S]{0,400}await updateCli\(/.test(compiledSource),
   )
 }
 
 // ---- cli: 真实 cliUpdate 的「版本未前进」路径（预检失败 + --latest no-op）------
 // 拷贝的编译模块 + 版本固定的 manifest：registry 指向必然拒绝连接的地址
 // （预检 → unknown → --latest 兜底），stub dsh 什么都不装、返回 0。安装前后
-// installedTuiVersion 相同——必须如实打印 version did not advance，绝不打印
+// installedCliVersion 相同——必须如实打印 version did not advance，绝不打印
 // 虚假的 updated X → X。真实模块、真实子进程，只有网络与 dsh 是假的。
 {
   const scratch3 = mkdtempSync(join(tmpdir(), 'verify-update-cli-'))
@@ -663,7 +663,7 @@ check(
     // not run sh scripts — provide a .cmd stub that exits 0 as well.
     writeFileSync(join(stubDir, 'dsh.cmd'), '@exit /b 0\r\n')
     // Isolate the profile workspace: ensureProfileAllowBuilds inside
-    // updateTui must touch this scratch home, never the real ~/.dsh.
+    // updateCli must touch this scratch home, never the real ~/.dsh.
     const DSH_HOME_BACKUP = process.env.DSH_HOME
     process.env.DSH_HOME = join(scratch3, 'home')
     process.env.NPM_CONFIG_REGISTRY = 'http://127.0.0.1:1'
@@ -678,7 +678,7 @@ check(
     process.stdout.write = chunk => { captured += String(chunk); return true }
     let code
     try {
-      code = await cliMod.cliUpdate('dsh-tui')
+      code = await cliMod.cliUpdate('dsh-cli')
     } finally {
       process.stdout.write = origWrite
     }
@@ -700,39 +700,39 @@ check(
 // ---- standalone: 便携包环境检测与资产名称解析 --------------------------------
 {
   const origEnv = {
-    standalone: process.env.DSH_TUI_STANDALONE,
-    binary: process.env.DSH_TUI_STANDALONE_BINARY,
+    standalone: process.env.DSH_CLI_STANDALONE,
+    binary: process.env.DSH_CLI_STANDALONE_BINARY,
     dshHome: process.env.DSH_HOME,
   }
   try {
-    delete process.env.DSH_TUI_STANDALONE
-    delete process.env.DSH_TUI_STANDALONE_BINARY
+    delete process.env.DSH_CLI_STANDALONE
+    delete process.env.DSH_CLI_STANDALONE_BINARY
     process.env.DSH_HOME = '/home/user/.dsh'
     check('standalone: 默认非便携模式', isStandaloneRuntime() === false)
 
-    process.env.DSH_TUI_STANDALONE = '1'
-    check('standalone: DSH_TUI_STANDALONE=1 识别为便携模式', isStandaloneRuntime() === true)
+    process.env.DSH_CLI_STANDALONE = '1'
+    check('standalone: DSH_CLI_STANDALONE=1 识别为便携模式', isStandaloneRuntime() === true)
 
-    delete process.env.DSH_TUI_STANDALONE
-    process.env.DSH_TUI_STANDALONE_BINARY = '/tmp/dsh-tui'
-    check('standalone: DSH_TUI_STANDALONE_BINARY 识别为便携模式', isStandaloneRuntime() === true)
-    check('standalone: getStandaloneBinaryPath 返回指定路径', getStandaloneBinaryPath() === '/tmp/dsh-tui')
+    delete process.env.DSH_CLI_STANDALONE
+    process.env.DSH_CLI_STANDALONE_BINARY = '/tmp/dsh-cli'
+    check('standalone: DSH_CLI_STANDALONE_BINARY 识别为便携模式', isStandaloneRuntime() === true)
+    check('standalone: getStandaloneBinaryPath 返回指定路径', getStandaloneBinaryPath() === '/tmp/dsh-cli')
 
-    delete process.env.DSH_TUI_STANDALONE_BINARY
-    process.env.DSH_HOME = '/home/user/.dsh-tui-standalone'
-    check('standalone: DSH_HOME 包含 dsh-tui-standalone 识别为便携模式', isStandaloneRuntime() === true)
+    delete process.env.DSH_CLI_STANDALONE_BINARY
+    process.env.DSH_HOME = '/home/user/.dsh-cli-standalone'
+    check('standalone: DSH_HOME 包含 dsh-cli-standalone 识别为便携模式', isStandaloneRuntime() === true)
 
     // 资产名称匹配
-    check('standalone: Windows 资产名匹配', getStandaloneAssetName('win32', 'x64') === 'dsh-tui-standalone-win-x64.zip')
-    check('standalone: macOS arm64 资产名匹配', getStandaloneAssetName('darwin', 'arm64') === 'dsh-tui-standalone-darwin-arm64.tar.gz')
-    check('standalone: macOS x64 资产名匹配', getStandaloneAssetName('darwin', 'x64') === 'dsh-tui-standalone-darwin-x64.tar.gz')
-    check('standalone: Linux x64 资产名匹配', getStandaloneAssetName('linux', 'x64') === 'dsh-tui-standalone-linux-x64.tar.gz')
-    check('standalone: Linux arm64 资产名匹配', getStandaloneAssetName('linux', 'arm64') === 'dsh-tui-standalone-linux-arm64.tar.gz')
+    check('standalone: Windows 资产名匹配', getStandaloneAssetName('win32', 'x64') === 'dsh-cli-standalone-win-x64.zip')
+    check('standalone: macOS arm64 资产名匹配', getStandaloneAssetName('darwin', 'arm64') === 'dsh-cli-standalone-darwin-arm64.tar.gz')
+    check('standalone: macOS x64 资产名匹配', getStandaloneAssetName('darwin', 'x64') === 'dsh-cli-standalone-darwin-x64.tar.gz')
+    check('standalone: Linux x64 资产名匹配', getStandaloneAssetName('linux', 'x64') === 'dsh-cli-standalone-linux-x64.tar.gz')
+    check('standalone: Linux arm64 资产名匹配', getStandaloneAssetName('linux', 'arm64') === 'dsh-cli-standalone-linux-arm64.tar.gz')
   } finally {
-    if (origEnv.standalone === undefined) delete process.env.DSH_TUI_STANDALONE
-    else process.env.DSH_TUI_STANDALONE = origEnv.standalone
-    if (origEnv.binary === undefined) delete process.env.DSH_TUI_STANDALONE_BINARY
-    else process.env.DSH_TUI_STANDALONE_BINARY = origEnv.binary
+    if (origEnv.standalone === undefined) delete process.env.DSH_CLI_STANDALONE
+    else process.env.DSH_CLI_STANDALONE = origEnv.standalone
+    if (origEnv.binary === undefined) delete process.env.DSH_CLI_STANDALONE_BINARY
+    else process.env.DSH_CLI_STANDALONE_BINARY = origEnv.binary
     if (origEnv.dshHome === undefined) delete process.env.DSH_HOME
     else process.env.DSH_HOME = origEnv.dshHome
   }
@@ -794,31 +794,31 @@ check(
   const prevDshHome = process.env.DSH_HOME
   try {
     process.env.DSH_HOME = join(sharpScratch, 'dsh-home')
-    const profDir = join(process.env.DSH_HOME, 'profiles', 'dsh-tui')
+    const profDir = join(process.env.DSH_HOME, 'profiles', 'dsh-cli')
     mkdirSync(profDir, { recursive: true })
     const wsPath = join(profDir, 'pnpm-workspace.yaml')
     writeFileSync(wsPath, 'packages:\n  - .\nnodeLinker: hoisted\n')
-    const first = ensureProfileSharpPlatformFilter('dsh-tui')
-    const yamlText = readFileSync(profileWorkspaceYamlPath('dsh-tui'), 'utf8')
+    const first = ensureProfileSharpPlatformFilter('dsh-cli')
+    const yamlText = readFileSync(profileWorkspaceYamlPath('dsh-cli'), 'utf8')
     check('workspace 预种: 块落盘且带模式行', first !== undefined && first.changed && yamlText.includes('ignoredOptionalDependencies:') && yamlText.includes(`- '${hostIgnore[0]}'`), `host=${process.platform}-${process.arch} first=${JSON.stringify(first)}`)
     check('workspace 预种: 既有内容保留', yamlText.includes('nodeLinker: hoisted'))
     check('workspace 预种: 不忽略本机平台（手写期望）', !ownNames.some(n => yamlText.includes(n)), `yaml 含本机包 ownNames=${ownNames.join(',')}`)
     check('workspace 预种: 忽略本机外的代表性包（手写期望）', literalProbes.every(p => yamlText.includes(`- '${p}'`)), `host=${hostSuffix} probes=${literalProbes.join(',')}`)
-    const second = ensureProfileSharpPlatformFilter('dsh-tui')
-    const afterText = readFileSync(profileWorkspaceYamlPath('dsh-tui'), 'utf8')
+    const second = ensureProfileSharpPlatformFilter('dsh-cli')
+    const afterText = readFileSync(profileWorkspaceYamlPath('dsh-cli'), 'utf8')
     check('workspace 预种: 幂等（不重复块、不再写盘）', afterText.match(/ignoredOptionalDependencies:/gu)?.length === 1 && second !== undefined && second.changed === false && afterText === yamlText)
 
     // 名单跟着运行平台走：已有块里若有「本机平台的包」或别的平台算出的残留，
     // 重算必须把它换掉；块内非表内条目是用户显式决策，原样保留。
     const hostOwnLine = `- '${ownNames[0]}'`
     writeFileSync(wsPath, `ignoredOptionalDependencies:\n  - fsevents\n  ${hostOwnLine}\n  - '@img/sharp-linux-riscv64'\n`)
-    const third = ensureProfileSharpPlatformFilter('dsh-tui')
-    const refreshed = readFileSync(profileWorkspaceYamlPath('dsh-tui'), 'utf8')
+    const third = ensureProfileSharpPlatformFilter('dsh-cli')
+    const refreshed = readFileSync(profileWorkspaceYamlPath('dsh-cli'), 'utf8')
     check('workspace 预种: 旧名单被重算（本机平台的包被移出）', third !== undefined && third.changed && !refreshed.includes(ownNames[0]))
     check('workspace 预种: 用户自定义条目保留', refreshed.includes('- fsevents'))
     check('workspace 预种: 重算后覆盖当前平台矩阵', hostIgnore.every(p => refreshed.includes(`- '${p}'`)))
     check('workspace 预种: 重算后仍只有一个块', refreshed.match(/ignoredOptionalDependencies:/gu)?.length === 1)
-    const fourth = ensureProfileSharpPlatformFilter('dsh-tui')
+    const fourth = ensureProfileSharpPlatformFilter('dsh-cli')
     check('workspace 预种: 重算后再次运行不再写盘', fourth !== undefined && fourth.changed === false)
 
     // 归类必须按「包名」而不是原始字节：空行、条目尾注释、双引号都是合法 YAML，
@@ -831,28 +831,28 @@ check(
     ]
     for (const [label, seeded] of malformed) {
       writeFileSync(wsPath, seeded)
-      const outcome = ensureProfileSharpPlatformFilter('dsh-tui')
+      const outcome = ensureProfileSharpPlatformFilter('dsh-cli')
       const got = readFileSync(wsPath, 'utf8')
       check(`workspace 预种: ${label}时本机包仍被重算掉`, outcome !== undefined && !got.includes(ownNames[0]) && got.includes('- fsevents'), `got=${got.replace(/\n/gu, '|')}`)
     }
     // 用户自写的、不在本模块两张表内的 @img 条目（如自带豁免 wasm 回退包）是用户
     // 决策，不能被重算抹掉。
     writeFileSync(wsPath, `ignoredOptionalDependencies:\n  - fsevents\n  - '@img/sharp-wasm32'\n`)
-    const keepOutcome = ensureProfileSharpPlatformFilter('dsh-tui')
+    const keepOutcome = ensureProfileSharpPlatformFilter('dsh-cli')
     check('workspace 预种: 用户自写的表外 @img 条目保留', keepOutcome !== undefined && readFileSync(wsPath, 'utf8').includes(`- '@img/sharp-wasm32'`))
 
     // 重复键的文档本来就不是合法 YAML：不能往里写（否则 pnpm 连 workspace 都读不了）。
     const duplicated = `ignoredOptionalDependencies:\n  - fsevents\nignoredOptionalDependencies:\n  - '@img/sharp-wasm32'\n`
     writeFileSync(wsPath, duplicated)
-    check('workspace 预种: 重复键原样放过', ensureProfileSharpPlatformFilter('dsh-tui') === undefined && readFileSync(wsPath, 'utf8') === duplicated)
+    check('workspace 预种: 重复键原样放过', ensureProfileSharpPlatformFilter('dsh-cli') === undefined && readFileSync(wsPath, 'utf8') === duplicated)
     // 流式写法（键行自带值）同理。
     writeFileSync(wsPath, 'ignoredOptionalDependencies: [fsevents]\n')
-    check('workspace 预种: 流式写法不动用户文件', ensureProfileSharpPlatformFilter('dsh-tui') === undefined && readFileSync(wsPath, 'utf8') === 'ignoredOptionalDependencies: [fsevents]\n')
+    check('workspace 预种: 流式写法不动用户文件', ensureProfileSharpPlatformFilter('dsh-cli') === undefined && readFileSync(wsPath, 'utf8') === 'ignoredOptionalDependencies: [fsevents]\n')
 
     // 文件不存在时要新建，且不能以空行开头。
-    const emptyProf = join(process.env.DSH_HOME, 'profiles', 'dsh-tui-empty')
+    const emptyProf = join(process.env.DSH_HOME, 'profiles', 'dsh-cli-empty')
     mkdirSync(emptyProf, { recursive: true })
-    const created = ensureProfileSharpPlatformFilter('dsh-tui-empty')
+    const created = ensureProfileSharpPlatformFilter('dsh-cli-empty')
     const createdText = readFileSync(join(emptyProf, 'pnpm-workspace.yaml'), 'utf8')
     check('workspace 预种: 新建文件不以空行开头', created !== undefined && createdText.startsWith('ignoredOptionalDependencies:'))
     check('workspace 预种: profile 目录缺失返回 undefined', ensureProfileSharpPlatformFilter('absent') === undefined)

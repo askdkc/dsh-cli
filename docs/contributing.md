@@ -19,7 +19,7 @@
 - **报告 bug**：在本仓库使用 bug 表单提交 issue，写明版本、终端环境和最短复现步骤。
 - **提功能建议**：在本仓库新建 issue，说明用户遇到的问题、预期行为及兼容性约束。
 - **提交 PR**：面向本仓库，一个 PR 聚焦一个逻辑改动，说明动机、改动内容和验证结果。
-  可以关联 issue，但不强制；不需要取得原 dsh-TUI 项目的批准，也不受其贡献者名单限制。
+  可以关联 issue，但不强制；不需要取得原 dsh-CLI 项目的批准，也不受其贡献者名单限制。
 - **请求 review 前先跑验证矩阵**：CI 运行的就是下面这些命令。
 - 新功能应附带或扩展一个聚焦的回归脚本。
 
@@ -64,7 +64,7 @@
 - `src/native-ts/yoga-layout/`：渲染器使用的移植布局引擎。
 - `src/terminal-utils/`：终端格式化与呈现辅助。
 - `src/*Prefs.ts`、`src/customTheme.ts`、`src/sessionHistory.ts`：持久化的
-  用户偏好与 `~/.dsh-tui` 下的本地会话元数据。
+  用户偏好与 `~/.dsh-cli` 下的本地会话元数据。
 - `.agents/skills/*/SKILL.md`：仅供仓库维护者使用的项目技能，由 DSH 文件系统
   provider 发现，不随 npm 包分发。
 - `cordis.patch.yml`：profile 安装时使用的包级 bundle 覆盖层。行的顺序、行 ID、
@@ -256,7 +256,7 @@ TypeScript 源的脚本在头部声明 `node --import tsx/esm <script>` 形式�
 
 `pnpm tui` 调用 `scripts/run.ts`，它假定包位于 DeepSeek Harness monorepo
 （`apps/cli` + `packages/*`）布局内，不是可移植的独立冒烟命令。端到端集成检查：
-把插件装进 DSH profile，在真实 TTY 用所需凭证运行 `dsh --profile dsh-tui`。
+把插件装进 DSH profile，在真实 TTY 用所需凭证运行 `dsh --profile dsh-cli`。
 
 ## TypeScript 与风格（TypeScript And Style）
 
@@ -359,8 +359,8 @@ TypeScript 源的脚本在头部声明 `node --import tsx/esm <script>` 形式�
 - 终端宽度是显示单元宽度，不是 JS 字符串长度。考虑 ANSI 转义、组合字符、
   emoji 与东亚宽字符；用仓库的宽度/切片/换行/ANSI 辅助函数。
 - 保持帧输出缓冲、常规运行安静。TUI 活动期间不要加 `console.log` 或 stdout
-  诊断。用 opt-in 的 stderr/调试路径（如 `DSH_TUI_DEBUG`）或既有
-  `DSH_TUI_RENDER_LOG` 帧捕获。
+  诊断。用 opt-in 的 stderr/调试路径（如 `DSH_CLI_DEBUG`）或既有
+  `DSH_CLI_RENDER_LOG` 帧捕获。
 - 在成功、错误、中断与收尾时都保持 raw 模式、光标、alt-screen、同步输出、
   鼠标、焦点与终端查询的清理。
 - 避免渲染期无界集合或每 token/每帧分配。流式会话长命，本仓库对先前的 OOM
@@ -374,13 +374,13 @@ TypeScript 源的脚本在头部声明 `node --import tsx/esm <script>` 形式�
 
 - 遵循既有可配置偏好优先级：显式部署配置或环境覆盖 > 持久化用户选择 >
   检测/默认值。改变该顺序要记录。
-- 用户数据持久化在既有 `~/.dsh-tui` 位置下。校验并安全解析外部 JSON；损坏的
+- 用户数据持久化在既有 `~/.dsh-cli` 位置下。校验并安全解析外部 JSON；损坏的
   可选状态应警告或回退，而不是让 TUI 崩溃。
 - 把主题名、插件主题 descriptor 与文件内容当不可信输入。保留路径包含检查、插件
   ID 约束与损坏主题文件的全有或全无校验；插件注册必须随 activation 清理。
 - 主题新增必须完整覆盖 `Theme` 契约与每个内置色板。组件用语义主题键，不要用
   孤立的字面颜色。运行时主题通过 `tuiThemes` 接缝接入，不要让插件直接改写
-  `~/.dsh-tui/themes/` 或绕过现有扩展服务。
+  `~/.dsh-cli/themes/` 或绕过现有扩展服务。
 
 ## 跨文件修改清单（Cross-File Change Checklist）
 

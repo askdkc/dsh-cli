@@ -6,15 +6,15 @@
  *   1. 菜单在点击后关闭（输入被清空 → overlay 卸载）；
  *   2. 命令真的执行（channel.clear 被调，/clear 的副作用）。
  *
- * 诊断：置 DSH_TUI_DEBUG_MOUSE=1，mouse-debug.log 会记录
+ * 诊断：置 DSH_CLI_DEBUG_MOUSE=1，mouse-debug.log 会记录
  * "mouse arrive" / "dispatchClick {handled}" —— 点击若失效，日志能区分
  * 「解析层没收到」「派发被门禁拦下」「hit-test 没找到 handler」三种情况。
  *
  * 运行：node --import tsx/esm scripts/repro-suggestion-click.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_DEBUG_MOUSE = '1'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_DEBUG_MOUSE = '1'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { render, AlternateScreen }, { Chat }, { QuestionStore }, { completeCommands, LOCAL_COMMANDS }] = await Promise.all([
   import('node:stream'),
@@ -40,7 +40,7 @@ function check(name: string, ok: boolean, extra = '') {
   if (!ok) failed += 1
 }
 
-const mouseLogPath = join(homedir(), '.dsh-tui', 'mouse-debug.log')
+const mouseLogPath = join(homedir(), '.dsh-cli', 'mouse-debug.log')
 const mouseLogSizeBefore = (() => { try { return statSync(mouseLogPath).size } catch { return 0 } })()
 
 function makeTerm() {

@@ -76,7 +76,7 @@ const PROBE_ENV_KEYS = [
   'ConEmuANSI',
   'ConEmuPID',
   'ConEmuTask',
-  'DSH_TUI_RENDER_LOG',
+  'DSH_CLI_RENDER_LOG',
 ]
 
 /** Terminal markers a scenario pins; `undefined` means "explicitly absent". */

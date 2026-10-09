@@ -4,7 +4,7 @@
  *
  * The chain mounts the real composer in dozens of fixtures. Without isolation
  * any of them can append its own fixture text to the developer's real
- * `~/.dsh-tui/history.jsonl` — and once `↑` started walking that file (#986)
+ * `~/.dsh-cli/history.jsonl` — and once `↑` started walking that file (#986)
  * those leftovers also became user-visible. Measured on a developer machine:
  * `hello ZYXworldQ` twice (verify-word-jump), `/btw what is` and
  * `/btw again?` ten times each (verify-btw), plus 18 entries from a single
@@ -22,7 +22,7 @@ import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-verify-home-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-verify-home-'))
 let status = 1
 try {
   const r = spawnSync('npm run verify:build:inner', {

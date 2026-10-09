@@ -36,7 +36,7 @@ export interface ChannelUi {
   readonly sessionId: string
   /** TUI-owned generation that changes on every live Agent rebind. */
   readonly agentBindingGeneration: number
-  /** `dsh-tui.recapOnOpen` (default on): auto-summarize the session tail
+  /** `dsh-cli.recapOnOpen` (default on): auto-summarize the session tail
    *  into the dim AutoRecapRow when the session opens/resumes. Read live
    *  (settings service), so a `/settings` change applies on the next
    *  session switch; absent settings service → on. */
@@ -111,39 +111,39 @@ export interface ChannelUi {
   /** Live tool-card background treatment. */
   readonly toolBackground: ToolBackground
   /** What the fullscreen transcript's right gutter shows (settings
-   *  `dsh-tui.scrollGutter`: turn timeline / proportional scrollbar /
+   *  `dsh-cli.scrollGutter`: turn timeline / proportional scrollbar /
    *  nothing). */
   readonly scrollGutter: ScrollGutterMode
-  /** Root page inset (settings `dsh-tui.pageMargin`): a preset name
+  /** Root page inset (settings `dsh-cli.pageMargin`): a preset name
    *  (`none` / `slim` / `normal` (default) / `roomy`) or a custom `NxM`
    *  spec (columns per side × rows top/bottom) inset the whole UI from the
    *  terminal edges — terminals without their own viewport padding (bare
    *  WSL, tmux, SSH) otherwise hug the screen border. */
   readonly pageMargin: PageMarginSetting
-  /** Terminal-card header folding (settings `dsh-tui.foldTerminalCommand`):
+  /** Terminal-card header folding (settings `dsh-cli.foldTerminalCommand`):
    *  collapse a multi-line command title to its first line + count hint. */
   readonly foldTerminalCommand: boolean
   /** Whether the session-name chip shows on the prompt top border's right
-   *  side (settings `dsh-tui.promptSessionLabel`; off by default). */
+   *  side (settings `dsh-cli.promptSessionLabel`; off by default). */
   readonly promptSessionLabel: boolean
   /** Whether the fullscreen draft editor is enabled (settings
-   *  `dsh-tui.expandEditor`; on by default) — gates the ⛶ affordance and
+   *  `dsh-cli.expandEditor`; on by default) — gates the ⛶ affordance and
    *  the expandEditor shortcut. */
   readonly expandEditor: boolean
-  /** Smooth streaming reveal (settings `dsh-tui.smoothStreaming`; on by
+  /** Smooth streaming reveal (settings `dsh-cli.smoothStreaming`; on by
    *  default): live-arriving assistant text, expanded thinking, and tool
    *  call bodies paint through a ~30fps reveal instead of jumping per
    *  provider burst. */
   readonly smoothStreaming: boolean
   /** Live status-footer visibility and compactness preferences. */
   readonly statusBar: Readonly<StatusBarConfig>
-  /** Whether the header's pixel whale art shows (settings `dsh-tui.whale`). */
+  /** Whether the header's pixel whale art shows (settings `dsh-cli.whale`). */
   readonly whale: boolean
-  /** Idle whale behaviors switch (settings `dsh-tui.whaleIdle`). */
+  /** Idle whale behaviors switch (settings `dsh-cli.whaleIdle`). */
   readonly whaleIdle: boolean
   /** Apply an idle-whale-behavior change (see the public Channel type). */
   setWhaleIdle(enabled: boolean): void
-  /** Minimal mode (settings `dsh-tui.minimal`): no header splash, no emoji
+  /** Minimal mode (settings `dsh-cli.minimal`): no header splash, no emoji
    *  glyphs, no decorative colors; code highlight and tool colors stay. */
   readonly minimal: boolean
   /** Whether the working-activity line is shown (config.activity); the line
@@ -206,7 +206,7 @@ export interface ChannelUi {
   ): Promise<ExternalCommandOutcome | undefined>
   /**
    * Plugin-registered full-screen scene currently replacing the conversation
-   * (the `dsh-tui-scenes` runtime), if any. The chat screen renders its
+   * (the `dsh-cli-scenes` runtime), if any. The chat screen renders its
    * component INSTEAD of the transcript — the same whole-terminal treatment
    * the trajectory scene gets — and hands it the keyboard; `undefined`
    * renders the conversation normally.
@@ -359,7 +359,7 @@ export interface ChannelUi {
   listEfforts(): Promise<{ efforts: readonly EffortOption[]; defaultEffort: string | undefined }>
   /** Set one effort level by id (validated against the adapter list);
    *  false + a notify when the id is not offered. Persists like the old
-   *  Shift+Tab cycle (~/.dsh-tui/effort.json). */
+   *  Shift+Tab cycle (~/.dsh-cli/effort.json). */
   setEffort(id: string): Promise<boolean>
   /** Re-seat the future-sessions default reasoning effort (cordis.yml
    *  `effort` → persisted /effort choice → adapter default). The live agent
@@ -405,7 +405,7 @@ export interface ChannelUi {
    *  early-dismiss handle (the auto-timeout still runs as the backstop). */
   notify(text: string, options?: { color?: NotificationItem['color']; timeoutMs?: number }): () => void
   /** Switch the working-activity indicator preset (`/activity`): validates
-   *  the name, persists it to `~/.dsh-tui/working-activity.json`, and
+   *  the name, persists it to `~/.dsh-cli/working-activity.json`, and
    *  re-renders the indicator immediately; false when the name is unknown
    *  or the preference cannot be written. */
   setActivityFrames(name: string): boolean
@@ -458,7 +458,7 @@ export interface ChannelUi {
   listSessions(onEnriched?: (summary: SessionSummary) => void): Promise<readonly SessionSummary[]>
   /** Trailing exchanges of a persisted session, for the browser's preview. */
   previewSession(sessionId: string): Promise<readonly PreviewEntry[]>
-  /** Mark a session for `dsh-tui --resume` on the next launch. */
+  /** Mark a session for `dsh-cli --resume` on the next launch. */
   setResumeTarget(sessionId: string): void
   /** Rename the current session (`/rename`): appends a `session/title`
    *  event, which the status line and the /resume picker both read. */
@@ -486,7 +486,7 @@ export interface ChannelUi {
   pushLocal(title: string, lines: readonly string[]): void
   /** MCP server/tool status for /mcp: one line per server, or setup guidance. */
   mcpStatus(): string[]
-  /** Write the conversation transcript to `dsh-tui-export-<ts>.md` in the
+  /** Write the conversation transcript to `dsh-cli-export-<ts>.md` in the
    *  session cwd; returns the written path, or null on failure. */
   exportSession(): string | null
   /** Create `AGENTS.md` in the session cwd (DSH workspace-context file);

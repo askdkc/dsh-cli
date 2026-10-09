@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type Schema from '@deepseek-ai/schemastery'
 
-const VOLATILE_REQUIRED = 'dsh-tui: profile-backed settings require Schemastery volatile Config support. Update DSH and reinstall the current profile dependencies before starting the TUI.'
+const VOLATILE_REQUIRED = 'dsh-cli: profile-backed settings require Schemastery volatile Config support. Update DSH and reinstall the current profile dependencies before starting the TUI.'
 
 /** Volatile Config fields are refs; ordinary fields retain plain values. */
 export type RuntimeConfig<T> = { [K in keyof T]: T[K] | { get(): T[K] } }
@@ -28,7 +28,7 @@ export function resolveSettingsNamespace(ctx: Context, schema: Pick<Schema, 'dic
   }
   const owner = ctx.fiber as typeof ctx.fiber & { entry?: { options: { id?: string } } }
   const ns = owner?.entry?.options?.id
-  if (!ns) throw new Error('dsh-tui: profile-backed settings require a Loader entry for the Config owner.')
+  if (!ns) throw new Error('dsh-cli: profile-backed settings require a Loader entry for the Config owner.')
   return ns
 }
 

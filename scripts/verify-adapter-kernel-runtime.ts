@@ -231,8 +231,8 @@ assert.notEqual(failed.currentLifecycles().find(lifecycle => lifecycle.capabilit
   await kernel.mount()
   const drivers = kernel.diagnosticSnapshot().drivers
   const driver = (id: string) => drivers.find(entry => entry.id === id)
-  assert.equal(driver('dsh-tui-presentation')?.mounted, false, 'mutate slice must be skipped under passive shadow')
-  assert.equal(driver('dsh-tui-channel')?.mounted, true, 'read-only slice must still mount under passive shadow')
+  assert.equal(driver('dsh-cli-presentation')?.mounted, false, 'mutate slice must be skipped under passive shadow')
+  assert.equal(driver('dsh-cli-channel')?.mounted, true, 'read-only slice must still mount under passive shadow')
   checks += 1
 }
 
@@ -544,7 +544,7 @@ assert.notEqual(failed.currentLifecycles().find(lifecycle => lifecycle.capabilit
     'disposed Kernel must not retain no-lifecycle driver features')
 }
 
-// M3: DSH_TUI_ADAPTER_SLICES / KernelRuntimeOptions.slices must actually filter
+// M3: DSH_CLI_ADAPTER_SLICES / KernelRuntimeOptions.slices must actually filter
 // kernel slices, not leave the option as a dead parameter.
 {
   const filtered = new KernelRuntime({
@@ -556,11 +556,11 @@ assert.notEqual(failed.currentLifecycles().find(lifecycle => lifecycle.capabilit
   })
   const diag = filtered.diagnosticSnapshot()
   checks += 1
-  assert.ok(diag.drivers.some(driver => driver.id === 'dsh-tui-scenes'),
+  assert.ok(diag.drivers.some(driver => driver.id === 'dsh-cli-scenes'),
     'slice allowlist must include the selected scenes slice')
-  assert.ok(!diag.drivers.some(driver => driver.id === 'dsh-tui-workspace'),
+  assert.ok(!diag.drivers.some(driver => driver.id === 'dsh-cli-workspace'),
     'slice allowlist must exclude unselected workspace slice')
-  assert.ok(!diag.drivers.some(driver => driver.id === 'dsh-tui-settings'),
+  assert.ok(!diag.drivers.some(driver => driver.id === 'dsh-cli-settings'),
     'slice allowlist must exclude unselected settings slice')
 }
 

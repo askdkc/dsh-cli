@@ -1,12 +1,12 @@
 /**
- * dsh-tui localization — UI strings for Chinese (`zh`) and
+ * dsh-cli localization — UI strings for Chinese (`zh`) and
  * English (`en`).
  *
  * Resolution order mirrors the `/theme` mechanism (see themePrefs.ts):
  *
- *   1. `DSH_TUI_LANG` env var (`en` / `zh`) — pinned at process start
+ *   1. `DSH_CLI_LANG` env var (`en` / `zh`) — pinned at process start
  *   2. `lang` cordis.yml config key (see Config in index.ts)
- *   3. the persisted `/lang` choice in `~/.dsh-tui/lang.json`
+ *   3. the persisted `/lang` choice in `~/.dsh-cli/lang.json`
  *   4. the OS locale guess (`LC_ALL` / `LC_MESSAGES` / `LANG`)
  *   5. `en` (the fallback language)
  *
@@ -98,8 +98,8 @@ const dict = {
   'spinner-verb-responding': { zh: '回应中', en: 'Responding' },
   'activity-indicator-already': { zh: '指示器已是：{{name}}', en: 'Indicator already set: {{name}}' },
   'activity-indicator-switched': { zh: '指示器已切换：{{name}}（已保存）', en: 'Indicator switched: {{name}} (saved)' },
-  'activity-pref-write-failed': { zh: '无法写入 ~/.dsh-tui/working-activity.json，切换未保存', en: 'Cannot write ~/.dsh-tui/working-activity.json, switch not saved' },
-  'model-pref-write-failed': { zh: '无法写入 ~/.dsh-tui/model.json，模型选择不会保存到重启后', en: 'Cannot write ~/.dsh-tui/model.json, the model choice will not survive a restart' },
+  'activity-pref-write-failed': { zh: '无法写入 ~/.dsh-cli/working-activity.json，切换未保存', en: 'Cannot write ~/.dsh-cli/working-activity.json, switch not saved' },
+  'model-pref-write-failed': { zh: '无法写入 ~/.dsh-cli/model.json，模型选择不会保存到重启后', en: 'Cannot write ~/.dsh-cli/model.json, the model choice will not survive a restart' },
   'model-route-invalid': { zh: '持久化的模型路由 {{provider}}/{{model}} 不在该 provider 的模型列表中，已整体回退到 {{fallback}}', en: 'Persisted model route {{provider}}/{{model}} is not advertised by that provider; fell back to {{fallback}}' },
   'unknown-activity-preset': { zh: '未知预设「{{name}}」· /activity frames 查看全部', en: 'Unknown preset "{{name}}" · /activity frames to view all' },
   'preset-unavailable': { zh: 'Preset 不可用——当前组合未挂载 agent-presets 名册', en: 'Preset unavailable — the agent-presets roster is not mounted' },
@@ -107,7 +107,7 @@ const dict = {
   'preset-not-found': { zh: 'Preset「{{id}}」不存在 · {{err}}', en: 'Preset "{{id}}" not found · {{err}}' },
   'preset-load-failed': { zh: 'Preset「{{id}}」无法加载 · {{broken}}', en: 'Preset "{{id}}" failed to load · {{broken}}' },
   'preset-already-current': { zh: '当前 preset 已是：{{id}}', en: 'Current preset already: {{id}}' },
-  'preset-pref-write-failed': { zh: '无法写入 ~/.dsh-tui/agent-preset.json，选择未保存', en: 'Cannot write ~/.dsh-tui/agent-preset.json, selection not saved' },
+  'preset-pref-write-failed': { zh: '无法写入 ~/.dsh-cli/agent-preset.json，选择未保存', en: 'Cannot write ~/.dsh-cli/agent-preset.json, selection not saved' },
   'preset-locked-saved-default': { zh: '会话已开始，preset 已锁定（当前：{{current}}）· 已保存为默认：{{id}}（/new 或下次启动生效）', en: 'Session already started, preset locked (current: {{current}}) · Saved as default: {{id}} (applies on /new or next start)' },
   'preset-switch-failed': { zh: 'Preset 切换失败 · {{err}}', en: 'Preset switch failed · {{err}}' },
   'preset-switched-pref-failed': { zh: 'Preset 已切换：{{id}}，但默认偏好写入失败（重启后不保留）', en: 'Preset switched: {{id}}, but writing the default preference failed (won\'t persist after restart)' },
@@ -129,12 +129,12 @@ const dict = {
   'preset-name-liangshen': { zh: '梁神模式', en: 'Liangshen mode' },
   'preset-desc-liangshen': { zh: '主 Agent 与子 Agent 首轮均保持 Minimal 双工具，首次工具调用后开放完整目录，压缩后重新锚定。', en: 'Root and delegated agents keep the minimal two-tool pair on the first turn; the full catalog opens after the first tool call and re-anchors after compaction.' },
   'mcp-none-configured': { zh: '未配置 MCP 服务器。', en: 'No MCP servers configured.' },
-  'mcp-insert-hint': { zh: '在 profile 补丁层（~/.dsh/profiles/dsh-tui/cordis.patch.yml）insert 一行即可，例：', en: 'Insert one line in the profile patch layer (~/.dsh/profiles/dsh-tui/cordis.patch.yml), e.g.:' },
+  'mcp-insert-hint': { zh: '在 profile 补丁层（~/.dsh/profiles/dsh-cli/cordis.patch.yml）insert 一行即可，例：', en: 'Insert one line in the profile patch layer (~/.dsh/profiles/dsh-cli/cordis.patch.yml), e.g.:' },
   'mcp-readme-hint': { zh: '详见仓库 README 的 MCP 章节。', en: 'See the MCP section of the repo README.' },
   'mcp-server-tools': { zh: '{{server}}（{{count}} 个工具）: {{tools}}', en: '{{server}} ({{count}} tools): {{tools}}' },
   'child-stderr-line': { zh: '子进程 stderr: {{line}}', en: 'Subprocess stderr: {{line}}' },
   'child-stderr-line-repeat': { zh: '子进程 stderr: {{line}}（重复 {{count}} 次）', en: 'Subprocess stderr: {{line}} (repeated {{count}}×)' },
-  'export-title': { zh: '# dsh-tui 会话导出', en: '# dsh-tui session export' },
+  'export-title': { zh: '# dsh-cli 会话导出', en: '# dsh-cli session export' },
   'export-time': { zh: '- 导出时间: {{time}}', en: '- Exported: {{time}}' },
   'export-model': { zh: '- 模型: {{model}}', en: '- Model: {{model}}' },
   'export-session': { zh: '- 会话: {{id}}', en: '- Session: {{id}}' },
@@ -363,7 +363,7 @@ const dict = {
   'migrate-unknown-agent': { zh: '未知迁移源 {{agent}}，可用源见 /migrate', en: 'Unknown migration source {{agent}}; see /migrate for the list' },
   'activity-current-preset': { zh: '当前预设  {{name}}', en: 'Current preset  {{name}}' },
   'activity-switch-hint': { zh: '切换      /activity（选择器）或 /activity frames <名>', en: 'Switch      /activity (picker) or /activity frames <name>' },
-  'activity-persist-hint': { zh: '持久化    ~/.dsh-tui/working-activity.json（重启后仍生效）', en: 'Persisted    ~/.dsh-tui/working-activity.json (survives restart)' },
+  'activity-persist-hint': { zh: '持久化    ~/.dsh-cli/working-activity.json（重启后仍生效）', en: 'Persisted    ~/.dsh-cli/working-activity.json (survives restart)' },
   'activity-current-direct': { zh: '当前预设：{{name}} · /activity frames <名> 直接切换：', en: 'Current preset: {{name}} · /activity frames <name> to switch directly:' },
   'activity-random-each': { zh: '每次随机', en: 'random each time' },
   'activity-current-marker': { zh: '  ← 当前', en: '  ← current' },
@@ -371,13 +371,13 @@ const dict = {
   'preset-current': { zh: '当前 preset  {{name}}', en: 'Current preset  {{name}}' },
   'preset-roster-missing': { zh: '（未挂载名册）', en: '(roster not mounted)' },
   'preset-switch-hint': { zh: '切换        /preset（选择器）或 /preset <id>', en: 'Switch        /preset (picker) or /preset <id>' },
-  'preset-persist-hint': { zh: '持久化      ~/.dsh-tui/agent-preset.json（重启后仍生效；cordis.yml preset 优先）', en: 'Persisted      ~/.dsh-tui/agent-preset.json (survives restart; cordis.yml preset wins)' },
+  'preset-persist-hint': { zh: '持久化      ~/.dsh-cli/agent-preset.json（重启后仍生效；cordis.yml preset 优先）', en: 'Persisted      ~/.dsh-cli/agent-preset.json (survives restart; cordis.yml preset wins)' },
   'preset-lock-hint': { zh: '锁定规则    已开始的会话不可切换（官方 blank-only 规则）', en: 'Lock rule     started sessions cannot switch (official blank-only rule)' },
   'preset-roster-unmounted': { zh: '当前组合未挂载 agent-presets 名册（preset 不可用）', en: 'The agent-presets roster is not mounted (presets unavailable)' },
   'theme-current': { zh: '当前主题  {{name}}', en: 'Current theme  {{name}}' },
   'theme-switch-hint': { zh: '切换      /theme（选择器）或 /theme <名字>', en: 'Switch      /theme (picker) or /theme <name>' },
-  'theme-persist-hint': { zh: '持久化    ~/.dsh-tui/theme.json（重启后仍生效；DSH_TUI_THEME 优先）', en: 'Persisted    ~/.dsh-tui/theme.json (survives restart; DSH_TUI_THEME wins)' },
-  'theme-custom-hint': { zh: '自定义    静态 ~/.dsh-tui/themes/<名字>.json（插件也可提供运行时主题；见 README「自定义主题」）', en: 'Custom      static ~/.dsh-tui/themes/<name>.json (plugins may also provide runtime themes; see README "Custom themes")' },
+  'theme-persist-hint': { zh: '持久化    ~/.dsh-cli/theme.json（重启后仍生效；DSH_CLI_THEME 优先）', en: 'Persisted    ~/.dsh-cli/theme.json (survives restart; DSH_CLI_THEME wins)' },
+  'theme-custom-hint': { zh: '自定义    静态 ~/.dsh-cli/themes/<名字>.json（插件也可提供运行时主题；见 README「自定义主题」）', en: 'Custom      static ~/.dsh-cli/themes/<name>.json (plugins may also provide runtime themes; see README "Custom themes")' },
   'theme-auto-resolved': { zh: '自动解析  当前为 {{name}}（跟随终端背景）', en: 'Auto-resolved  currently {{name}} (follows terminal background)' },
   'theme-switched-saved': { zh: '主题已切换：{{name}}（已保存）', en: 'Theme switched: {{name}} (saved)' },
   'theme-unknown': { zh: '未知主题「{{name}}」· /theme 查看全部', en: 'Unknown theme "{{name}}" · /theme to view all' },
@@ -420,7 +420,7 @@ const dict = {
   'home-add-workspace': { zh: '添加工作区', en: 'Add workspace' },
   'home-add-hint': { zh: '选择目录并加入列表', en: 'Pick a directory and add it to the list' },
   'home-workspace-missing': { zh: '目录不存在', en: 'directory missing' },
-  'home-no-workspaces': { zh: '还没有工作区 · 在任意目录启动 dsh-tui 即可自动加入', en: 'No workspaces yet · start dsh-tui in a directory to add it' },
+  'home-no-workspaces': { zh: '还没有工作区 · 在任意目录启动 dsh-cli 即可自动加入', en: 'No workspaces yet · start dsh-cli in a directory to add it' },
   'home-sessions-title': { zh: '{{name}} 的会话', en: 'Sessions in {{name}}' },
   'home-sessions-count': { zh: '{{n}} 个会话', en: { one: '{{n}} session', other: '{{n}} sessions' } },
   'home-no-sessions': { zh: '这个工作区还没有会话 · Enter 新建一个', en: 'No sessions in this workspace yet · Enter starts one' },
@@ -491,7 +491,7 @@ const dict = {
   'balance-hint': { zh: '余额查询免费 · 以 DeepSeek 平台为准', en: 'balance queries are free · authoritative on the DeepSeek platform' },
   'doctor-example-config': { zh: '示例配置  {{path}}', en: 'Example config  {{path}}' },
   'doctor-user-config': { zh: '用户配置  {{path}}', en: 'User config  {{path}}' },
-  'doctor-launch-hint': { zh: '启动方式  dsh-tui.cmd / dsh --profile dsh-tui', en: 'Launch      dsh-tui.cmd / dsh --profile dsh-tui' },
+  'doctor-launch-hint': { zh: '启动方式  dsh-cli.cmd / dsh --profile dsh-cli', en: 'Launch      dsh-cli.cmd / dsh --profile dsh-cli' },
   'doctor-route-hint': { zh: '模型路由  由 cordis.yml 的 llm-deepseek 段决定（/model 仅提示重启生效）', en: 'Model route  set by the llm-deepseek block in cordis.yml (/model only hints at restart)' },
   'export-failed': { zh: '导出失败（无法写入工作目录）', en: 'Export failed (cannot write to working directory)' },
   // 导出/调试快照都落在会话工作区根：同步盘（Dropbox/网盘）或共享目录
@@ -511,7 +511,7 @@ const dict = {
   'login-storage-read-only': { zh: '只读', en: 'read-only' },
   'login-base-url': { zh: 'Base URL: {{url}}', en: 'Base URL: {{url}}' },
   'login-official-endpoint': { zh: '官方端点', en: 'official endpoint' },
-  'login-logout-hint': { zh: '使用 /provider 管理 DSH 凭据；若来源为 env，请删除对应环境变量并重启 dsh-tui', en: 'Manage DSH credentials with /provider; for env sources, remove the corresponding environment variable and restart dsh-tui' },
+  'login-logout-hint': { zh: '使用 /provider 管理 DSH 凭据；若来源为 env，请删除对应环境变量并重启 dsh-cli', en: 'Manage DSH credentials with /provider; for env sources, remove the corresponding environment variable and restart dsh-cli' },
   // /login 的 OAuth 账号状态段（dsh-auth 类插件挂载时追加）
   'login-oauth-heading': { zh: '提供商认证:', en: 'Provider authentication:' },
   'login-oauth-row': { zh: '  {{provider}} — {{state}}', en: '  {{provider}} — {{state}}' },
@@ -565,7 +565,7 @@ const dict = {
   'reload-kind-model': { zh: '模型', en: 'model' },
   'reload-kind-activity': { zh: '活动指示', en: 'activity' },
   // ── /restart (process restart with session resume) ────────────────────
-  'restart-starting': { zh: '正在重启 dsh-tui，完成后自动恢复当前会话……', en: 'Restarting dsh-tui. The session resumes when it comes back…' },
+  'restart-starting': { zh: '正在重启 dsh-cli，完成后自动恢复当前会话……', en: 'Restarting dsh-cli. The session resumes when it comes back…' },
   'restart-unavailable': { zh: '当前运行方式不支持进程内重启（未挂载重启通道）。', en: 'Restart is unavailable in this launch mode (no restart channel mounted).' },
   'streaming-folded': { zh: '…（前 {{count}} 字符流式期间已折叠，落定后完整显示）', en: '…(first {{count}} chars folded while streaming; full text renders once the turn settles)' },
   'mermaid-too-wide': { zh: '（图需要 {{width}} 列，当前宽度不足，显示源码）', en: '(diagram needs {{width}} columns; showing the source)' },
@@ -574,7 +574,7 @@ const dict = {
   'terminal-setup-hint': { zh: '推荐 Windows Terminal（≥110 列、等宽字体、TrueColor）。', en: 'Recommended: Windows Terminal (≥110 columns, monospace, TrueColor).' },
   'terminal-paste-hint': { zh: '{{mod}}V 或 Alt+V 粘贴文本、文件路径或图片；Ctrl+Shift+V 终端原生粘贴；右键粘贴同样可用；快捷键可在 /settings 修改。', en: '{{mod}}V or Alt+V pastes text, file paths, or images; Ctrl+Shift+V is native terminal paste; right-click paste also works; remappable via /settings.' },
   'connect-none': { zh: '当前环境未提供远程连接服务。', en: 'No remote connection service is available in this environment.' },
-  'theme-switch-failed': { zh: '主题「{{name}}」切换失败（无法写入 ~/.dsh-tui/theme.json）', en: 'Theme "{{name}}" switch failed (cannot write ~/.dsh-tui/theme.json)' },
+  'theme-switch-failed': { zh: '主题「{{name}}」切换失败（无法写入 ~/.dsh-cli/theme.json）', en: 'Theme "{{name}}" switch failed (cannot write ~/.dsh-cli/theme.json)' },
   'interrupt-delivered': { zh: '已打断当前回合，{{n}} 条消息立即处理', en: 'Interrupted current turn, {{n}} messages processed immediately' },
   'btw-usage': { zh: '用法：/btw <问题> —— 不打断当前对话的快速侧问', en: 'Usage: /btw <question> — quick side question without interrupting the conversation' },
   'btw-answering': { zh: '思考中…', en: 'Answering…' },
@@ -636,12 +636,12 @@ const dict = {
   'tokens-usage-context': { zh: '{{usage}} · 上下文 {{percent}}%', en: '{{usage}} · {{percent}}% of context' },
 
   // ── plugin.ts — /update flow ───────────────────────────────────────
-  'update-aborted-no-profile': { zh: 'dsh-tui 更新中止：未解析到 dsh profile。', en: 'dsh-tui update aborted: no dsh profile resolved.' },
+  'update-aborted-no-profile': { zh: 'dsh-cli 更新中止：未解析到 dsh profile。', en: 'dsh-cli update aborted: no dsh profile resolved.' },
   // 0.8.3 launcher alignment bridge: /update only replaces the profile
-  // copy; the global `dsh-tui` launcher must be aligned separately.
+  // copy; the global `dsh-cli` launcher must be aligned separately.
   'update-launcher-align-unknown': {
-    zh: 'Profile 已更新到 v{{version}}。如果你平时使用全局 dsh-tui 命令启动，请同步更新全局启动器：\n  npm install -g --legacy-peer-deps dsh-cli@{{version}}\n（--legacy-peer-deps 可绕过 npm 12 的 peer 解析崩溃，全局启动器是瘦壳，跳过全局 peer 解析是安全的）',
-    en: 'The profile is now v{{version}}. If you normally launch with the global dsh-tui command, align the global launcher too:\n  npm install -g --legacy-peer-deps dsh-cli@{{version}}\n(--legacy-peer-deps works around an npm 12 peer-resolution crash; the global launcher is a thin shim, so skipping global peer resolution is safe.)',
+    zh: 'Profile 已更新到 v{{version}}。如果你平时使用全局 dsh-cli 命令启动，请同步更新全局启动器：\n  npm install -g --legacy-peer-deps dsh-cli@{{version}}\n（--legacy-peer-deps 可绕过 npm 12 的 peer 解析崩溃，全局启动器是瘦壳，跳过全局 peer 解析是安全的）',
+    en: 'The profile is now v{{version}}. If you normally launch with the global dsh-cli command, align the global launcher too:\n  npm install -g --legacy-peer-deps dsh-cli@{{version}}\n(--legacy-peer-deps works around an npm 12 peer-resolution crash; the global launcher is a thin shim, so skipping global peer resolution is safe.)',
   },
   'update-launcher-outdated': {
     zh: 'Profile 已更新到 v{{profile}}，但全局启动器仍是 v{{launcher}}。请同步更新：\n  npm install -g --legacy-peer-deps dsh-cli@{{profile}}\n（--legacy-peer-deps 可绕过 npm 12 的 peer 解析崩溃，见 #459）',
@@ -784,7 +784,7 @@ const dict = {
   'sugg-color-name-desc': { zh: '会话强调色', en: 'Session accent color' },
 
   // ── dsh-adapter/plugin.ts（/settings 渲染设置）───────────────────────
-  'settings-fullscreen-restart': { zh: '全屏设置已保存，重启 dsh-tui 后生效', en: 'Fullscreen preference saved — restart dsh-tui to apply' },
+  'settings-fullscreen-restart': { zh: '全屏设置已保存，重启 dsh-cli 后生效', en: 'Fullscreen preference saved — restart dsh-cli to apply' },
   'settings-terminal-images-restart': { zh: '图片预览设置已保存，使用 /restart 重启 TUI 后生效', en: 'Image preview preference saved — use /restart to apply' },
 
   // ── components/HelpMenu.tsx ─────────────────────────────────────────
@@ -956,7 +956,7 @@ const dict = {
   'rewind-mode-default': { zh: '仅回退会话', en: 'Conversation only' },
   'rewind-waiting-plugins': { zh: '正在等待插件决定…（Esc 放弃等待）', en: 'Waiting for plugins… (Esc to stop waiting)' },
 
-  // ── 插件扩展缝（dsh-tui-extensions：决策事件 + 托管对话框 + 快捷键）──
+  // ── 插件扩展缝（dsh-cli-extensions：决策事件 + 托管对话框 + 快捷键）──
   'ext-action-cancelled': { zh: '操作已被插件取消', en: 'Action cancelled by a plugin' },
   'ext-action-handled': { zh: '输入已由插件处理', en: 'Input handled by a plugin' },
   'ext-decision-pending': { zh: '正在等待插件决定（{{event}}）…', en: 'Waiting for a plugin decision ({{event}})…' },
@@ -990,12 +990,12 @@ const dict = {
   'plugins-check-invalid': { zh: '语义校验失败：{{err}}', en: 'Semantic validation failed: {{err}}' },
   'plugins-check-state': { zh: '协商结果：{{state}}', en: 'Negotiation decision: {{state}}' },
   'plugins-grant-hint': {
-    zh: '授权方法：在 ~/.dsh-tui/extension-grants.json 的 "grants" 段为插件 id 添加规则（如 { "name": "<权限>", "scope": "<范围>" }），保存即生效、无需重启。',
-    en: 'To grant: add a rule for the plugin id under "grants" in ~/.dsh-tui/extension-grants.json (e.g. { "name": "<permission>", "scope": "<scope>" }); saved changes apply immediately, no restart.',
+    zh: '授权方法：在 ~/.dsh-cli/extension-grants.json 的 "grants" 段为插件 id 添加规则（如 { "name": "<权限>", "scope": "<范围>" }），保存即生效、无需重启。',
+    en: 'To grant: add a rule for the plugin id under "grants" in ~/.dsh-cli/extension-grants.json (e.g. { "name": "<permission>", "scope": "<scope>" }); saved changes apply immediately, no restart.',
   },
   'plugins-check-grant-hint': {
-    zh: '授权方法：在 ~/.dsh-tui/extension-grants.json 的 "grants" 段加入 "{{id}}": [{ "name": "<权限>", "scope": "<范围>" }]；待授权权限：{{perms}}。',
-    en: 'To authorize: add "{{id}}": [{ "name": "<permission>", "scope": "<scope>" }] under "grants" in ~/.dsh-tui/extension-grants.json; pending permissions: {{perms}}.',
+    zh: '授权方法：在 ~/.dsh-cli/extension-grants.json 的 "grants" 段加入 "{{id}}": [{ "name": "<权限>", "scope": "<范围>" }]；待授权权限：{{perms}}。',
+    en: 'To authorize: add "{{id}}": [{ "name": "<permission>", "scope": "<scope>" }] under "grants" in ~/.dsh-cli/extension-grants.json; pending permissions: {{perms}}.',
   },
   'plugins-check-dropped': { zh: '（宿主描述符已剔除漂移契约：{{dropped}}）', en: '(host descriptor dropped drifted contracts: {{dropped}})' },
   'plugins-check-host-unavailable': { zh: '当前没有 live Host Descriptor；只做静态 manifest 校验，不进行协议支持声明/协商。', en: 'No live Host Descriptor is available; only static manifest validation was performed, no protocol support declaration/negotiation.' },
@@ -1037,7 +1037,7 @@ const dict = {
   // ── components/ThemePicker.tsx ──────────────────────────────────────
   'theme-builtin-base': { zh: '内置 · {{name}} 基底', en: 'Built-in · {{name}} base' },
   'theme-auto-base': { zh: '内置 · 跟随系统/终端背景自动选择 light/dark', en: 'Built-in · follows the system/terminal background (light/dark)' },
-  'theme-user-base': { zh: '{{base}} 基底 · ~/.dsh-tui/themes/{{name}}.json', en: '{{base}} base · ~/.dsh-tui/themes/{{name}}.json' },
+  'theme-user-base': { zh: '{{base}} 基底 · ~/.dsh-cli/themes/{{name}}.json', en: '{{base}} base · ~/.dsh-cli/themes/{{name}}.json' },
   'theme-plugin-base': { zh: '插件 · {{base}} 基底 · {{name}}', en: 'Plugin · {{base}} base · {{name}}' },
 
   // ── components/LoadedContextPanel.tsx ───────────────────────────────
@@ -1272,8 +1272,8 @@ const dict = {
   'cmd-desc-background': { zh: '当前会话转入后台并打开总览' },
   'cmd-desc-rename': { zh: '重命名当前会话' },
   'cmd-desc-recap': { zh: '生成最近会话活动摘要（可应用建议标题）' },
-  'cmd-desc-quit': { zh: '退出 dsh-tui' },
-  'cmd-desc-q': { zh: '退出 dsh-tui' },
+  'cmd-desc-quit': { zh: '退出 dsh-cli' },
+  'cmd-desc-q': { zh: '退出 dsh-cli' },
   'cmd-desc-rewind': { zh: '回退会话到历史消息' },
   'cmd-desc-tree': { zh: '浏览会话分叉树（回退/分叉/切分支）' },
   'cmd-desc-fork': { zh: '把当前会话分叉为可恢复副本' },
@@ -1283,7 +1283,7 @@ const dict = {
   'cmd-desc-status': { zh: '查看会话状态' },
   'cmd-desc-cost': { zh: '查看会话 token 用量' },
   'cmd-desc-balance': { zh: '查看 DeepSeek 账户余额' },
-  'cmd-desc-config': { zh: '查看 dsh-tui 配置来源' },
+  'cmd-desc-config': { zh: '查看 dsh-cli 配置来源' },
   'cmd-desc-reload': { zh: '重读偏好文件并立即生效' },
   'cmd-desc-settings': { zh: '查看和编辑插件设置' },
   'cmd-desc-doctor': { zh: '运行环境检查' },
@@ -1309,7 +1309,7 @@ const dict = {
   'cmd-desc-mcp': { zh: '查看 MCP 状态' },
   'cmd-desc-skills': { zh: '列出所有可用技能' },
   'cmd-desc-plugins': { zh: '显示插件契约、授权与台账诊断' },
-  'cmd-desc-update': { zh: '更新 dsh-tui 并重启' },
+  'cmd-desc-update': { zh: '更新 dsh-cli 并重启' },
   // Misc
   'cmd-desc-vim': { zh: '切换 vim 模式' },
   'cmd-desc-terminal-setup': { zh: '查看终端配置建议' },
@@ -1320,8 +1320,8 @@ const dict = {
   'cmd-desc-workspace-open': { zh: '打开路径或工作区 URI', en: 'Open a path or workspace URI' },
   // Help / exit
   'cmd-desc-help': { zh: '查看快捷键与命令' },
-  'cmd-desc-restart': { zh: '重启 dsh-tui 并恢复当前会话' },
-  'cmd-desc-exit': { zh: '退出 dsh-tui' },
+  'cmd-desc-restart': { zh: '重启 dsh-cli 并恢复当前会话' },
+  'cmd-desc-exit': { zh: '退出 dsh-cli' },
   // Registry-injected (external) commands — zh only; en falls back to the
   // registry's own description, and unlisted externals always fall back.
   'cmd-desc-plan': { zh: '切换计划模式（/plan off 退出）' },
@@ -1331,10 +1331,10 @@ const dict = {
   // ── /lang command ───────────────────────────────────────────────────
   'lang-current': { zh: '当前语言  {{lang}}', en: 'Current language  {{lang}}' },
   'lang-switch-hint': { zh: '切换      /lang en | /lang zh', en: 'Switch      /lang en | /lang zh' },
-  'lang-persist-hint': { zh: '持久化    ~/.dsh-tui/lang.json（重启后仍生效；DSH_TUI_LANG 优先）', en: 'Persisted    ~/.dsh-tui/lang.json (survives restart; DSH_TUI_LANG wins)' },
+  'lang-persist-hint': { zh: '持久化    ~/.dsh-cli/lang.json（重启后仍生效；DSH_CLI_LANG 优先）', en: 'Persisted    ~/.dsh-cli/lang.json (survives restart; DSH_CLI_LANG wins)' },
   'lang-switched': { zh: '语言已切换：{{lang}}（已保存）', en: 'Language switched: {{lang}} (saved)' },
   'lang-unknown': { zh: '未知语言「{{lang}}」· /lang 查看全部（en / zh）', en: 'Unknown language "{{lang}}" · /lang to view all (en / zh)' },
-  'lang-switch-failed': { zh: '语言「{{lang}}」切换失败（无法写入 ~/.dsh-tui/lang.json）', en: 'Language "{{lang}}" switch failed (cannot write ~/.dsh-tui/lang.json)' },
+  'lang-switch-failed': { zh: '语言「{{lang}}」切换失败（无法写入 ~/.dsh-cli/lang.json）', en: 'Language "{{lang}}" switch failed (cannot write ~/.dsh-cli/lang.json)' },
   'lang-picker-title': { zh: '界面语言', en: 'UI language' },
   'lang-zh-desc': { zh: '简体中文（默认）', en: 'Simplified Chinese (default)' },
   'lang-en-desc': { zh: 'English（英文）', en: 'English' },
@@ -1492,7 +1492,7 @@ export function progressSpinnerVerb(language: ProgressLanguage, verb: string): s
 /** Read-only view of the dictionary for audits (scripts/verify-i18n.ts). */
 export const i18nDict: Readonly<Record<string, { readonly zh?: I18nText; readonly en?: I18nText }>> = dict
 
-// ── persistence (~/.dsh-tui/lang.json) ─────────────────────────────────
+// ── persistence (~/.dsh-cli/lang.json) ─────────────────────────────────
 
 /**
  * Parse a persisted `{ lang }` value; anything else yields undefined.
@@ -1557,14 +1557,14 @@ export function detectLocaleLang(): Lang {
 }
 
 /**
- * Resolve the startup language: `DSH_TUI_LANG` when it holds a valid value
+ * Resolve the startup language: `DSH_CLI_LANG` when it holds a valid value
  * (pinned at process start — the repro/verify scripts rely on this for
  * deterministic UI copy), else the persisted `/lang` choice, else the OS
  * locale guess, else `en` (the fallback language). The
  * cordis.yml `lang` precedence lives in plugin.apply.
  */
 export function resolveStartupLang(): Lang {
-  const envLang = process.env.DSH_TUI_LANG
+  const envLang = process.env.DSH_CLI_LANG
   if (isLang(envLang)) return envLang
   return readLangPref() ?? detectLocaleLang()
 }

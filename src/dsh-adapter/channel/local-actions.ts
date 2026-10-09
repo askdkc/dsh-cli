@@ -75,7 +75,7 @@ export function createLocalActions(deps: {
       const capture = binding.capture()
       try {
         const children = await service.listChildren((binding.agent.session as { id?: unknown }).id)
-        if (!current(capture)) throw new Error('dsh-tui: Channel lifetime has ended')
+        if (!current(capture)) throw new Error('dsh-cli: Channel lifetime has ended')
         if (children.length === 0) return [t('subagent-none')]
         return children.map(child => {
           const id = typeof child.id === 'string' ? child.id : (child.id.value ?? '')

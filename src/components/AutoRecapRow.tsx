@@ -4,7 +4,7 @@ import { Divider } from './design-system/Divider.js'
 import { t } from '../i18n.js'
 
 /**
- * Auto-recap row (`dsh-tui.recapOnOpen` setting): a quiet, dim recap shown
+ * Auto-recap row (`dsh-cli.recapOnOpen` setting): a quiet, dim recap shown
  * at the bottom of the transcript after an automatic summary on session
  * open/resume — a thin divider, then a `回顾：` line showing the session
  * tail in FULL (wraps over lines rather than truncating, like a colleague

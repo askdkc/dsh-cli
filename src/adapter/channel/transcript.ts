@@ -17,7 +17,7 @@ import { CHANNEL_SPLIT_TOKEN } from './internal-token.js'
 /** Build the host-internal transcript surface over one live Channel. */
 export function createChannelTranscript(channel: Channel, token: symbol): HostChannelTranscriptPort {
   if (token !== CHANNEL_SPLIT_TOKEN) {
-    throw new Error('dsh-tui: Channel split transcript requires the internal host token')
+    throw new Error('dsh-cli: Channel split transcript requires the internal host token')
   }
   return Object.freeze({
     rows: () => projectChannelRows(channel.rows),

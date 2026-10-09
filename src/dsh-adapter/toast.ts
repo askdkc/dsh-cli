@@ -144,23 +144,23 @@ export class TuiToastRuntime extends Service {
     try {
       caller = requirePluginCaller(this.ctx, 'tuiToast.show', this)
     } catch {
-      this.ctx.logger.warn('dsh-tui: tuiToast.show requires a live non-root plugin activation')
+      this.ctx.logger.warn('dsh-cli: tuiToast.show requires a live non-root plugin activation')
       return false
     }
     const state = toastStateFor(this)
     if (typeof text !== 'string' && typeof text !== 'number' && typeof text !== 'boolean') {
-      caller.logger.warn('dsh-tui: tuiToast.show rejected non-scalar text')
+      caller.logger.warn('dsh-cli: tuiToast.show rejected non-scalar text')
       return false
     }
     const cleaned = cleanScalarText(text, TEXT_CELLS)
     if (cleaned === '') {
-      caller.logger.warn('dsh-tui: tuiToast.show rejected empty text')
+      caller.logger.warn('dsh-cli: tuiToast.show rejected empty text')
       return false
     }
     let color: TuiToastDelivery['color']
     if (options.color !== undefined) {
       if (!COLORS.has(options.color)) {
-        caller.logger.warn(`dsh-tui: tuiToast.show rejected unknown color "${String(options.color)}"`)
+        caller.logger.warn(`dsh-cli: tuiToast.show rejected unknown color "${String(options.color)}"`)
         return false
       }
       color = options.color
@@ -170,14 +170,14 @@ export class TuiToastRuntime extends Service {
       if (options.timeoutMs <= 0) {
         // Sticky toasts are a host-only device; fall back, don't fail —
         // the plugin asked to be seen, not to park an indicator forever.
-        caller.logger.warn('dsh-tui: tuiToast.show ignores sticky timeoutMs (host-only); using the 4000ms default')
+        caller.logger.warn('dsh-cli: tuiToast.show ignores sticky timeoutMs (host-only); using the 4000ms default')
       } else {
         timeoutMs = Math.min(TIMEOUT_MAX_MS, Math.max(TIMEOUT_MIN_MS, Math.floor(options.timeoutMs)))
       }
     }
     const owner = activationFiber(caller)
     if (owner === undefined) {
-      caller.logger.warn('dsh-tui: tuiToast.show requires a live activation owner')
+      caller.logger.warn('dsh-cli: tuiToast.show requires a live activation owner')
       return false
     }
     const now = Date.now()
@@ -186,7 +186,7 @@ export class TuiToastRuntime extends Service {
     if (window.length >= RATE_LIMIT) {
       if (!state.warned.has(owner)) {
         state.warned.add(owner)
-        caller.logger.warn(`dsh-tui: tuiToast.show rate-limited an activation to ${RATE_LIMIT}/min; further toasts in this window are dropped silently`)
+        caller.logger.warn(`dsh-cli: tuiToast.show rate-limited an activation to ${RATE_LIMIT}/min; further toasts in this window are dropped silently`)
       }
       state.windows.set(owner, window)
       return false

@@ -1,6 +1,6 @@
 /**
  * End-to-end verification of the plugin decision-event seam
- * (dsh-tui-extensions): a REAL cordis context, a REAL createChannel over a
+ * (dsh-cli-extensions): a REAL cordis context, a REAL createChannel over a
  * fake agent, and a REAL Chat screen driven through a fake TTY.
  *
  * Covered contracts:
@@ -57,24 +57,24 @@
  */
 process.env.FORCE_COLOR = '3'
 // 断言针对中文 i18n 文案（toast/标题），与运行环境的 locale 无关。
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 // 家目录隔离：touchSession/clearResumeTarget（/new 与 rewind 都会走）写
-// ~/.dsh-tui 的真实文件，必须先切到临时目录再 import src。HOME 与
+// ~/.dsh-cli 的真实文件，必须先切到临时目录再 import src。HOME 与
 // USERPROFILE 必须成对设置（POSIX 读 HOME、Windows 读 USERPROFILE）。
 const { mkdtempSync, mkdirSync, readFileSync, writeFileSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-ext-events-home-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-ext-events-home-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 // createChannel installs the D-7 decision guard itself (the backstop for a
-// missing dsh-tui-extensions row — this battery mounts none, so it exercises
+// missing dsh-cli-extensions row — this battery mounts none, so it exercises
 // exactly that path). Intentional handlers below are mounted through an
 // admitted Component and the host-mediated DecisionEvents API; the root
 // context remains unprivileged for the denial probe.
-writeFileSync(joinPath(isolatedHome, '.dsh-tui', 'extension-grants.json'), JSON.stringify({
+writeFileSync(joinPath(isolatedHome, '.dsh-cli', 'extension-grants.json'), JSON.stringify({
   grants: {
     'event-probe': [
       { name: 'session.input.intercept', scope: 'tui/input', activationId: 'events-act' },

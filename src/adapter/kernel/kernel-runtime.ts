@@ -507,7 +507,7 @@ export class KernelRuntime {
         }
         if (this.mountedDriverIds.has(driver.id)) continue
         if (driver.mountEffectClass === undefined) {
-          throw new Error(`dsh-tui: driver "${driver.id}" must declare mountEffectClass`)
+          throw new Error(`dsh-cli: driver "${driver.id}" must declare mountEffectClass`)
         }
         // Shadow modes must not abort the whole mount transaction because the
         // first selected driver is non-read-only. Skip disallowed drivers and

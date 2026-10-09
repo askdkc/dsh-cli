@@ -168,7 +168,7 @@ export function createPermissionIdentity(
       await new Promise(resolve => setTimeout(resolve, 50))
     }
     ctx.logger.warn(
-      `dsh-tui: permission mode "${target}" was not confirmed by permissionPresets.current()/permission/preset`,
+      `dsh-cli: permission mode "${target}" was not confirmed by permissionPresets.current()/permission/preset`,
     )
     deps.notify(t('mode-permission-unconfirmed'), { color: 'warning' })
     return false
@@ -176,7 +176,7 @@ export function createPermissionIdentity(
 
   const apply = async (target: string): Promise<boolean> => {
     if (!isCommandCompletionToken(target)) {
-      ctx.logger.warn(`dsh-tui: permission mode "${target}" skipped because its identity is not a safe command token`)
+      ctx.logger.warn(`dsh-cli: permission mode "${target}" skipped because its identity is not a safe command token`)
       return false
     }
     const agent = deps.agent()
@@ -203,21 +203,21 @@ export function createPermissionIdentity(
           runtime.set(session, target)
         } catch (error) {
           ctx.logger.warn(
-            `dsh-tui: permission mode "${target}" could not be applied by the permissionPresets service: ${error instanceof Error ? error.message : String(error)}`,
+            `dsh-cli: permission mode "${target}" could not be applied by the permissionPresets service: ${error instanceof Error ? error.message : String(error)}`,
           )
           deps.notify(t('mode-permission-invoke-failed'), { color: 'warning' })
           return false
         }
         return await confirmTarget(target, session, 2000)
       }
-      ctx.logger.warn(`dsh-tui: permission mode "${target}" skipped because /permission is not registered`)
+      ctx.logger.warn(`dsh-cli: permission mode "${target}" skipped because /permission is not registered`)
       deps.notify(t('mode-permission-unregistered'), { color: 'warning' })
       return false
     }
     const result = await deps.executeRegistryCommand('permission', ` ${target}`)
     if (session !== deps.agent().session) return false
     if (result === undefined) {
-      ctx.logger.warn(`dsh-tui: permission mode "${target}" could not invoke /permission`)
+      ctx.logger.warn(`dsh-cli: permission mode "${target}" could not invoke /permission`)
       deps.notify(t('mode-permission-invoke-failed'), { color: 'warning' })
       return false
     }
@@ -245,7 +245,7 @@ export function createPermissionIdentity(
     const canonical = canonicalForMode(spec, session)
     if (canonical === undefined) {
       ctx.logger.warn(
-        `dsh-tui: static mode "${spec.id}" cannot safely clear permission identity "${current}"`,
+        `dsh-cli: static mode "${spec.id}" cannot safely clear permission identity "${current}"`,
       )
       deps.notify(t('mode-permission-no-canonical', { name: modeDisplayName(spec) }), { color: 'warning' })
       return false

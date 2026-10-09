@@ -4,7 +4,7 @@ const fs = require('node:fs')
 const { dirname, isAbsolute, join, relative, resolve, sep } = require('node:path')
 const { randomUUID } = require('node:crypto')
 
-const TUI = '@askdkc/dsh-cli'
+const CLI = '@askdkc/dsh-cli'
 const BASE = '@deepseek-ai/dsh-base'
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value)
 
@@ -12,8 +12,8 @@ const object = value => value !== null && typeof value === 'object' && !Array.is
 function readRuntimeMetadata(runtimeRoot) {
   const dshRoot = join(runtimeRoot, 'node_modules/@deepseek-ai/dsh')
   const dsh = JSON.parse(fs.readFileSync(join(dshRoot, 'package.json'), 'utf8'))
-  const tui = JSON.parse(fs.readFileSync(join(runtimeRoot, 'node_modules', TUI, 'package.json'), 'utf8'))
-  for (const [name, version] of [['DSH', dsh.version], ['TUI', tui.version]]) {
+  const cli = JSON.parse(fs.readFileSync(join(runtimeRoot, 'node_modules', CLI, 'package.json'), 'utf8'))
+  for (const [name, version] of [['DSH', dsh.version], ['CLI', cli.version]]) {
     if (typeof version !== 'string' || !/^[0-9A-Za-z.+-]+$/u.test(version)) {
       throw new Error(`${name} manifest has no usable version`)
     }
@@ -30,7 +30,7 @@ function readRuntimeMetadata(runtimeRoot) {
   if (!fs.statSync(entry).isFile()) throw new Error(`DSH CLI entry is not a file: ${entry}`)
   return {
     dshVersion: dsh.version,
-    tuiVersion: tui.version,
+    cliVersion: cli.version,
     binPath: relative(runtimeRoot, entry).split(sep).join('/'),
   }
 }
@@ -77,7 +77,7 @@ function replaceRuntimeLink(linkPath, target) {
 }
 
 /** Migrate generated profiles; validate all user state before the first write. */
-function ensureProfile({ home, runtimeRoot, tuiVersion, profile = 'dsh-cli' }) {
+function ensureProfile({ home, runtimeRoot, cliVersion, profile = 'dsh-cli' }) {
   const profileDir = join(home, 'profiles', profile)
   const manifestPath = join(profileDir, 'package.json')
   const patchPath = join(profileDir, 'cordis.patch.yml')
@@ -100,23 +100,23 @@ function ensureProfile({ home, runtimeRoot, tuiVersion, profile = 'dsh-cli' }) {
     if (error.code !== 'ENOENT') throw error
   }
   let resetPatch = !fs.existsSync(patchPath)
-  if (!bundles.includes(TUI) && !resetPatch) {
+  if (!bundles.includes(CLI) && !resetPatch) {
     const patch = fs.readFileSync(patchPath, 'utf8')
-    const previousPatch = join(linkPath, TUI, 'cordis.patch.yml')
+    const previousPatch = join(linkPath, CLI, 'cordis.patch.yml')
     if (patch.trim() === '[]' || (fs.existsSync(previousPatch) && patch === fs.readFileSync(previousPatch, 'utf8'))) {
       resetPatch = true
     } else {
       throw new Error(`Standalone migration preserved your edited patch: ${patchPath}. `
-        + `Move only your custom overrides into that file and add ${TUI} to dsh.profile.bundles in ${manifestPath}, then restart.`)
+        + `Move only your custom overrides into that file and add ${CLI} to dsh.profile.bundles in ${manifestPath}, then restart.`)
     }
   }
   const nextBundles = bundles.filter((name, index) =>
-    (name !== BASE && name !== TUI) || bundles.indexOf(name) === index)
+    (name !== BASE && name !== CLI) || bundles.indexOf(name) === index)
   if (!nextBundles.includes(BASE)) nextBundles.unshift(BASE)
-  if (!nextBundles.includes(TUI)) nextBundles.splice(nextBundles.indexOf(BASE) + 1, 0, TUI)
+  if (!nextBundles.includes(CLI)) nextBundles.splice(nextBundles.indexOf(BASE) + 1, 0, CLI)
   const next = {
     ...manifest,
-    dependencies: { ...manifest.dependencies, [TUI]: tuiVersion },
+    dependencies: { ...manifest.dependencies, [CLI]: cliVersion },
     dsh: {
       ...manifest.dsh,
       profile: {

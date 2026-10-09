@@ -1,13 +1,13 @@
 /**
- * IDE selection channel (PR-B groundwork): the dsh-tui side of a loopback
+ * IDE selection channel (PR-B groundwork): the dsh-cli side of a loopback
  * WebSocket link with a companion IDE extension (dsh-tui-vscode). The
  * extension broadcasts caret-selection changes; the TUI consumes them to
  * attach `<attached-file …>` blocks at submit time (ADR-001).
  *
  * Discovery has two paths (DESIGN D4):
- *   1. env direct — DSH_TUI_IDE_PORT + DSH_TUI_IDE_TOKEN, injected when the
+ *   1. env direct — DSH_CLI_IDE_PORT + DSH_CLI_IDE_TOKEN, injected when the
  *      extension spawns this TUI itself;
- *   2. lock scan — `~/.dsh-tui/ide/*.lock` files written by the extension
+ *   2. lock scan — `~/.dsh-cli/ide/*.lock` files written by the extension
  *      ({port, token, workspaceFolders, pid}); locks whose workspaceFolders
  *      match the session cwd connect first.
  *
@@ -38,9 +38,9 @@ import { join } from 'node:path'
 import { DATA_DIR } from '../utils/paths.js'
 
 /** Env var carrying the extension's loopback WS port (spawn-injected). */
-export const IDE_PORT_ENV = 'DSH_TUI_IDE_PORT'
+export const IDE_PORT_ENV = 'DSH_CLI_IDE_PORT'
 /** Env var carrying the extension's handshake token (spawn-injected). */
-export const IDE_TOKEN_ENV = 'DSH_TUI_IDE_TOKEN'
+export const IDE_TOKEN_ENV = 'DSH_CLI_IDE_TOKEN'
 
 /** Handshake frame the client must send as its very first message. */
 const HELLO_METHOD = 'ide/hello'
@@ -59,7 +59,7 @@ const SELECTION_METHOD = 'selection_changed'
 /** Total connection budget across all candidates, in milliseconds. */
 const CONNECT_BUDGET_MS = 300
 
-/** Where the extension advertises its loopback server (`~/.dsh-tui/ide`). */
+/** Where the extension advertises its loopback server (`~/.dsh-cli/ide`). */
 export function ideLockDir(dataDir: string = DATA_DIR): string {
   return join(dataDir, 'ide')
 }

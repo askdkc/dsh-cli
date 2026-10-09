@@ -1,5 +1,5 @@
 /**
- * Persisted reasoning-effort preference (`~/.dsh-tui/effort.json`). Set via
+ * Persisted reasoning-effort preference (`~/.dsh-cli/effort.json`). Set via
  * `/effort` (slider or `/effort <id>`; `/effort status` reports the current
  * level) — note Shift+Tab cycles session modes (default/plan/full), not
  * effort levels. The choice lands here so the next boot starts on it. The
@@ -33,7 +33,7 @@ export function readEffortPref(dir: string = PREFS_DIR): string | undefined {
 /**
  * Default reasoning-effort precedence for sessions that do not carry their
  * own choice: the /settings 默认推理强度 user layer (`settings.yaml
- * dsh-tui.effortDefault`; the plugin folds the `auto` option to undefined
+ * dsh-cli.effortDefault`; the plugin folds the `auto` option to undefined
  * before calling), then the cordis.yml `effort` pin, then this persisted
  * `/effort` file, then the adapter/model default (undefined). Mirrors the
  * lang chain (settings user layer > cordis.yml > lang.json).

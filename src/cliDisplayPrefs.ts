@@ -194,7 +194,7 @@ export const getPageMarginSetting = pageMarginStore.get
 export const applyPageMargin = pageMarginStore.apply
 
 /** Whether ```mermaid fences render as box-drawing diagrams (settings
- *  `dsh-tui.mermaidDiagrams`, default on). Only an explicit `false` keeps
+ *  `dsh-cli.mermaidDiagrams`, default on). Only an explicit `false` keeps
  *  the fenced source. */
 const mermaidDiagramsStore = createLiveSetting<boolean>(true, value => value !== false)
 export const subscribeMermaidDiagrams = mermaidDiagramsStore.subscribe

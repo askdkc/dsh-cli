@@ -1,5 +1,5 @@
 {
-  "name": "@dsh-tui-dev/sqlite-island",
+  "name": "@dsh-cli-dev/sqlite-island",
   "version": "0.0.0",
   "private": true,
   "type": "module",

@@ -32,7 +32,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const name = 'dsh-tui-command-trees'
+export const name = 'dsh-cli-command-trees'
 
 /** Small host-only registry; command execution remains owned by dsh-commands. */
 export class TuiCommandTreeRuntime extends Service {
@@ -65,7 +65,7 @@ export class TuiCommandTreeRuntime extends Service {
     const caller = requirePluginCaller(this.ctx, 'tuiCommandTrees.register', this)
     const state = commandTreeStateFor(this)
     const owner = activationFiber(caller)
-    if (owner === undefined) throw new Error('dsh-tui: tuiCommandTrees.register requires a live activation')
+    if (owner === undefined) throw new Error('dsh-cli: tuiCommandTrees.register requires a live activation')
     const root = provider.root.trim().toLowerCase()
     if (!/^[a-z][a-z0-9_-]*$/u.test(root)) throw new TypeError(`invalid TUI command-tree root: ${provider.root}`)
     if (state.providers.has(root)) throw new Error(`TUI command-tree root "${root}" is already registered`)

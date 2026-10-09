@@ -90,7 +90,7 @@ export type Props = {
 
 /**
  * Theme-aware Text component that resolves theme color keys to raw colors
- * in the dsh-TUI visual language). This lets components use
+ * in the dsh-CLI visual language). This lets components use
  * `color="subtle"`-style theme keys consistently.
  */
 export default function ThemedText({

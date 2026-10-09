@@ -8,7 +8,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-messages-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-messages-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 process.env.DSH_HOME = home

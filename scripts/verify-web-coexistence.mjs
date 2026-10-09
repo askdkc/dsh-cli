@@ -1,5 +1,5 @@
 /**
- * Regression gate for mixed dsh-web + dsh-tui profiles.
+ * Regression gate for mixed dsh-web + dsh-cli profiles.
  *
  * The installed web-app is always checked. A source checkout supplies the
  * source-authoritative prerelease baseline; CI requires it instead of silently
@@ -54,7 +54,7 @@ if (existsSync(sourceWebPath) && existsSync(sourceWebManifest) && existsSync(sou
 }
 
 const tuiPatches = loadPatch(tuiPath)
-assert.ok(Array.isArray(tuiPatches), 'dsh-tui patch must be a top-level list')
+assert.ok(Array.isArray(tuiPatches), 'dsh-cli patch must be a top-level list')
 
 const evaluateFor = (baseline, expression, entries = []) => evaluate({
   baseUrl: baseline.baseUrl,
@@ -95,7 +95,7 @@ for (const baseline of baselines) {
   assert.deepEqual(
     duplicates,
     [],
-    `${baseline.label}: dsh-tui reuses official loader ids: ${duplicates.join(', ')}`,
+    `${baseline.label}: dsh-cli reuses official loader ids: ${duplicates.join(', ')}`,
   )
 
   for (const { id, name } of shared) {
@@ -103,9 +103,9 @@ for (const baseline of baselines) {
     const official = composed.find(row => row?.id === id && row?.name === name)
     assert.equal(Boolean(official), officialExpected, `${baseline.label}: official ${id} ownership drifted`)
 
-    const scopedId = `dsh-tui-${id}`
+    const scopedId = `dsh-cli-${id}`
     const tuiRow = composed.find(row => row?.id === scopedId && row?.name === name)
-    assert.ok(tuiRow, `${baseline.label}: dsh-tui patch must mount ${scopedId}`)
+    assert.ok(tuiRow, `${baseline.label}: dsh-cli patch must mount ${scopedId}`)
     assert.equal(typeof tuiRow.disabled, 'string', `${baseline.label}: ${scopedId} needs a !!js disabled expression`)
     assert.ok(
       tuiRow.disabled.includes(`entry.options.id === '${id}'`) && tuiRow.disabled.includes(`'${name}'`),
@@ -123,8 +123,8 @@ for (const baseline of baselines) {
   const commandGoalPatch = tuiPatches.find(row => row?.id === 'command-goal')
   assert.equal(commandGoalPatch?.disabled, shippedOwnsCommandGoal,
     `${baseline.label}: preset owns command-goal`)
-  assert.equal(composed.some(row => row?.id === 'dsh-tui-agent-presets'), false)
-  assert.equal(composed.some(row => row?.id === 'dsh-tui-code-runtime'), false)
+  assert.equal(composed.some(row => row?.id === 'dsh-cli-agent-presets'), false)
+  assert.equal(composed.some(row => row?.id === 'dsh-cli-code-runtime'), false)
 
 }
 

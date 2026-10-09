@@ -103,10 +103,10 @@ async function verifyScenesLive(ctx: unknown): Promise<CapabilityLifecycle[]> {
   }
   const evidence: DetectionEvidence[] = [serviceEvidence('tuiScenes')]
   const missing: string[] = []
-  const id = `dsh_tui_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+  const id = `dsh_cli_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
   const descriptor: HostSceneDescriptor = {
     id,
-    title: 'dsh-tui reversible scene probe',
+    title: 'dsh-cli reversible scene probe',
     component: () => undefined,
   }
   let dispose: (() => void) | undefined
@@ -170,8 +170,8 @@ function createScenesPort(host: TuiSceneHost): HostScenesPort {
 }
 
 export const scenesDriver: UpstreamDriver = {
-  id: 'dsh-tui-scenes',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-scenes',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.scenes',
   mountEffectClass: 'register',
   detect: detectScenesCapability,

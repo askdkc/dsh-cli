@@ -94,7 +94,7 @@ Channel 只保留适合当前 TUI 的投影。长会话超过窗口后，旧行�
 
 改动 `src/ink/` 或 Yoga 时，至少运行 CI 的问卷/工具卡回归，并按影响范围运行
 scroll、resize、copy-on-select 或 PTY 脚本。不要用普通 `console.log` 向活动 TUI 的
-stdout 打印诊断；使用 stderr 的 `DSH_TUI_DEBUG` 或 `DSH_TUI_RENDER_LOG`。
+stdout 打印诊断；使用 stderr 的 `DSH_CLI_DEBUG` 或 `DSH_CLI_RENDER_LOG`。
 
 ## 图片渲染预算
 
@@ -150,45 +150,45 @@ stdout 打印诊断；使用 stderr 的 `DSH_TUI_DEBUG` 或 `DSH_TUI_RENDER_LOG`
 | 路径 | 内容 |
 | --- | --- |
 | `~/.dsh/sessions/` | profile patch 默认的共享 JSONL 会话事件（TUI / Web） |
-| `~/.dsh-tui/sessions/` | 直接运行 `cordis.yml` 时的 JSONL 会话事件 |
-| `~/.dsh-tui/resume.txt` | Windows 启动器和退出提示使用的最近 session ID |
-| `~/.dsh-tui/last-used.json` | `/resume` 最近使用排序元数据 |
-| `~/.dsh-tui/theme.json` | 当前主题选择（内置、静态或插件主题 ID） |
-| `~/.dsh-tui/themes/` | 用户自定义主题 JSON；运行时插件主题不写入此目录 |
-| `~/.dsh-tui/working-activity.json` | 工作状态动画选择 |
-| `~/.dsh-tui/agent-preset.json` | 新会话默认 Agent preset |
+| `~/.dsh-cli/sessions/` | 直接运行 `cordis.yml` 时的 JSONL 会话事件 |
+| `~/.dsh-cli/resume.txt` | Windows 启动器和退出提示使用的最近 session ID |
+| `~/.dsh-cli/last-used.json` | `/resume` 最近使用排序元数据 |
+| `~/.dsh-cli/theme.json` | 当前主题选择（内置、静态或插件主题 ID） |
+| `~/.dsh-cli/themes/` | 用户自定义主题 JSON；运行时插件主题不写入此目录 |
+| `~/.dsh-cli/working-activity.json` | 工作状态动画选择 |
+| `~/.dsh-cli/agent-preset.json` | 新会话默认 Agent preset |
 
-`DSH_TUI_SESSION_ROOT` 在两种组合中都改写 JSONL 根目录。profile 默认使用
+`DSH_CLI_SESSION_ROOT` 在两种组合中都改写 JSONL 根目录。profile 默认使用
 `$DSH_HOME/sessions`（通常为 `~/.dsh/sessions/`）；直接运行根目录的
-`cordis.yml` 时默认使用 `~/.dsh-tui/sessions/`。
+`cordis.yml` 时默认使用 `~/.dsh-cli/sessions/`。
 
 偏好文件是可选状态：损坏或缺失时回退，不应阻止 TUI 启动。
 
-数据目录为 `~/.dsh-tui`（早期版本曾用 `~/.dsh-cc`，自更名版本起新代码只读写
-`~/.dsh-tui`，不自动迁移旧目录）。
+数据目录为 `~/.dsh-cli`（早期版本曾用 `~/.dsh-cc`，自更名版本起新代码只读写
+`~/.dsh-cli`，不自动迁移旧目录）。
 
 ## 与 VS Code 扩展的通道细节
 
-companion 扩展 `dsh-tui-vscode` 与 TUI 的交互面，维护 dsh-tui 侧时需要了解：
+companion 扩展 `dsh-tui-vscode` 与 TUI 的交互面，维护 dsh-cli 侧时需要了解：
 
 - **指定会话恢复（env 通道）**：点侧边栏会话条目时，扩展把目标会话 id 经
-  `DSH_TUI_RESUME_SESSION` 注入终端环境，并刻意不传 `--resume`。本 profile 的
+  `DSH_CLI_RESUME_SESSION` 注入终端环境，并刻意不传 `--resume`。本 profile 的
   `cordis.patch.yml` 启动时读该 env（`sessionId: !!js
-  process.env.DSH_TUI_RESUME_SESSION ?? undefined`），TUI 随即恢复该会话。
-  若传裸 `--resume`（或 `-c`/`--continue`），启动器（`bin/dsh-tui.js`）会用
-  `~/.dsh-tui/resume.txt` 覆盖 env——那是「恢复上次会话」的路径，两者互不干扰
-  （已读启动器源码确认）。CLI 用户也可用 `dsh-tui --resume <id>` 或
+  process.env.DSH_CLI_RESUME_SESSION ?? undefined`），TUI 随即恢复该会话。
+  若传裸 `--resume`（或 `-c`/`--continue`），启动器（`bin/dsh-cli.js`）会用
+  `~/.dsh-cli/resume.txt` 覆盖 env——那是「恢复上次会话」的路径，两者互不干扰
+  （已读启动器源码确认）。CLI 用户也可用 `dsh-cli --resume <id>` 或
   `--resume=<id>`（0.7.0 起）恢复指定会话，效果与 env 通道一致。
 - **侧边栏会话历史的数据源**：`~/.dsh/sessions` 的会话日志（zstd JSONL）、
   dsh-storage 账本（`~/.dsh/storages/session_projcache.json`，Web 会话列表的
-  标题来源）、TUI 的最近使用表（`~/.dsh-tui/last-used.json`）。标题优先级：
+  标题来源）、TUI 的最近使用表（`~/.dsh-cli/last-used.json`）。标题优先级：
   日志 `session/title` 事件 → storage 账本标题 → 首条用户消息 → "未命名会话"；
   完整路径与会话 id 进悬浮提示。按项目（cwd 短名）分组、按最近活跃/使用排序；
   自动刷新监听会话目录变化。
 
 ## 权限与安全边界
 
-`dsh-TUI` 本身不提供独立沙箱；实际能力由 `cordis.patch.yml` 挂载的
+`dsh-CLI` 本身不提供独立沙箱；实际能力由 `cordis.patch.yml` 挂载的
 DSH 服务决定。
 
 审批走 `ctx.approval` seam：策略为 `ask` 时，TUI 以本地审批面板作为
@@ -268,8 +268,8 @@ answerer（`approval/request` waterfall），仅允许一次/拒绝两种决定�
 | 目的 | 方式 |
 | --- | --- |
 | 环境与 profile | TUI 内运行 `/doctor`、`/config`、`/permission status` |
-| stderr 调试 | `DSH_TUI_DEBUG=1 dsh --profile dsh-tui` |
-| 原始 ANSI 帧 | `DSH_TUI_RENDER_LOG=/path/to/render.log dsh --profile dsh-tui` |
+| stderr 调试 | `DSH_CLI_DEBUG=1 dsh --profile dsh-cli` |
+| 原始 ANSI 帧 | `DSH_CLI_RENDER_LOG=/path/to/render.log dsh --profile dsh-cli` |
 | 主题回归 | `node --import tsx/esm scripts/verify-themes.mjs` |
 
-`DSH_TUI_RENDER_LOG` 和会话导出可能包含敏感内容，分享前必须脱敏。
+`DSH_CLI_RENDER_LOG` 和会话导出可能包含敏感内容，分享前必须脱敏。

@@ -54,14 +54,14 @@ if (typeof verifyAssetChecksum === 'function') {
   const payload = Buffer.from('legit binary bytes\n')
   const digest = createHash('sha256').update(payload).digest('hex')
   const upper = digest.toUpperCase()
-  const asset = 'dsh-tui-standalone-linux-x64.tar.gz'
+  const asset = 'dsh-cli-standalone-linux-x64.tar.gz'
 
   check('标准 SHA256SUMS 行（两空格分隔）匹配', verifyAssetChecksum(payload, `${digest}  ${asset}\n`, asset))
   check('二进制格式（* 前缀）匹配', verifyAssetChecksum(payload, `${digest} *${asset}\n`, asset))
   check('大写 hex 摘要匹配', verifyAssetChecksum(payload, `${upper}  ${asset}\n`, asset))
   check('多行清单按资产名取行', verifyAssetChecksum(
     payload,
-    `${createHash('sha256').update(Buffer.from('other')).digest('hex')}  dsh-tui-standalone-win-x64.zip\n`
+    `${createHash('sha256').update(Buffer.from('other')).digest('hex')}  dsh-cli-standalone-win-x64.zip\n`
       + `${digest}  ${asset}\n`,
     asset,
   ))
@@ -120,7 +120,7 @@ const server = http.createServer(async (req, res) => {
       // 外来旁注：另一平台资产（win zip）的 .sha256——它的 digest 登记
       // 的是 win 资产，拿来校验 linux 资产必然 mismatch（fail-closed 误拒
       // 无辜用户的更新）。
-      assets.push({ name: 'dsh-tui-standalone-win-x64.zip.sha256', browser_download_url: `http://127.0.0.1:${serverPort()}/dsh-tui-standalone-win-x64.zip.sha256` })
+      assets.push({ name: 'dsh-cli-standalone-win-x64.zip.sha256', browser_download_url: `http://127.0.0.1:${serverPort()}/dsh-cli-standalone-win-x64.zip.sha256` })
     }
     res.writeHead(200, { 'content-type': 'application/json' })
     res.end(JSON.stringify({ tag_name: 'v9.9.9', assets }))
@@ -231,16 +231,16 @@ const base = `http://127.0.0.1:${serverPort()}`
 
 // ═══════════════ Part 3：downloadAndReplaceStandaloneBinary 端到端 ═══════════════
 
-// 临时假二进制 + 临时缓存目录：DSH_TUI_STANDALONE_BINARY / _CACHE 注入，
+// 临时假二进制 + 临时缓存目录：DSH_CLI_STANDALONE_BINARY / _CACHE 注入，
 // 替换动作发生在 scratch 内，不碰真实安装。
-const fakeCurrentBinary = join(scratch, 'current', 'dsh-tui')
+const fakeCurrentBinary = join(scratch, 'current', 'dsh-cli')
 mkdirSync(join(scratch, 'current'), { recursive: true })
 writeFileSync(fakeCurrentBinary, 'old binary\n')
 chmodSync(fakeCurrentBinary, 0o755)
 const cacheDir = join(scratch, 'cache')
 mkdirSync(cacheDir, { recursive: true })
-process.env.DSH_TUI_STANDALONE_BINARY = fakeCurrentBinary
-process.env.DSH_TUI_STANDALONE_CACHE = cacheDir
+process.env.DSH_CLI_STANDALONE_BINARY = fakeCurrentBinary
+process.env.DSH_CLI_STANDALONE_CACHE = cacheDir
 
 const downloadFn = updateModule.downloadAndReplaceStandaloneBinary as
   | ((url: string, onProgress?: (text: string) => void, checksumUrl?: string,
@@ -366,14 +366,14 @@ if (typeof downloadFn === 'function') {
 // api.github.com / github.com 直链）。
 {
   const realFetch = globalThis.fetch
-  const realStandalone = process.env.DSH_TUI_STANDALONE
+  const realStandalone = process.env.DSH_CLI_STANDALONE
   const realRegistry = process.env.NPM_CONFIG_REGISTRY
-  const resolveTarget = updateModule.resolveTuiUpdateTarget as
+  const resolveTarget = updateModule.resolveCliUpdateTarget as
     | (() => Promise<Record<string, unknown>>)
     | undefined
 
   if (typeof resolveTarget === 'function' && typeof downloadFn === 'function') {
-    process.env.DSH_TUI_STANDALONE = '1'
+    process.env.DSH_CLI_STANDALONE = '1'
     process.env.NPM_CONFIG_REGISTRY = 'https://registry.npmjs.org'
     const FALLBACK_DOWNLOAD = `https://github.com/askdkc/dsh-cli/releases/download/v9.9.9/${ASSET_NAME}`
     const FALLBACK_SUMS = 'https://github.com/askdkc/dsh-cli/releases/download/v9.9.9/SHA256SUMS'
@@ -463,25 +463,25 @@ if (typeof downloadFn === 'function') {
     )
 
     globalThis.fetch = realFetch
-    if (realStandalone === undefined) delete process.env.DSH_TUI_STANDALONE
-    else process.env.DSH_TUI_STANDALONE = realStandalone
+    if (realStandalone === undefined) delete process.env.DSH_CLI_STANDALONE
+    else process.env.DSH_CLI_STANDALONE = realStandalone
     if (realRegistry === undefined) delete process.env.NPM_CONFIG_REGISTRY
     else process.env.NPM_CONFIG_REGISTRY = realRegistry
   } else {
-    check('resolveTuiUpdateTarget 已导出', typeof resolveTarget === 'function')
+    check('resolveCliUpdateTarget 已导出', typeof resolveTarget === 'function')
   }
 }
 
 server.close()
 try { rmSync(scratch, { recursive: true, force: true }) } catch { /* best effort */ }
 
-/** 用系统 tar 造一个内容为 given 文本的 dsh-tui 成员归档（与 release 包同构）。 */
+/** 用系统 tar 造一个内容为 given 文本的 dsh-cli 成员归档（与 release 包同构）。 */
 function makeAssetArchive(memberContent: string): Buffer {
   const dir = join(scratch, 'asset-src')
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'dsh-tui'), memberContent)
+  writeFileSync(join(dir, 'dsh-cli'), memberContent)
   const archive = join(scratch, 'asset.tar.gz')
-  execFileSync('tar', ['-czf', archive, '-C', dir, 'dsh-tui'])
+  execFileSync('tar', ['-czf', archive, '-C', dir, 'dsh-cli'])
   return Buffer.from([...readFileSync(archive)])
 }
 

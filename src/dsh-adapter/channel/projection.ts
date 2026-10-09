@@ -961,7 +961,7 @@ export function createChannelProjection(state: ProjectionState, deps: Projection
           deps.rowIds.value += 1
           break
         }
-        // `/color` accent (dsh-tui plugin event, replayed on resume/rewind
+        // `/color` accent (dsh-cli plugin event, replayed on resume/rewind
         // like session/title): last write wins, '' clears to the default.
         if ((event as { type: string }).type === 'session/color') {
           const data = event.data as unknown as { color?: unknown }

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createChannel } from '../lib/types/dsh-adapter/channel.js'
 
-const fixture = await mkdtemp(join(tmpdir(), 'dsh-tui-file-completion-'))
+const fixture = await mkdtemp(join(tmpdir(), 'dsh-cli-file-completion-'))
 
 function makeAgent() {
   return {

@@ -229,13 +229,13 @@ function createChannelWithOwner(
   // built-in local commands exist.
   const commandService: CommandRuntime | undefined = ctx.get('commands')
   // messages.observe broker (optional service, C-042): mounted by the
-  // dsh-tui-plugin-host row; absent the row, publish is a no-op and nothing
+  // dsh-cli-plugin-host row; absent the row, publish is a no-op and nothing
   // else changes (soft degradation, #183).
   const messageObserver = getHostMessageObserver(
     ctx.get('tuiMessageObserver') as TuiMessageObserverRuntime | undefined,
   )
   // Workspace registry runtime (optional service, issue #183): mounted by
-  // the bundle patch's dsh-tui-workspaces row; absent the row (stale patch
+  // the bundle patch's dsh-cli-workspaces row; absent the row (stale patch
   // or a bare embedder), degrade to the local-only runtime. plugin.ts owns
   // the degraded-boot warning for profile launches.
   const workspaceService = getHostWorkspaceRuntime(ctx.get('tuiWorkspaces')) ?? createLocalWorkspaceRuntime()
@@ -247,7 +247,7 @@ function createChannelWithOwner(
   // so compute once and cache.
   // Plugin scene runtime (optional service, same degradation rule as
   // tuiWorkspaces/tuiCommandTrees): mounted by the bundle patch's
-  // dsh-tui-scenes row; absent the row, `pluginScene` simply stays undefined.
+  // dsh-cli-scenes row; absent the row, `pluginScene` simply stays undefined.
   const sceneRuntime = getHostSceneRuntime(ctx.get('tuiScenes') as TuiSceneRuntime | undefined)
   // Falls back to the in-package local host when the composition's service
   // row is unavailable (issue #557: the row can be disposed right after
@@ -255,7 +255,7 @@ function createChannelWithOwner(
   const settingsSectionsRuntime = getHostSettingsSections(
     ctx.get('tuiSettingsSections') as TuiSettingsSectionsRuntime | undefined,
   ) ?? getLocalSettingsSectionsHost(ctx)
-  // Custom-entry text renderers (optional service, dsh-tui-extensions row):
+  // Custom-entry text renderers (optional service, dsh-cli-extensions row):
   // absent the row, unknown plugin event types stay invisible in the
   // transcript, exactly as before the seam existed.
   const rendererRuntime = getHostRenderers(ctx.get('tuiRenderers') as TuiRendererRuntime | undefined)
@@ -275,7 +275,7 @@ function createChannelWithOwner(
     : DEFAULT_SESSION_MODES
   if (droppedModeIds.length > 0) {
     ctx.logger.warn(
-      `dsh-tui: session modes ${droppedModeIds.map(id => `"${id}"`).join(', ')} declare no plan/sandbox/approval/permission atom; dropped from the Shift+Tab cycle`,
+      `dsh-cli: session modes ${droppedModeIds.map(id => `"${id}"`).join(', ')} declare no plan/sandbox/approval/permission atom; dropped from the Shift+Tab cycle`,
     )
   }
   // Runtime permission roster: third-party presets enter the Shift+Tab cycle
@@ -385,12 +385,12 @@ function createChannelWithOwner(
   const notifySessionSwitched = (kind: 'new' | 'resume' | 'rewind' | 'fork' | 'agent-view' | 'background', sessionId: string, previousSessionId: string): void => {
       try {
         void dispatchTuiNotification(ctx, 'tui/session-switched', { kind, sessionId, previousSessionId, cwd: state.cwd }).catch((error: unknown) => {
-          ctx.logger.warn('dsh-tui: tui/session-switched listener failed: %o', error)
+          ctx.logger.warn('dsh-cli: tui/session-switched listener failed: %o', error)
         })
     } catch (error) {
       // A bare embedder's context may lack the event bus entirely; the
       // switch itself already succeeded, so this stays a log line.
-      ctx.logger.warn('dsh-tui: tui/session-switched dispatch failed: %o', error)
+      ctx.logger.warn('dsh-cli: tui/session-switched dispatch failed: %o', error)
     }
   }
 
@@ -487,7 +487,7 @@ function createChannelWithOwner(
         | { describe(options?: { redactSecrets?: boolean }): readonly { ns: string; value: unknown }[] }
         | undefined
       if (settings === undefined) return false
-      const ns = settings.describe({ redactSecrets: true }).find(entry => entry.ns === 'dsh-tui')
+      const ns = settings.describe({ redactSecrets: true }).find(entry => entry.ns === 'dsh-cli')
       return (ns?.value as Record<string, unknown> | undefined)?.recapOnOpen !== false
     },
     ...createInitialChannelView(options, {
@@ -1052,7 +1052,7 @@ function createChannelWithOwner(
     // The context owns the complete Channel lifetime, not merely the skill
     // command contribution. Keep emitter teardown in the same finally funnel.
     state.releaseContributions()
-  }, 'dsh-tui channel lifecycle')
+  }, 'dsh-cli channel lifecycle')
   // Statusline breadcrumb: current git branch of the session cwd (best-effort).
   // Re-run when an agent swap adopts a different persisted cwd (/resume,
   // issue #96) so the breadcrumb never shows the previous workspace's branch.

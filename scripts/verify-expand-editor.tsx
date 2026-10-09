@@ -10,7 +10,7 @@
 export {} // 模块边界：避免顶层 await/全局名与其他 verify 脚本冲突
 
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.SSH_CONNECTION = 'headless-test'
 delete process.env.TMUX
 
@@ -407,7 +407,7 @@ try {
   app.unmount()
 }
 
-// ── 阶段 B：设置关闭（dsh-tui.expandEditor=false）→ 两个入口都消失 ────
+// ── 阶段 B：设置关闭（dsh-cli.expandEditor=false）→ 两个入口都消失 ────
 {
   const h2 = makeHarness(COLS, ROWS)
   const stdin2 = h2.stdin

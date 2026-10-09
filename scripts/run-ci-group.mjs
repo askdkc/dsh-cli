@@ -26,7 +26,7 @@
  *   - 结束时汇总 ✓/✗ 清单（附每条耗时，按登记顺序），任一失败 exit 1 并给
  *     失败条目打 ::error；在 GitHub Actions 里再往 step summary 写一张按
  *     耗时降序的表——分片与拆组按这张表的数据来，不靠日志时间戳反推。
- *   - 每条脚本带 DSH_TUI_RENDER_LOG=ci-render-logs/<名>.log 跑（显式设置优先）：
+ *   - 每条脚本带 DSH_CLI_RENDER_LOG=ci-render-logs/<名>.log 跑（显式设置优先）：
  *     通过即删，失败保留，ci.yml 在 job 失败时把目录传成 artifact。时序
  *     flake（#513/#734 一类"退出备用屏后主屏错一行"）本地复现不出来，只有
  *     CI 那一次失败的原始帧字节才是证据。
@@ -67,7 +67,7 @@ const GROUPS = {
     ['verify-text-paint-budget', ['node', '--import', 'tsx/esm', 'scripts/verify-text-paint-budget.tsx']],
     ['verify-text-viewport-paint', ['node', '--import', 'tsx/esm', 'scripts/verify-text-viewport-paint.ts']],
     ['verify-tool-history-window', ['node', '--import', 'tsx/esm', 'scripts/verify-tool-history-window.tsx']],
-// 流式平滑揭示回归（dsh-tui.smoothStreaming）：调度器步进/游标生命周期
+// 流式平滑揭示回归（dsh-cli.smoothStreaming）：调度器步进/游标生命周期
 // （追加保游标、替换 snap、追平不再重打）+ MessageList 集成（流式行/
 // 非流式 fresh 行渐进揭示、回放行直出、开关关闭直出）+ 组件契约
 // （thinking ticker 跟随已到达文本而展开体吃切片、工具卡行级揭示、
@@ -194,6 +194,7 @@ const GROUPS = {
     ["verify-zellij", ['node', '--import', 'tsx/esm', 'scripts/verify-zellij.tsx']],
   ],
   'input-terminal': [
+    ['verify-cli-naming', ['node', 'scripts/verify-cli-naming.mjs']],
 // 按键解析回归（issue #110）：Option+Enter（ESC CR）精确/合并/分块
 // 三种到达形态、CSI-u 与 modifyOtherKeys 的 Shift/Ctrl/Meta+Enter。
     ["verify-keys", ['node', '--import', 'tsx/esm', 'scripts/verify-keys.tsx']],
@@ -317,7 +318,7 @@ const GROUPS = {
 // tuiWorkspaces 服务可选化回归（issue #183）：代码层 inject 不含
 // tuiWorkspaces、消费处带本地兜底、patch 保留服务行与行级顺序保证。
     ["verify-workspaces-degrade", ['node', 'scripts/verify-workspaces-degrade.mjs']],
-// 插件扩展面回归（dsh-tui-extensions）：
+// 插件扩展面回归（dsh-cli-extensions）：
 //  - events：真 cordis 总线 + 真 channel——tui/input 改写/取消/崩溃
 //    隔离、rewind 决策（模式列表/否决/完成后摘要）、session-switch
 //    否决与 switched 通知、compact 否决的 serial bail 语义。
@@ -326,10 +327,10 @@ const GROUPS = {
 //    与粘性报错、真 Chat 驱动的对话框/状态行/快捷键端到端。
     ["verify-extension-events", ['node', '--import', 'tsx/esm', 'scripts/verify-extension-events.tsx']],
     ["verify-extension-ui", ['node', '--import', 'tsx/esm', 'scripts/verify-extension-ui.tsx']],
-// 非 TTY 宿主门禁回归（Web/Tauri 共存）：profile 装有 dsh-tui 的非终端
+// 非 TTY 宿主门禁回归（Web/Tauri 共存）：profile 装有 dsh-cli 的非终端
 // 宿主（stdout 为 pipe/null）必须静默跳过插件、不 throw、不影响宿主启动；
-// 显式 dsh-tui launcher/standalone 启动无 TTY 仍保留原报错。
-    ["verify-tui-host-mode", ['node', '--import', 'tsx/esm', 'scripts/verify-tui-host-mode.ts']],
+// 显式 dsh-cli launcher/standalone 启动无 TTY 仍保留原报错。
+    ["verify-cli-host-mode", ['node', '--import', 'tsx/esm', 'scripts/verify-cli-host-mode.ts']],
 // 插件 toast 接缝回归（ctx.tuiToast）：消毒/标量强制、timeout 钳制
 // （插件不可 sticky）、未知颜色拒绝、每激活 20/min 限速 + 粘性告警、
 // host-only 面不泄漏到插件服务对象、公开 shim 导出。
@@ -472,7 +473,7 @@ const GROUPS = {
 // 0700）。mini runtime fixture 由清单造树 + 系统 tar 打包，解压器注入。
     ["verify-standalone-runtime", ['node', 'scripts/verify-standalone-runtime.mjs']],
     ["verify-standalone-cache-guard", ['node', 'scripts/verify-standalone-cache-guard.mjs']],
-// ~/.dsh-tui 数据文件权限回归（安全修复）：history.jsonl（用户输入全文）、
+// ~/.dsh-cli 数据文件权限回归（安全修复）：history.jsonl（用户输入全文）、
 // mouse-debug.log 与 session-index.json（会话标题/分支名）落盘 0600、
 // DATA_DIR 建目录 0700；临时 HOME 重定向 + 固定 umask，修复前按 umask
 // 落 0644 必红。
@@ -823,17 +824,17 @@ for (const entry of group) {
   rmSync(renderLog, { force: true })
   // One throwaway HOME per script: fixtures used to share the machine's real
   // home, so a script that submits text left entries in
-  // `~/.dsh-tui/history.jsonl` for whatever ran next — and `↑` walks that file
+  // `~/.dsh-cli/history.jsonl` for whatever ran next — and `↑` walks that file
   // (#986), which turned one script's leftovers into the next script's
   // assertion failure. A local group run must also never write the runner's
   // own history. `HOME`/`USERPROFILE` sit after `env` (which carries the real
   // ones) so the real home can never win; an entry may still override them
   // through its own `extraEnv`.
-  const scriptHome = mkdtempSync(join(tmpdir(), 'dsh-tui-group-home-'))
+  const scriptHome = mkdtempSync(join(tmpdir(), 'dsh-cli-group-home-'))
   const startedAt = performance.now()
   const r = spawnSync(argv[0], argv.slice(1), {
     env: {
-      DSH_TUI_RENDER_LOG: renderLog,
+      DSH_CLI_RENDER_LOG: renderLog,
       ...env,
       HOME: scriptHome,
       USERPROFILE: scriptHome,

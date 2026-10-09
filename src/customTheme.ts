@@ -1,7 +1,7 @@
 /**
- * User-defined color themes for dsh-tui.
+ * User-defined color themes for dsh-cli.
  *
- * A theme is a JSON file in `~/.dsh-tui/themes/<name>.json`:
+ * A theme is a JSON file in `~/.dsh-cli/themes/<name>.json`:
  *
  * ```json
  * { "name": "sakura", "displayName": "Sakura Pink", "base": "dark",
@@ -37,7 +37,7 @@ import { DATA_DIR } from './utils/paths.js'
 export const THEME_BASE_NAMES = ['light', 'dark', 'dark-ansi'] as const
 export type ThemeBase = (typeof THEME_BASE_NAMES)[number]
 
-/** The directory user theme files live in (~/.dsh-tui/themes). */
+/** The directory user theme files live in (~/.dsh-cli/themes). */
 export const CUSTOM_THEME_DIR = join(DATA_DIR, 'themes')
 
 /** A validated user theme file. `colors` only carries accepted overrides. */
@@ -85,7 +85,7 @@ const cache = new Map<string, Theme>()
 
 /**
  * `spec.name` → load key (file name), so a theme whose `name` field differs
- * from its file name still resolves (DSH_TUI_THEME, /theme, persistence all
+ * from its file name still resolves (DSH_CLI_THEME, /theme, persistence all
  * speak the display name). Filled lazily on the first name miss.
  */
 const nameIndex = new Map<string, string>()
@@ -103,7 +103,7 @@ export function isThemeKey(value: unknown): value is ThemeColorKey {
 
 /**
  * Whether a name is safe to use as a file name (no path separators or dot
- * traversal). Theme names are user input from DSH_TUI_THEME and /theme, so
+ * traversal). Theme names are user input from DSH_CLI_THEME and /theme, so
  * they must never escape the themes directory.
  */
 export function isSafeThemeName(name: string): boolean {
@@ -136,7 +136,7 @@ export function isValidThemeColor(value: unknown): value is string {
 }
 
 function warn(message: string): void {
-  console.warn(`[dsh-tui] ${message}`)
+  console.warn(`[dsh-cli] ${message}`)
 }
 
 /**
@@ -310,7 +310,7 @@ function indexCustomThemeNames(): void {
 
 /**
  * Whether a name selects a usable theme: a built-in palette, the `auto`
- * pseudo-theme, or a valid user theme file. Used for DSH_TUI_THEME /
+ * pseudo-theme, or a valid user theme file. Used for DSH_CLI_THEME /
  * persisted-preference validation and the runtime /theme switch.
  * @param name - Candidate theme name.
  * @returns True when the theme resolves.

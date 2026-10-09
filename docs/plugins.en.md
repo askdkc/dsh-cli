@@ -15,10 +15,10 @@ live in the admission & development guide.
   [Terminal Interactive Ecosystem Plugin Admission and Development Guide](https://github.com/T-Auto/dsh-ecosystem-spec/blob/main/docs/plugin-admission-and-development.md)
   (admission spec, seams, contracts, verification checklist).
 - **Organization**:
-  [dsh-tui-ecosystem](https://github.com/dsh-tui-ecosystem)
+  [dsh-cli-ecosystem](https://github.com/dsh-cli-ecosystem)
   (home of community plugins and templates).
 - **Template repository**:
-  [plugin-template](https://github.com/dsh-tui-ecosystem/plugin-template)
+  [plugin-template](https://github.com/dsh-cli-ecosystem/plugin-template)
   (start from the template and ship a plugin in minutes).
 - **Reference implementation**: `dsh-working-activity` (live working-status
   line with dual outlets: TUI prompt slot + `workingActivity` session

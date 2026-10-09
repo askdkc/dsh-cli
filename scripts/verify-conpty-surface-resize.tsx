@@ -5,8 +5,8 @@
  * Run: node --import tsx/esm scripts/verify-conpty-surface-resize.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'en'
 process.env.WT_SESSION = 'headless-conpty-surface'
 delete process.env.TERM_PROGRAM
 delete process.env.TMUX

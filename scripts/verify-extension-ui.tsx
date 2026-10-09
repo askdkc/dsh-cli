@@ -1,5 +1,5 @@
 /**
- * Verification of the plugin UI seams (dsh-tui-extensions): managed dialogs,
+ * Verification of the plugin UI seams (dsh-cli-extensions): managed dialogs,
  * status line, keyboard shortcuts, custom entry renderers.
  *
  * Three layers, one file:
@@ -19,16 +19,16 @@
  */
 process.env.FORCE_COLOR = '3'
 // 断言针对中文 i18n 文案（对话框标题/状态行标记），与运行环境的 locale 无关。
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 // 家目录隔离（同 verify-extension-events.tsx）：Chat 加载即解析 homedir()。
 const { mkdtempSync, mkdirSync, writeFileSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-ext-ui-home-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-ext-ui-home-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [
   { PassThrough, Writable },

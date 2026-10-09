@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-cli-subcommands.mjs — bin/dsh-tui.js 子命令回归。
+ * verify-cli-subcommands.mjs — bin/dsh-cli.js 子命令回归。
  *
  * 覆盖：
  *   - `help` / `--help` / `-h`：零环境应答——PATH 上没有 dsh/pnpm、
@@ -8,8 +8,8 @@
  *     （求助命令自己先跑一轮安装是反目标）；
  *   - `version` / `--version` / `-v`：打印本副本版本与角色；profile
  *     未安装时打印双语缺失标记，已安装时打印 profile 版本；
- *   - 双语：DSH_TUI_LANG=en 输出英文，缺省中文（与 bin 的 MSG 契约一致）；
- *   - 只认第一个参数：`dsh-tui <path> --help` 不截获（透传语义不变，
+ *   - 双语：DSH_CLI_LANG=en 输出英文，缺省中文（与 bin 的 MSG 契约一致）；
+ *   - 只认第一个参数：`dsh-cli <path> --help` 不截获（透传语义不变，
  *     由 verify-launcher.mjs 覆盖透传本身）。
  *
  * 运行：node scripts/verify-cli-subcommands.mjs（不依赖 lib/ 构建产物）
@@ -21,7 +21,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const bin = join(root, 'bin', 'dsh-tui.js')
+const bin = join(root, 'bin', 'dsh-cli.js')
 const ownVersion = JSON.parse(
   (await import('node:fs')).readFileSync(join(root, 'package.json'), 'utf8'),
 ).version
@@ -61,7 +61,7 @@ const run = (args, env = {}) =>
       DSH_HOME: emptyHome,
       HOME: fakeUserHome,
       USERPROFILE: fakeUserHome,
-      DSH_TUI_LANG: 'zh',
+      DSH_CLI_LANG: 'zh',
       ...env,
     },
   })
@@ -72,8 +72,8 @@ for (const alias of ['help', '--help', '-h']) {
   check(`${alias} 退出 0 且打印用法（无 dsh、空 profile）`, r.status === 0 && r.stdout.includes('用法'), `status=${r.status}`)
 }
 {
-  const r = run(['--help'], { DSH_TUI_LANG: 'en' })
-  check('--help 英文输出（DSH_TUI_LANG=en）', r.status === 0 && r.stdout.includes('Usage'))
+  const r = run(['--help'], { DSH_CLI_LANG: 'en' })
+  check('--help 英文输出（DSH_CLI_LANG=en）', r.status === 0 && r.stdout.includes('Usage'))
 }
 
 // --- version ------------------------------------------------------------------
@@ -86,7 +86,7 @@ for (const alias of ['version', '--version', '-v']) {
   check('profile 未安装时打印中文缺失标记', r.stdout.includes('（未安装）'))
 }
 {
-  const r = run(['version'], { DSH_TUI_LANG: 'en' })
+  const r = run(['version'], { DSH_CLI_LANG: 'en' })
   check('profile 未安装时打印英文缺失标记', r.stdout.includes('(not installed)'))
 }
 {
@@ -143,15 +143,15 @@ for (const alias of ['version', '--version', '-v']) {
   // 无 dsh：update 需要 dsh（README 如实声明），止于预检。
   const r4 = run(['update'], { DSH_HOME: updateHome })
   check('无 dsh 时 update 止于预检并给安装指引', r4.status === 1 && r4.stderr.includes('@deepseek-ai/dsh'), `status=${r4.status}`)
-  // DSH_TUI_NO_DELEGATE 不改变路径：分发在角色分支之前，import 的仍是
+  // DSH_CLI_NO_DELEGATE 不改变路径：分发在角色分支之前，import 的仍是
   // profile 的 lib（不是本副本的——两者版本可能不同，读错包会误判）。
   mkdirSync(join(pkgDir, 'lib', 'types'), { recursive: true })
   writeFileSync(
     join(pkgDir, 'lib', 'types', 'update.js'),
     'export async function cliUpdate(profile) { console.log(`stub-cli-update profile=${profile}`); return 42 }\n',
   )
-  const r5 = run(['update'], { PATH: stubDir, DSH_HOME: updateHome, DSH_TUI_NO_DELEGATE: '1' })
-  check('DSH_TUI_NO_DELEGATE 下 update 仍 import profile lib', r5.status === 42 && r5.stdout.includes('stub-cli-update'), `status=${r5.status}`)
+  const r5 = run(['update'], { PATH: stubDir, DSH_HOME: updateHome, DSH_CLI_NO_DELEGATE: '1' })
+  check('DSH_CLI_NO_DELEGATE 下 update 仍 import profile lib', r5.status === 42 && r5.stdout.includes('stub-cli-update'), `status=${r5.status}`)
 }
 {
   // 空 profile → 先走既有自举、再 import 自举出的 profile lib。stub dsh 的

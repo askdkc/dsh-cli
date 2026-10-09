@@ -335,7 +335,7 @@ export function createInputDelivery(
     inputChain = inputChain.then(() => runUserTextDecision(text, placement, capturedImages, origin, attach)).catch((error: unknown) => {
       // The chain must survive a failed decision: log, then continue with
       // the next queued submission.
-      ctx.logger.warn('dsh-tui: tui/input dispatch failed: %o', error)
+      ctx.logger.warn('dsh-cli: tui/input dispatch failed: %o', error)
     })
   }
   /** Public companion for callers that own a line but not a draft (skill

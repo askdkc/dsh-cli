@@ -25,7 +25,7 @@ const { Terminal } = xterm
 const sharp = await loadSharp()
 if (!sharp) { console.log('SKIP Sixel transcript: optional sharp unavailable'); process.exit(0) }
 const oldEnv = { ...process.env }
-for (const key of ['TMUX', 'STY', 'DSH_TUI_ACCESSIBILITY', 'DSH_TUI_DISABLE_TERMINAL_IMAGES', 'DSH_TUI_IMAGE_PROTOCOL']) delete process.env[key]
+for (const key of ['TMUX', 'STY', 'DSH_CLI_ACCESSIBILITY', 'DSH_CLI_DISABLE_TERMINAL_IMAGES', 'DSH_CLI_IMAGE_PROTOCOL']) delete process.env[key]
 
 async function until(check: () => boolean, message: string): Promise<void> {
   const deadline = Date.now() + 15_000
@@ -367,8 +367,8 @@ try {
 // Exercise the real transcript component and its lazy terminal capability hook.
 for (const [fullscreen, terminalImages] of [[true, true], [false, true], [true, false]] as const) {
   clearTranscriptImageCacheForTests()
-  const previousProtocol = process.env.DSH_TUI_IMAGE_PROTOCOL
-  if (!terminalImages) process.env.DSH_TUI_IMAGE_PROTOCOL = 'sixel'
+  const previousProtocol = process.env.DSH_CLI_IMAGE_PROTOCOL
+  if (!terminalImages) process.env.DSH_CLI_IMAGE_PROTOCOL = 'sixel'
   const input = new Input()
   const output = new Output(input)
   let reads = 0
@@ -416,8 +416,8 @@ for (const [fullscreen, terminalImages] of [[true, true], [false, true], [true, 
   } finally {
     output.isTTY = false
     app.unmount()
-    if (previousProtocol === undefined) delete process.env.DSH_TUI_IMAGE_PROTOCOL
-    else process.env.DSH_TUI_IMAGE_PROTOCOL = previousProtocol
+    if (previousProtocol === undefined) delete process.env.DSH_CLI_IMAGE_PROTOCOL
+    else process.env.DSH_CLI_IMAGE_PROTOCOL = previousProtocol
   }
 }
 console.log('Sixel transcript: exact crop/pixel-plane, scrolling, multi-image queue, cache and no-ghost regressions passed')

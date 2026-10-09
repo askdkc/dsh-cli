@@ -17,7 +17,7 @@ const STATUS_CONFIG: Record<
 }
 
 /**
- * A status indicator icon with the dsh-TUI color mapping: ✓ green / ✗ red /
+ * A status indicator icon with the dsh-CLI color mapping: ✓ green / ✗ red /
  * ⚠ amber / ℹ blue /
  * ○ dim / … dim.
  */

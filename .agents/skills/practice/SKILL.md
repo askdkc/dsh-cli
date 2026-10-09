@@ -1,6 +1,6 @@
 ---
 name: practice
-description: Guide a programming exercise using dsh-tui or a topic the user wants to learn. Use for practice and coaching requests, rather than requests to deliver a product change.
+description: Guide a programming exercise using dsh-cli or a topic the user wants to learn. Use for practice and coaching requests, rather than requests to deliver a product change.
 ---
 
 Help the user learn one concept through a small exercise and feedback. Use their stated goal, level, and time budget; ask only when the missing context changes the exercise.

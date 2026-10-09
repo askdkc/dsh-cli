@@ -75,8 +75,8 @@ jobs:
     env:
       # Keep UI language deterministic for the repro/verify scripts: zh is the
       # historical script-context default; scripts asserting English copy pin
-      # DSH_TUI_LANG=en themselves before their dynamic imports.
-      DSH_TUI_LANG: zh
+      # DSH_CLI_LANG=en themselves before their dynamic imports.
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -139,7 +139,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -186,7 +186,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
       DSH_HARNESS_SOURCE_ROOT: ${{ github.workspace }}/.upstream/deepseek-harness
       DSH_REQUIRE_UPSTREAM_BASELINE: '1'
     steps:
@@ -254,7 +254,7 @@ jobs:
         shard: [1, 2]
     name: render-scroll ${{ matrix.shard }}/2
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -280,7 +280,7 @@ jobs:
       # scripts/run-ci-group.mjs 的 GROUPS 表（新增测试时同步登记）。
       - run: node scripts/run-ci-group.mjs render-scroll --shard ${{ matrix.shard }}/2
 
-      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_TUI_RENDER_LOG）：
+      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_CLI_RENDER_LOG）：
       # 时序 flake 本地复现不出来，这份日志是唯一现场。
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -297,7 +297,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -323,7 +323,7 @@ jobs:
       # scripts/run-ci-group.mjs 的 GROUPS 表（新增测试时同步登记）。
       - run: node scripts/run-ci-group.mjs input-terminal
 
-      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_TUI_RENDER_LOG）：
+      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_CLI_RENDER_LOG）：
       # 时序 flake 本地复现不出来，这份日志是唯一现场。
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -348,7 +348,7 @@ jobs:
         shard: [1, 2]
     name: session-workspace ${{ matrix.shard }}/2
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -374,7 +374,7 @@ jobs:
       # scripts/run-ci-group.mjs 的 GROUPS 表（新增测试时同步登记）。
       - run: node scripts/run-ci-group.mjs session-workspace --shard ${{ matrix.shard }}/2
 
-      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_TUI_RENDER_LOG）：
+      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_CLI_RENDER_LOG）：
       # 时序 flake 本地复现不出来，这份日志是唯一现场。
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -399,7 +399,7 @@ jobs:
         shard: [1, 2]
     name: channel-ui ${{ matrix.shard }}/2
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -425,7 +425,7 @@ jobs:
       # scripts/run-ci-group.mjs 的 GROUPS 表（新增测试时同步登记）。
       - run: node scripts/run-ci-group.mjs channel-ui --shard ${{ matrix.shard }}/2
 
-      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_TUI_RENDER_LOG）：
+      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_CLI_RENDER_LOG）：
       # 时序 flake 本地复现不出来，这份日志是唯一现场。
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -448,7 +448,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     steps:
       - uses: actions/checkout@v7
         with:
@@ -475,7 +475,7 @@ jobs:
       # scripts/run-ci-group.mjs 的 GROUPS 表（新增测试时同步登记）。
       - run: node scripts/run-ci-group.mjs flaky-observation
 
-      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_TUI_RENDER_LOG）：
+      # 失败脚本的原始帧字节（run-ci-group 只保留失败条目的 DSH_CLI_RENDER_LOG）：
       # 时序 flake 本地复现不出来，这份日志是唯一现场。
       - uses: actions/upload-artifact@v7
         if: failure()
@@ -495,7 +495,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 15
     env:
-      DSH_TUI_LANG: zh
+      DSH_CLI_LANG: zh
     defaults:
       run:
         shell: bash
@@ -530,7 +530,7 @@ jobs:
       # from this path and eventually fail with EINVAL while binding the socket.
       - name: Injection channel with long macOS TMPDIR
         run: |
-          LONG_TMPDIR="/tmp/dsh-tui-ci-$(printf 'x%.0s' {1..70})"
+          LONG_TMPDIR="/tmp/dsh-cli-ci-$(printf 'x%.0s' {1..70})"
           mkdir -p "$LONG_TMPDIR"
           TMPDIR="$LONG_TMPDIR" \
             node --import tsx/esm scripts/verify-inject-channel.mjs

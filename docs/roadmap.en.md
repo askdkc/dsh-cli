@@ -1,4 +1,4 @@
-# dsh-TUI Roadmap
+# dsh-CLI Roadmap
 
 [Documentation index](README.md) · [简体中文](roadmap.md)
 

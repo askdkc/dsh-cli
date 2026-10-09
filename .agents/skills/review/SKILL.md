@@ -1,9 +1,9 @@
 ---
 name: review
-description: "Review or de-slop concrete changes in ccch1mneyyy/dsh-TUI at maintainer level: PR numbers or URLs, branches, commit ranges, patch files, staged or unstaged worktrees, and scoped repository-hygiene requests. Use for evidence-first correctness, contract, repository-rule, process, and behavior-preserving cleanup review, including debug residue, dead or duplicate code, speculative abstractions, stale comments or tests, and unrelated diff churn. Do not use for abstract designs with no concrete repository artifact; use audit for repository-wide assessments and vuln-check for security-only checks."
+description: "Review or de-slop concrete changes in askdkc/dsh-cli at maintainer level: PR numbers or URLs, branches, commit ranges, patch files, staged or unstaged worktrees, and scoped repository-hygiene requests. Use for evidence-first correctness, contract, repository-rule, process, and behavior-preserving cleanup review, including debug residue, dead or duplicate code, speculative abstractions, stale comments or tests, and unrelated diff churn. Do not use for abstract designs with no concrete repository artifact; use audit for repository-wide assessments and vuln-check for security-only checks."
 ---
 
-# dsh-TUI Deslop 与维护者审查
+# dsh-CLI Deslop 与维护者审查
 按规则 → 独立取证 → 叙事对账 → 验证 → 裁决工作。文件引用一律仓库根相对或技能根相对，部署环境到仓库根的映射由调用方解析；不得跳过脚本或伪称运行。
 
 ## 全局不变量与模式

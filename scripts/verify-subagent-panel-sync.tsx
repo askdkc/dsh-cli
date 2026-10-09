@@ -28,16 +28,16 @@
  * Run: node --import tsx/esm scripts/verify-subagent-panel-sync.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 // Home isolation: channel construction touches the user directory.
 const { mkdtempSync, mkdirSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-subagent-sync-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-subagent-sync-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [{ Context }, { createChannel }, { settled, sleep }] = await Promise.all([
   import('@deepseek-ai/cordis'),

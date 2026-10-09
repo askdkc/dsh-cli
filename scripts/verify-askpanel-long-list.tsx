@@ -6,7 +6,7 @@
  * Run: node --import tsx/esm scripts/verify-askpanel-long-list.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal }, { render }, { AskUserQuestionPanel }, { settled, sleep }] = await Promise.all([
   import('node:stream'),

@@ -1,8 +1,8 @@
 /**
  * Persisted working-activity indicator preference, mirroring the pi
  * working-activity extension's `~/.pi/agent/working-activity.json`
- * (`frames` key). dsh-tui keeps its own copy at
- * `~/.dsh-tui/working-activity.json` so the `/activity` choice survives
+ * (`frames` key). dsh-cli keeps its own copy at
+ * `~/.dsh-cli/working-activity.json` so the `/activity` choice survives
  * restarts. The file is best-effort: a missing or corrupt file (or an
  * unknown preset left behind by an older version) just falls back to the
  * default preset.

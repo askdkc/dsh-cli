@@ -21,10 +21,10 @@ const isExecutable = async path => {
 }
 
 const resolveBunCommand = async () => {
-  const configured = process.env.DSH_TUI_BUN_COMMAND
+  const configured = process.env.DSH_CLI_BUN_COMMAND
   if (configured) {
     if (!isAbsolute(configured) || await isExecutable(configured)) return configured
-    throw new Error(`Bun executable configured by DSH_TUI_BUN_COMMAND was not found: ${configured}`)
+    throw new Error(`Bun executable configured by DSH_CLI_BUN_COMMAND was not found: ${configured}`)
   }
 
   if (process.platform !== 'win32') return 'bun'
@@ -67,7 +67,7 @@ const run = (command, args, cwd) => {
   return result.stdout
 }
 
-const temporaryRoot = await mkdtemp(join(tmpdir(), 'dsh-tui-bun-package-'))
+const temporaryRoot = await mkdtemp(join(tmpdir(), 'dsh-cli-bun-package-'))
 try {
   const packOutput = run(nodeCommand, [
     join(projectRoot, 'scripts', 'with-publish-manifest.mjs'),

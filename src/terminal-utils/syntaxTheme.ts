@@ -4,7 +4,7 @@ import type { Theme } from '../theme.js'
 // --- syntax highlighting theme bridge ----------------------------------------
 // Shared by SplitDiffView (diff panes) and the markdown renderer (fenced
 // code blocks). Both feed cli-highlight's `theme` option so code colors come
-// from the active dsh-tui theme instead of cli-highlight's own sparse
+// from the active dsh-cli theme instead of cli-highlight's own sparse
 // default palette.
 
 /** highlight.js token classes -> theme syntax tokens. `default` catches

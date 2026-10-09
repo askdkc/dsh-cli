@@ -13,11 +13,11 @@ import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import CommandRuntime from '@deepseek-ai/dsh-commands'
 import { settled } from './lib/term-test.mjs'
 
-const root = mkdtempSync(join(tmpdir(), 'dsh-tui-v3-'))
+const root = mkdtempSync(join(tmpdir(), 'dsh-cli-v3-'))
 process.env.HOME = root
 process.env.USERPROFILE = root
 process.env.DSH_HOME = join(root, 'home')
-process.env.DSH_TUI_SESSION_ROOT = join(root, 'fallback')
+process.env.DSH_CLI_SESSION_ROOT = join(root, 'fallback')
 const cwd = join(root, 'project')
 const noop = () => undefined
 const { createChannelProjection } = await import('../src/dsh-adapter/channel/projection.js')

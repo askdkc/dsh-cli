@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-tui-history-search-'))
+const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-cli-history-search-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
 
@@ -47,7 +47,7 @@ try {
   assert.equal(capped[0]?.text, 'cmd 249')
   assert.equal(capped.at(-1)?.text, 'cmd 50')
 
-  const staleLock = join(fakeHome, '.dsh-tui', 'history.jsonl.lock')
+  const staleLock = join(fakeHome, '.dsh-cli', 'history.jsonl.lock')
   mkdirSync(staleLock, { recursive: true })
   const old = new Date(Date.now() - 60_000)
   utimesSync(staleLock, old, old)
@@ -55,7 +55,7 @@ try {
   assert.equal(existsSync(staleLock), false, 'stale history lock is removed')
   assert.equal(loadHistory()[0]?.text, 'after stale lock', 'append recovers after stale lock')
 
-  const liveLock = join(fakeHome, '.dsh-tui', 'history.jsonl.lock')
+  const liveLock = join(fakeHome, '.dsh-cli', 'history.jsonl.lock')
   mkdirSync(liveLock)
   let eventLoopResponsive = false
   const releaseLiveLock = setTimeout(() => {
@@ -79,7 +79,7 @@ try {
 
   // Ordering under contention: without a local append chain each call races the
   // file lock on its own, and the later input can land first.
-  const orderingLock = join(fakeHome, '.dsh-tui', 'history.jsonl.lock')
+  const orderingLock = join(fakeHome, '.dsh-cli', 'history.jsonl.lock')
   mkdirSync(orderingLock)
   const releaseOrderingLock = setTimeout(() => {
     rmSync(orderingLock, { recursive: true, force: true })
@@ -102,9 +102,9 @@ try {
 
   // Rename failure: appendHistory swallows the error, so the temp file holding
   // the user's raw input must still be removed.
-  const historyFile = join(fakeHome, '.dsh-tui', 'history.jsonl')
+  const historyFile = join(fakeHome, '.dsh-cli', 'history.jsonl')
   const historyBackup = readFileSync(historyFile, 'utf8')
-  const dataDir = join(fakeHome, '.dsh-tui')
+  const dataDir = join(fakeHome, '.dsh-cli')
   rmSync(historyFile, { force: true })
   mkdirSync(join(historyFile, 'blocked'), { recursive: true })
   try {
@@ -181,7 +181,7 @@ try {
   assert.match(emptyRender, /没有匹配的命令|No matching commands/, 'empty history search shows empty state')
   app.unmount()
 
-  const parallelHome = mkdtempSync(join(tmpdir(), 'dsh-tui-history-parallel-'))
+  const parallelHome = mkdtempSync(join(tmpdir(), 'dsh-cli-history-parallel-'))
   try {
     await Promise.all(Array.from({ length: 20 }, (_, index) => new Promise((resolve, reject) => {
       const child = spawn(process.execPath, [
@@ -209,7 +209,7 @@ try {
       })
     })))
 
-    const parallelHistory = readFileSync(join(parallelHome, '.dsh-tui', 'history.jsonl'), 'utf8')
+    const parallelHistory = readFileSync(join(parallelHome, '.dsh-cli', 'history.jsonl'), 'utf8')
       .trim()
       .split('\n')
       .map(line => JSON.parse(line))

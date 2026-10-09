@@ -22,7 +22,7 @@ import { homedir } from 'node:os'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-tui-effort-mode-'))
+const isolatedHome = mkdtempSync(join(tmpdir(), 'dsh-cli-effort-mode-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
 process.on('exit', () => rmSync(isolatedHome, { recursive: true, force: true }))
@@ -136,7 +136,7 @@ const baseOptions = {
   const ok = await channel.setEffort('max')
   check('setEffort(max) → true', ok === true)
   check('state.reasoningEffort = max', channel.reasoningEffort === 'max', String(channel.reasoningEffort))
-  const prefRaw = readFileSync(join(homedir(), '.dsh-tui', 'effort.json'), 'utf8')
+  const prefRaw = readFileSync(join(homedir(), '.dsh-cli', 'effort.json'), 'utf8')
   check('effort pref persisted', prefRaw.includes('max'), prefRaw)
 
   const before = channel.reasoningEffort

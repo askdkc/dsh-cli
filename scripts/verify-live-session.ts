@@ -209,7 +209,7 @@ async function verifyRealUpstreamSession(): Promise<void> {
   const sessionEntry = pathToFileURL(resolve(sourceRoot, 'packages/core/session/src/index.ts')).href
   const upstream = await import(sessionEntry) as unknown as UpstreamSessionModule
 
-  const parentId = upstream.SessionId('dsh-tui-real-upstream-parent')
+  const parentId = upstream.SessionId('dsh-cli-real-upstream-parent')
   const source = upstream.Session.create(parentId)
   source.append('turn/start', { turn: 1 })
   source.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
@@ -220,7 +220,7 @@ async function verifyRealUpstreamSession(): Promise<void> {
     seed.length === 2 && seed[0]?.type === 'turn/start' && seed[1]?.type === 'turn/end',
   )
 
-  const childId = upstream.SessionId('dsh-tui-real-upstream-child')
+  const childId = upstream.SessionId('dsh-cli-real-upstream-child')
   const request = liveSessionCreateOptions({
     sessionId: childId as never,
     seed,

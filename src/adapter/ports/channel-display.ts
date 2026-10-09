@@ -29,7 +29,7 @@ export type ScrollGutterMode = 'timeline' | 'scrollbar' | 'hidden'
 export type PageMarginSetting = PageMarginMode | PageMarginSpec
 
 /**
- * Root page inset (settings `dsh-tui.pageMargin`): some terminals carry
+ * Root page inset (settings `dsh-cli.pageMargin`): some terminals carry
  * their own viewport padding (Windows Terminal's 8px default, GUI
  * emulators), others — bare WSL, tmux, SSH — have none, so the UI text
  * touches the screen edges. A setting is either a preset name

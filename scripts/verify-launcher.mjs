@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * verify-launcher.mjs — bin/dsh-tui.js 直达启动器回归（issue #108）。
+ * verify-launcher.mjs — bin/dsh-cli.js 直达启动器回归（issue #108）。
  *
  * PATH 上放一个逐参数记录 argv 的 dsh stub（外加空 pnpm stub），覆盖：
  *   - 参数原样透传给 `dsh --profile dsh-cli`（含空格参数不拆分）
@@ -15,7 +15,7 @@
  *     #183）拒绝启动并给出对齐命令——dsh CLI 会从启动器拷贝读 bundle
  *     patch 套到 profile 旧包上，启动必然 opaque 崩溃
  *   - profile 子进程非零退出时保留退出码与直跑诊断命令
- *   - 面向用户的消息双语：DSH_TUI_LANG=zh 输出中文，否则默认英文
+ *   - 面向用户的消息双语：DSH_CLI_LANG=zh 输出中文，否则默认英文
  *   - shellQuote 单元（win32 的 shell:true 路径 CI 跑不到 Windows，只能靠
  *     单测覆盖转义规则本身）
  *
@@ -29,7 +29,7 @@ import { fileURLToPath } from 'node:url'
 import { shellQuote } from '../lib/types/utils/shellQuote.js'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const bin = join(root, 'bin', 'dsh-tui.js')
+const bin = join(root, 'bin', 'dsh-cli.js')
 const ownVersion = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version
 const PROFILE = 'dsh-cli'
 const PACKAGE = '@askdkc/dsh-cli'
@@ -111,7 +111,7 @@ function runBin(args, extraEnv = {}, { delegating = false, cwd = root } = {}) {
       NODE_OPTIONS: '--no-deprecation',
       // 0.8.7 双态启动器：默认强制完整逻辑（本套回归覆盖的全量路径）；
       // 委托角色的专门用例按需放开（见第 4 节）。
-      ...(delegating ? {} : { DSH_TUI_NO_DELEGATE: '1' }),
+      ...(delegating ? {} : { DSH_CLI_NO_DELEGATE: '1' }),
       ...extraEnv,
     },
     encoding: 'utf8',
@@ -135,7 +135,7 @@ resetStubLog()
 r = runBin([], {
   DSH_STUB_ADD_FAILS: '1',
   DSH_STUB_ADD_SIG: 'ERR_PNPM_ADDING_TO_ROOT Running this command will add the dependency to the workspace root',
-  DSH_TUI_LANG: 'en',
+  DSH_CLI_LANG: 'en',
 })
 const addCalls = () => stubCalls().filter(c => c.includes('<plugin>') && c.includes('<add>'))
 const launchCalls = () => stubCalls().filter(c => c.startsWith('<--profile>'))
@@ -147,7 +147,7 @@ check('root-refusal: launches after the retry', stubCalls().at(-1) === '<--profi
 // --- 1.6 无签名的失败：不盲目 -w 重试，按普通安装失败处理 -------------
 setProfileVersion(undefined)
 resetStubLog()
-r = runBin([], { DSH_STUB_ADD_FAILS: '9', DSH_STUB_ADD_EXIT_CODE: '3', DSH_TUI_LANG: 'en' })
+r = runBin([], { DSH_STUB_ADD_FAILS: '9', DSH_STUB_ADD_EXIT_CODE: '3', DSH_CLI_LANG: 'en' })
 check('other failure: no -w retry without the signature', addCalls().length === 1 && !addCalls()[0].includes('<-w>'))
 check('other failure: manual hint kept', r.stderr.includes('Retry manually'))
 check('other failure: exit code preserved', r.status === 3)
@@ -158,11 +158,11 @@ check('other failure: exit code preserved', r.status === 3)
 // 同样 no-op。fail loud 给出删 profile 重建的恢复路径，而不是继续启动。
 setProfileVersion(undefined)
 resetStubLog()
-r = runBin([], { DSH_STUB_ADD_NOCREATE: '1', DSH_TUI_LANG: 'en' })
+r = runBin([], { DSH_STUB_ADD_NOCREATE: '1', DSH_CLI_LANG: 'en' })
 check('no-op install: fails loud instead of launching', r.status === 1 && launchCalls().length === 0)
 check('no-op install: names the unreadable package', r.stderr.includes('still unreadable'))
 check('no-op install: gives the rm -rf recovery', r.stderr.includes('rm -rf'))
-r = runBin([], { DSH_STUB_ADD_NOCREATE: '1', DSH_TUI_LANG: 'zh' })
+r = runBin([], { DSH_STUB_ADD_NOCREATE: '1', DSH_CLI_LANG: 'zh' })
 check('no-op install: Chinese message', r.stderr.includes('仍不可读'))
 
 // --- 2. 版本一致：参数原样透传，无提示 ----------------------------------------
@@ -175,11 +175,11 @@ check('passthrough: silent when aligned', r.stderr.trim() === '')
 // --- 2.5 profile 非零退出：保留退出码与可直接复现的命令（须在版本对齐时测，
 // 错位提示/拒绝会干扰退出码与 stderr 断言）-------------------------------------
 resetStubLog()
-r = runBin([], { DSH_STUB_EXIT: '42', DSH_TUI_LANG: 'en' })
+r = runBin([], { DSH_STUB_EXIT: '42', DSH_CLI_LANG: 'en' })
 check('nonzero exit: launcher preserves the child status', r.status === 42)
 check('nonzero exit: stderr names the status', r.stderr.includes('profile exited with code 42'))
 check('nonzero exit: stderr gives the direct command', r.stderr.includes('dsh --profile dsh-cli'))
-r = runBin([], { DSH_STUB_EXIT: '42', DSH_TUI_LANG: 'zh' })
+r = runBin([], { DSH_STUB_EXIT: '42', DSH_CLI_LANG: 'zh' })
 check('nonzero exit: Chinese message names the status', r.stderr.includes('退出码 42'))
 
 // --- 3. 前向错位（profile 更新）：必须指向「更新全局 Launcher」------------
@@ -211,7 +211,7 @@ r = runBin([])
 check('reverse skew: refuses to launch', r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')))
 check('reverse skew: names both versions', r.stderr.includes('v0.0.0') && r.stderr.includes(`v${ownVersion}`))
 check('reverse skew: prints the align command', r.stderr.includes(`add @askdkc/dsh-cli@${ownVersion}`))
-r = runBin([], { DSH_TUI_LANG: 'en' })
+r = runBin([], { DSH_CLI_LANG: 'en' })
 check('reverse skew: English message', r.stderr.includes('cannot start'))
 
 // --- 3.6 同 minor 反向 patch-skew（0.8.2 Launcher / 0.8.1 Profile）---------
@@ -240,13 +240,13 @@ check(
   !patchSkewOlderExists || !r.stderr.includes('npm install -g'),
 )
 
-// --- 3.7 Launcher→runtime 契约：子进程必须收到 DSH_TUI_LAUNCHER_VERSION ---
+// --- 3.7 Launcher→runtime 契约：子进程必须收到 DSH_CLI_LAUNCHER_VERSION ---
 // 让 /update 能诊断「全局 Launcher 是否落后于刚装的 profile」。先做源码
 // 静态断言，更强的 e2e（stub 记录子进程 env）后续再补。
 const launcherSource = readFileSync(bin, 'utf8')
 check(
-  'launcher env: child receives DSH_TUI_LAUNCHER_VERSION',
-  launcherSource.includes('process.env.DSH_TUI_LAUNCHER_VERSION = ownVersion'),
+  'launcher env: child receives DSH_CLI_LAUNCHER_VERSION',
+  launcherSource.includes('process.env.DSH_CLI_LAUNCHER_VERSION = ownVersion'),
 )
 
 // --- 4. 委托角色（0.8.7 双态启动器）：全局副本 → profile 内副本 -------------
@@ -258,7 +258,7 @@ check(
 const placeProfileBin = () => {
   const dir = join(home, PKG_DIR, 'bin')
   mkdirSync(dir, { recursive: true })
-  writeFileSync(join(dir, 'dsh-tui.js'), readFileSync(bin, 'utf8'))
+  writeFileSync(join(dir, 'dsh-cli.js'), readFileSync(bin, 'utf8'))
 }
 
 setProfileVersion(ownVersion)
@@ -269,7 +269,7 @@ check('shim: delegates argv through to the profile copy', stubCalls().at(-1) ===
 check('shim: silent + exit 0 when aligned', r.status === 0 && r.stderr.trim() === '')
 
 // 反向错位（profile 更旧，issue #183）必须在「瘦壳委托」路径上拦住：上面 3.5
-// 走的是 DSH_TUI_NO_DELEGATE=1 的完整逻辑路径，而真实用户命中的是这条委托
+// 走的是 DSH_CLI_NO_DELEGATE=1 的完整逻辑路径，而真实用户命中的是这条委托
 // 路径（完整的 profile bin 已预放，委托本身可行）。不拦的话 dsh 会拿启动器
 // 拷贝的 bundle patch 配 profile 旧包，patch 引用旧包没有的子路径导出（例如
 // ./oauth）时以 ERR_PACKAGE_PATH_NOT_EXPORTED 崩溃。
@@ -299,17 +299,17 @@ check(
 setProfileVersion(ownVersion)
 rmSync(join(home, PKG_DIR, 'bin'), { recursive: true, force: true })
 resetStubLog()
-r = runBin([], { DSH_TUI_LANG: 'en' }, { delegating: true })
+r = runBin([], { DSH_CLI_LANG: 'en' }, { delegating: true })
 check('shim: no bin fails loud with the reinstall hint', r.status === 1 && r.stderr.includes(`Reinstall the global launcher`))
 check('shim: reinstall hint names the npm command', r.stderr.includes(`npm install -g --legacy-peer-deps ${PACKAGE}`))
 
 
-// --- 5. 消息双语：缺 dsh 时的报错（契约同 TUI：DSH_TUI_LANG 指定才生效，否则默认英文）
+// --- 5. 消息双语：缺 dsh 时的报错（契约同 TUI：DSH_CLI_LANG 指定才生效，否则默认英文）
 const envNoDsh = { PATH: noDshPath }
-r = runBin([], { ...envNoDsh, DSH_TUI_LANG: 'en' })
-check('i18n: DSH_TUI_LANG=en prints English', r.stderr.includes('dsh CLI not found'))
-r = runBin([], { ...envNoDsh, DSH_TUI_LANG: 'zh' })
-check('i18n: DSH_TUI_LANG=zh prints Chinese', r.stderr.includes('未检测到 dsh CLI'))
+r = runBin([], { ...envNoDsh, DSH_CLI_LANG: 'en' })
+check('i18n: DSH_CLI_LANG=en prints English', r.stderr.includes('dsh CLI not found'))
+r = runBin([], { ...envNoDsh, DSH_CLI_LANG: 'zh' })
+check('i18n: DSH_CLI_LANG=zh prints Chinese', r.stderr.includes('未检测到 dsh CLI'))
 r = runBin([], envNoDsh)
 check('i18n: default (unset) prints English', r.stderr.includes('dsh CLI not found'))
 
@@ -322,25 +322,25 @@ mkdirSync(projectDir)
 writeFileSync(join(sourceCli, 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', type: 'module' }))
 writeFileSync(join(sourceCli, 'lib', 'bin.js'), `#!/usr/bin/env node
 import { appendFileSync } from 'node:fs'
-appendFileSync(process.env.DSH_STUB_LOG, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), resume: process.env.DSH_TUI_RESUME_SESSION }) + '\\n')
+appendFileSync(process.env.DSH_STUB_LOG, JSON.stringify({ args: process.argv.slice(2), cwd: process.cwd(), resume: process.env.DSH_CLI_RESUME_SESSION }) + '\\n')
 if (process.argv[2] === '--version') console.log('0.1.7-rc.2')
 `)
 setProfileVersion(ownVersion)
 resetStubLog()
-r = runBin(['a b'], { ...envNoDsh, DSH_TUI_DSH_ROOT: sourceRoot }, { cwd: projectDir })
+r = runBin(['a b'], { ...envNoDsh, DSH_CLI_DSH_ROOT: sourceRoot }, { cwd: projectDir })
 const sourceCalls = readFileSync(stubLog, 'utf8').trim().split('\n').map(line => JSON.parse(line))
 check('source clone: launches without dsh on PATH', r.status === 0 && sourceCalls.length === 2)
 check('source clone: keeps caller cwd and args', sourceCalls.at(-1)?.cwd === realpathSync(projectDir) && JSON.stringify(sourceCalls.at(-1)?.args) === JSON.stringify(['--profile', PROFILE, 'a b']))
 const resumeSession = '00000000-0000-4000-8000-000000000001'
 resetStubLog()
-r = runBin([], { ...envNoDsh, DSH_TUI_DSH_ROOT: sourceRoot, DSH_TUI_RESUME_SESSION: resumeSession }, { cwd: projectDir })
+r = runBin([], { ...envNoDsh, DSH_CLI_DSH_ROOT: sourceRoot, DSH_CLI_RESUME_SESSION: resumeSession }, { cwd: projectDir })
 const resumedCalls = readFileSync(stubLog, 'utf8').trim().split('\n').map(line => JSON.parse(line))
 check('resume hint: launcher preserves session and profile without dsh on PATH',
   r.status === 0 && resumedCalls.at(-1)?.resume === resumeSession
     && JSON.stringify(resumedCalls.at(-1)?.args) === JSON.stringify(['--profile', PROFILE]))
 resetStubLog()
-r = runBin([], { ...envNoDsh, DSH_TUI_DSH_ROOT: 'relative/path' }, { cwd: projectDir })
-check('source clone: rejects relative root before launch', r.status === 1 && r.stderr.includes('DSH_TUI_DSH_ROOT') && readFileSync(stubLog, 'utf8') === '')
+r = runBin([], { ...envNoDsh, DSH_CLI_DSH_ROOT: 'relative/path' }, { cwd: projectDir })
+check('source clone: rejects relative root before launch', r.status === 1 && r.stderr.includes('DSH_CLI_DSH_ROOT') && readFileSync(stubLog, 'utf8') === '')
 
 // --- 6. shellQuote 单元（win32 shell:true 路径的转义规则）---------------------
 check('shellQuote: plain tokens pass through', shellQuote(['plugin', '--profile', 'dsh-cli']).join(' ') === 'plugin --profile dsh-cli')

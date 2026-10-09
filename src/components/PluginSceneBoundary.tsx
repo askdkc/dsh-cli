@@ -1,5 +1,5 @@
 /**
- * Error boundary for plugin scenes (dsh-tui-scenes). A scene component is
+ * Error boundary for plugin scenes (dsh-cli-scenes). A scene component is
  * third-party code rendered inside Chat's tree: without a boundary a render
  * error propagates to ink's app-level boundary (src/ink/components/App.tsx)
  * and takes the whole TUI down with it. Catching here collapses the blast

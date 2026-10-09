@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * sync-profile.mjs — 把当前工作区产物同步到活动 dsh-tui profile，让
- * `dsh-tui` 直接跑的就是本仓库这份代码（改完即测）。
+ * sync-profile.mjs — 把当前工作区产物同步到活动 dsh-cli profile，让
+ * `dsh-cli` 直接跑的就是本仓库这份代码（改完即测）。
  *
  * 同步范围 = package.json `files` 列表（bin/、lib/、cordis.patch.yml、
  * dsh-ecosystem-spec/{registry,protocols,schemas}、presets），以及同捆 dsh-auth。
@@ -55,7 +55,7 @@ const installed = join(profileDir, 'node_modules', PACKAGE)
 
 if (!existsSync(join(installed, 'package.json'))) {
   console.error(`[sync-profile] profile 未安装：${installed}`)
-  console.error(`  （首次请先运行 dsh-tui 让它自举，或手工：`)
+  console.error(`  （首次请先运行 dsh-cli 让它自举，或手工：`)
   console.error(`   dsh plugin --profile ${PROFILE} add ${PACKAGE}@${pkg.version}）`)
   process.exit(1)
 }
@@ -113,4 +113,4 @@ for (const { rel, src } of changed) {
   copyFileSync(src, dst)
   console.log(`  → ${rel}`)
 }
-console.log('[sync-profile] 同步完成。重启 dsh-tui 即可生效。')
+console.log('[sync-profile] 同步完成。重启 dsh-cli 即可生效。')

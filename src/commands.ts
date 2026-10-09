@@ -1,7 +1,7 @@
 import type { LocalCommand, LocalizedDescriptions, CommandCompletion } from './adapter/ports/channel-catalog.js'
 export type { LocalCommand, LocalizedDescriptions, CommandCompletion } from './adapter/ports/channel-catalog.js'
 /**
- * Local slash commands for dsh-tui, presented as `/name — description`.
+ * Local slash commands for dsh-cli, presented as `/name — description`.
  * The built-in set is merged with plugin-registered
  * commands (plan/goal/…) from the DSH command registry (`dsh-commands`) —
  * `runCommand` in the Chat screen dispatches either kind, with the registry
@@ -57,7 +57,7 @@ export const LOCAL_COMMANDS: LocalCommand[] = [
   { name: 'context', description: 'Show loaded context details' },
   { name: 'status', description: 'Show session status' },
   { name: 'cost', description: 'Show session token usage' },
-  { name: 'config', description: 'Show the dsh-tui configuration source' },
+  { name: 'config', description: 'Show the dsh-cli configuration source' },
   { name: 'reload', description: 'Reload preference files from disk and apply live' },
   { name: 'settings', description: 'View and edit plugin settings' },
   { name: 'doctor', description: 'Run environment checks' },
@@ -85,7 +85,7 @@ export const LOCAL_COMMANDS: LocalCommand[] = [
   { name: 'mcp', description: 'Show MCP status' },
   { name: 'skills', description: 'List available skills' },
   { name: 'plugins', description: 'Show plugin contract, grant, and ledger diagnostics' },
-  { name: 'update', description: 'Update dsh-tui and restart' },
+  { name: 'update', description: 'Update dsh-cli and restart' },
   // Skills are discovered through the DSH registry and added at runtime.
   // A local entry of the same name would win the collision filter.
   // Misc / not applicable on this leaf
@@ -97,10 +97,10 @@ export const LOCAL_COMMANDS: LocalCommand[] = [
   // Help / exit
   { name: 'help', description: 'Show shortcuts and commands' },
   { name: 'tips', description: 'Show usage tips and shortcuts' },
-  { name: 'restart', description: 'Restart dsh-tui and resume this session' },
-  { name: 'exit', description: 'Exit dsh-tui' },
-  { name: 'quit', description: 'Exit dsh-tui', tag: 'alias of /exit' },
-  { name: 'q', description: 'Exit dsh-tui', tag: 'alias of /exit' },
+  { name: 'restart', description: 'Restart dsh-cli and resume this session' },
+  { name: 'exit', description: 'Exit dsh-cli' },
+  { name: 'quit', description: 'Exit dsh-cli', tag: 'alias of /exit' },
+  { name: 'q', description: 'Exit dsh-cli', tag: 'alias of /exit' },
 ]
 
 /**

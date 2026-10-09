@@ -13,17 +13,17 @@
  *
  * 运行：node --import tsx/esm scripts/verify-jobs-panel.tsx
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '3'
 
 // 家目录隔离：channel 构造路径会 touch 用户目录，先切临时目录再 import。
 const { mkdtempSync, mkdirSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-jobs-panel-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-jobs-panel-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [
   { Context },

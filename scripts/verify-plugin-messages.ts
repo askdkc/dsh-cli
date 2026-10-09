@@ -32,8 +32,8 @@ import { fileURLToPath } from 'node:url'
 const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-plugin-messages-home-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_LANG = 'zh'
-process.env.DSH_TUI_ADAPTER_MODE = 'new'
+process.env.DSH_CLI_LANG = 'zh'
+process.env.DSH_CLI_ADAPTER_MODE = 'new'
 
 const { Context, Service } = await import('@deepseek-ai/cordis')
 const {

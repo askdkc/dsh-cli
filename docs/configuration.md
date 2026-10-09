@@ -7,7 +7,7 @@
 通过 npm/profile 机制安装后，用户配置位于：
 
 ```text
-$DSH_HOME/profiles/dsh-tui/cordis.patch.yml
+$DSH_HOME/profiles/dsh-cli/cordis.patch.yml
 ```
 
 `DSH_HOME` 未设置时通常为 `~/.dsh`。该文件是顶层 YAML 数组，可使用 DSH
@@ -33,7 +33,7 @@ Profile 启动按顺序叠加：
 下面是完整的常用覆盖示例：
 
 ```yaml
-- id: dsh-tui
+- id: dsh-cli
   config:
     provider: deepseek-official
     model: deepseek-flash
@@ -46,9 +46,9 @@ Profile 启动按顺序叠加：
     contextBar: true
     fullscreen: false
     terminalImages: true
-    preset: !!js process.env.DSH_TUI_PRESET ?? undefined
-    workspace: !!js process.env.DSH_TUI_WORKSPACE_TARGET ?? undefined
-    sessionId: !!js process.env.DSH_TUI_RESUME_SESSION ?? undefined
+    preset: !!js process.env.DSH_CLI_PRESET ?? undefined
+    workspace: !!js process.env.DSH_CLI_WORKSPACE_TARGET ?? undefined
+    sessionId: !!js process.env.DSH_CLI_RESUME_SESSION ?? undefined
 ```
 
 | 字段 | 默认/来源 | 说明 |
@@ -57,7 +57,7 @@ Profile 启动按顺序叠加：
 | `model` | Harness `agentDefaultModel`；裸组合回落 `deepseek-flash` | 启动模型；`/model` 可通过 session fork 实时切换 |
 | `cwd` | 启动目录所在的 git worktree 根（不在任何 worktree 内时为 `process.cwd()`；家目录的 dotfiles 仓不算） | TUI 会话侧工作区：agent meta、`@` 补全/提及展开、/resume 过滤、状态栏；恢复已有会话时以该会话持久化的 cwd 为准。注意 bash/fs-policy/sandbox 的根仍由组合层 cordis 配置决定（默认启动目录，归 dsh-base 管），与这里的会话侧 cwd 可能不同 |
 | `workspace` | 未设置 | 启动工作区目标；可用本地路径、`file://` URI 或插件提供的 URI，设置后优先于 `cwd` |
-| `effort` | 配置层通常为 `max` | 每个请求实际生效的推理等级（按运行时模型档位校验，非法档位静默回落默认；兼作顶栏启动显示）。优先级：/settings 的 `effortDefault`（`auto` 时让位）> 本字段 > `/effort` 持久化选择（`~/.dsh-tui/effort.json`）> 模型默认 |
+| `effort` | 配置层通常为 `max` | 每个请求实际生效的推理等级（按运行时模型档位校验，非法档位静默回落默认；兼作顶栏启动显示）。优先级：/settings 的 `effortDefault`（`auto` 时让位）> 本字段 > `/effort` 持久化选择（`~/.dsh-cli/effort.json`）> 模型默认 |
 | `effortDefault` | 未设置 | 新会话默认推理强度；`auto` 让位给 `effort`，可经 `/settings` 修改 |
 | `whale` / `whaleIdle` | `true` / `true` | 标题鲸鱼与欢迎页鲸鱼闲置动画 |
 | `minimal` | `false` | 精简标题装饰与配色 |
@@ -75,7 +75,7 @@ Profile 启动按顺序叠加：
 - `/settings → 终端图片预览` 保存的选择优先于 `config.terminalImages`。
 - 未保存时用配置值，默认开启。
 - 开启仍需终端支持 Kitty graphics，且处于允许图片渲染的显示模式。
-- `DSH_TUI_DISABLE_TERMINAL_IMAGES=1` 始终强制关闭预览。
+- `DSH_CLI_DISABLE_TERMINAL_IMAGES=1` 始终强制关闭预览。
 - 关闭后不读取、不解码图片，也不发图片渲染指令；向模型发图片不受影响。
 - 勾选框编辑的是预览偏好；环境变量强制关闭时，设置行会单独标明「环境强制关闭」。
 
@@ -91,11 +91,11 @@ Profile 启动按顺序叠加：
 
 | 变量 | 作用 |
 | --- | --- |
-| `DSH_TUI_DEBUG_REPAINTS=1` | 记录重绘诊断信息 |
-| `DSH_TUI_COMMIT_LOG=1` | 记录渲染提交诊断信息 |
-| `DSH_TUI_ACCESSIBILITY=1` | 启用无障碍相关显示路径 |
-| `DSH_TUI_TMUX_TRUECOLOR=1` | 在 tmux 中启用 truecolor 探测路径 |
-| `DSH_TUI_TAB_STATUS=1` | 实验性终端 tab 状态 opt-in；默认关闭，不保证任意终端支持 |
+| `DSH_CLI_DEBUG_REPAINTS=1` | 记录重绘诊断信息 |
+| `DSH_CLI_COMMIT_LOG=1` | 记录渲染提交诊断信息 |
+| `DSH_CLI_ACCESSIBILITY=1` | 启用无障碍相关显示路径 |
+| `DSH_CLI_TMUX_TRUECOLOR=1` | 在 tmux 中启用 truecolor 探测路径 |
+| `DSH_CLI_TAB_STATUS=1` | 实验性终端 tab 状态 opt-in；默认关闭，不保证任意终端支持 |
 
 诊断输出不会改变会话事件或模型路由；遇到终端兼容问题时，只按需启用相关变量。
 
@@ -140,20 +140,20 @@ Profile 启动按顺序叠加：
 
 ### 默认值与优先级
 
-- 默认值保存在 `~/.dsh-tui/agent-preset.json`。
-- 优先级：显式 `config.preset` 或 `DSH_TUI_PRESET` → 持久化偏好 → 名册
+- 默认值保存在 `~/.dsh-cli/agent-preset.json`。
+- 优先级：显式 `config.preset` 或 `DSH_CLI_PRESET` → 持久化偏好 → 名册
   默认值 `standard`。
 - 恢复旧会话时，以该会话日志记录的 preset 为准，不读取当前默认值覆盖它。
 
 ### 梁神模式
 
-- 梁神模式随 dsh-tui 包发布，启动时注册到官方 registry，已有同名 profile 声明优先。
+- 梁神模式随 dsh-cli 包发布，启动时注册到官方 registry，已有同名 profile 声明优先。
 - Windows 首轮 `bash` 通过自动发现的 Git Bash 执行，依次尝试：
   - PATH 上的 `git.exe` 所在安装树（安装器/便携/Scoop 布局通用，穿透 Scoop shim）
   - 常规安装位置与 Scoop 约定目录
   - PATH 上的裸 `bash`（最后兜底）
   - 始终拒绝把 System32 的 WSL 启动器当作 Git Bash
-- 环境变量 `DSH_TUI_LIANGSHEN_BASH_PATH` 可显式指定 `bash.exe` 绝对路径。
+- 环境变量 `DSH_CLI_LIANGSHEN_BASH_PATH` 可显式指定 `bash.exe` 绝对路径。
 - 设置后即为唯一候选；找不到即告警并跳过注册，首轮直接放开完整工具目录。
 
 ### 自定义 preset
@@ -162,7 +162,7 @@ Profile 启动按顺序叠加：
 `name` 与 `plugins`。
 
 从 0.3 起，模型侧工具、plan、compaction、delegation 等由 preset 自己组合。
-Profile 模式不再使用旧的 `DSH_TUI_COMPACT_RATIO`、`DSH_TUI_COMPACT_RETAIN`
+Profile 模式不再使用旧的 `DSH_CLI_COMPACT_RATIO`、`DSH_CLI_COMPACT_RETAIN`
 或旧版 TUI 的深度限制；这些策略应在 preset 中配置。
 
 ## MCP
@@ -204,31 +204,31 @@ Profile 模式不再使用旧的 `DSH_TUI_COMPACT_RATIO`、`DSH_TUI_COMPACT_RETA
 | `DEEPSEEK_API_KEY` | DeepSeek 凭证；运行模型的必需项 |
 | `DEEPSEEK_BASE_URL` | 覆盖 DeepSeek 兼容 API 端点 |
 | `DSH_HOME` | harness 家目录（profile、会话、凭据、附件）；未设置时用上游默认 `~/.dsh` |
-| `DSH_TUI_PERSONA` | 覆盖组合注入的 Agent persona |
-| `DSH_TUI_PRESET` | 覆盖新会话默认 Agent preset |
-| `DSH_TUI_THEME` | 锁定内置（`auto`/`light`/`dark`/`dark-ansi`）、静态主题或已注册的插件主题，优先于持久化选择 |
-| `DSH_TUI_DISABLE_MOUSE` | 在 fullscreen 模式临时关闭鼠标处理 |
-| `DSH_TUI_DISABLE_TERMINAL_IMAGES` | 设为 `1` 时强制关闭 Kitty/Sixel 探测、预览读取/解码与终端图片渲染，优先于 config 和 /settings；保留文字信息 |
-| `DSH_TUI_IMAGE_PROTOCOL` | `auto`（默认）、`kitty`、`sixel` 或 `none`；覆盖协议选择，但不绕过图片预览偏好、禁用开关、非全屏、无障碍和多路复用器限制 |
-| `DSH_TUI_RESUME_SESSION` | 启动时恢复指定会话，通常由启动器设置 |
-| `DSH_TUI_WORKSPACE_TARGET` | 启动时解析的工作区路径或 URI，通常由 `dsh-tui <目标>` 设置 |
-| `DSH_TUI_SESSION_ROOT` | 覆盖 JSONL 会话根目录；profile 默认 `$DSH_HOME/sessions`，裸 `cordis.yml` 默认 `~/.dsh-tui/sessions` |
+| `DSH_CLI_PERSONA` | 覆盖组合注入的 Agent persona |
+| `DSH_CLI_PRESET` | 覆盖新会话默认 Agent preset |
+| `DSH_CLI_THEME` | 锁定内置（`auto`/`light`/`dark`/`dark-ansi`）、静态主题或已注册的插件主题，优先于持久化选择 |
+| `DSH_CLI_DISABLE_MOUSE` | 在 fullscreen 模式临时关闭鼠标处理 |
+| `DSH_CLI_DISABLE_TERMINAL_IMAGES` | 设为 `1` 时强制关闭 Kitty/Sixel 探测、预览读取/解码与终端图片渲染，优先于 config 和 /settings；保留文字信息 |
+| `DSH_CLI_IMAGE_PROTOCOL` | `auto`（默认）、`kitty`、`sixel` 或 `none`；覆盖协议选择，但不绕过图片预览偏好、禁用开关、非全屏、无障碍和多路复用器限制 |
+| `DSH_CLI_RESUME_SESSION` | 启动时恢复指定会话，通常由启动器设置 |
+| `DSH_CLI_WORKSPACE_TARGET` | 启动时解析的工作区路径或 URI，通常由 `dsh-cli <目标>` 设置 |
+| `DSH_CLI_SESSION_ROOT` | 覆盖 JSONL 会话根目录；profile 默认 `$DSH_HOME/sessions`，裸 `cordis.yml` 默认 `~/.dsh-cli/sessions` |
 | `DSH_PERMISSION_MODE` | 非 Windows 平台覆盖 sandbox policy，例如 `workspace-write` 或 `danger-full-access` |
-| `DSH_TUI_WORKSPACE` | Windows `dsh-tui.cmd` 采用的工作目录 |
-| `DSH_TUI_DEBUG` | 启用写往 stderr 的 dsh-tui 调试日志 |
-| `DSH_TUI_RENDER_LOG` | 指定文件路径，记录原始 ANSI 渲染帧用于取证 |
+| `DSH_CLI_WORKSPACE` | Windows `dsh-cli.cmd` 采用的工作目录 |
+| `DSH_CLI_DEBUG` | 启用写往 stderr 的 dsh-cli 调试日志 |
+| `DSH_CLI_RENDER_LOG` | 指定文件路径，记录原始 ANSI 渲染帧用于取证 |
 
 旧名 `CC_TUI_*` 与 `DSH_CC_*` 来自早期版本命名，自本版本起不再被读取；环境变量
-一律使用 `DSH_TUI_*` 前缀。
+一律使用 `DSH_CLI_*` 前缀。
 
 数据目录分两层，互不替代：
 
 - **harness 家目录**：`$DSH_HOME`，未设置时用上游默认 `~/.dsh`。存 profile、
   会话、凭据与附件。早期版本把它钉在 `~/.dsh-cc`。
-- **TUI 数据目录**：`~/.dsh-tui`（固定路径，不随 `$DSH_HOME` 走）。存 `/model`、
+- **TUI 数据目录**：`~/.dsh-cli`（固定路径，不随 `$DSH_HOME` 走）。存 `/model`、
   `/lang`、`/theme` 等偏好与 `resume.txt`。早期版本曾把这些写在 `$DSH_HOME` 下。
 
-`DSH_TUI_RENDER_LOG` 可能捕获屏幕上可见的提示词、工具参数和输出，不应上传到
+`DSH_CLI_RENDER_LOG` 可能捕获屏幕上可见的提示词、工具参数和输出，不应上传到
 公开 issue，除非已经检查并脱敏。
 
 ## `/provider`：运行时管理模型提供方
@@ -266,8 +266,8 @@ Profile 模式不再使用旧的 `DSH_TUI_COMPACT_RATIO`、`DSH_TUI_COMPACT_RETA
 - `cordis.yml` 是裸组合示例，服务拓扑可能与 profile patch 不同。正常安装和用户
   覆盖应以 `cordis.patch.yml` 为准。
 
-`DSH_TUI_SESSION_ROOT` 始终表示 JSONL 根目录。`dsh --profile dsh-tui` 默认使用
+`DSH_CLI_SESSION_ROOT` 始终表示 JSONL 根目录。`dsh --profile dsh-cli` 默认使用
 `$DSH_HOME/sessions`（通常为 `~/.dsh/sessions/`）；直接运行
-`dsh --config cordis.yml` 的裸示例默认使用 `~/.dsh-tui/sessions/`。
+`dsh --config cordis.yml` 的裸示例默认使用 `~/.dsh-cli/sessions/`。
 
 权限相关配置与平台差异见[架构与限制](architecture.md#权限与安全边界)。

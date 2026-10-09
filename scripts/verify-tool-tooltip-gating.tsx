@@ -27,7 +27,7 @@ const dataDir = mkdtempSync(join(tmpdir(), 'verify-tool-tooltip-data-'))
 process.env.HOME = dataDir
 process.env.USERPROFILE = dataDir
 // 元数据断言含本地化文案（耗时/运行中），钉住语言保证 CI（LANG=C）一致。
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, ui, tooltip, termTest] = await Promise.all([
   import('node:stream'),

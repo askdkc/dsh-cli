@@ -78,7 +78,7 @@ export function createJobProjection(
       if (!jobs?.kill) return false
       const job = store.get(id)
       try {
-        jobs.kill(id, deps.agent(), 'dsh-tui /jobs panel')
+        jobs.kill(id, deps.agent(), 'dsh-cli /jobs panel')
       } catch {
         return false
       }

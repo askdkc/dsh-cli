@@ -1,4 +1,4 @@
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 /**
  * 压缩 × 会话切换生命周期回归（真实 channel.compact / switchModel + 可控
  * fake compaction 服务）：
@@ -17,13 +17,13 @@ process.env.DSH_TUI_LANG = 'zh'
  *
  * 运行：node --import tsx/esm scripts/verify-compact-switch.tsx
  */
-// 隔离家目录：switchModel 会把选择写进 ~/.dsh-tui/model.json（modelPrefs
+// 隔离家目录：switchModel 会把选择写进 ~/.dsh-cli/model.json（modelPrefs
 // 在模块加载时按 homedir() 解析）。必须在 import src 之前；HOME 与
 // USERPROFILE 成对设置，两个平台都隔离。
 import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-const reproHome = mkdtempSync(join(tmpdir(), 'dshtui-compact-switch-'))
+const reproHome = mkdtempSync(join(tmpdir(), 'dshcli-compact-switch-'))
 process.env.HOME = reproHome
 process.env.USERPROFILE = reproHome
 

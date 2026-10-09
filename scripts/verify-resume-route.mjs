@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regression for the resume-model-route backfill (dsh-tui side of the
+ * Regression for the resume-model-route backfill (dsh-cli side of the
  * subagent `{{model}}` failure): resume must feed the target session's
  * recorded request/header route back into `agents.resume({ agentOptions })`
  * so `options.model` is populated again. A provider-only cordis.yml pin

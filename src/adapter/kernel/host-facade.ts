@@ -4,7 +4,7 @@
  * P2 callers normally obtain this from `KernelRuntime.facade()`, which backs
  * the descriptor port with the unified kernel lifecycle evidence.
  * `facadeFromLegacy` remains only as a long-term compatibility fallback for
- * bare/test compositions (outside P6 removal scope; owner: dsh-tui adapter).
+ * bare/test compositions (outside P6 removal scope; owner: dsh-cli adapter).
  * Hard rules:
  * - It performs no business logic, no protocol translation, no capability
  *   detection, no registry, and stores no mutable host state.
@@ -145,7 +145,7 @@ const PORT_METHOD_CAPABILITIES: Readonly<Record<string, Readonly<Record<string, 
 function assertPortMethod(mode: AdapterMode, capability: string): void {
   const effectClass = effectClassFor(capability)
   if (effectClass === undefined) {
-    throw new Error(`dsh-tui: Host Port method has no registered effect class: ${capability}`)
+    throw new Error(`dsh-cli: Host Port method has no registered effect class: ${capability}`)
   }
   assertShadowPolicy(effectClass, mode)
 }
@@ -153,13 +153,13 @@ function assertPortMethod(mode: AdapterMode, capability: string): void {
 function wrapPort<T extends object>(port: T, portName: string, mode: AdapterMode): T {
   const capabilities = PORT_METHOD_CAPABILITIES[portName]
   if (capabilities === undefined) {
-    throw new Error(`dsh-tui: no shadow-policy map for Host Port "${portName}"`)
+    throw new Error(`dsh-cli: no shadow-policy map for Host Port "${portName}"`)
   }
   const wrapped: Record<string, unknown> = {}
   for (const key of Object.keys(port)) {
     const capability = capabilities[key]
     if (capability === undefined) {
-      throw new Error(`dsh-tui: Host Port "${portName}" method "${key}" is missing from the shadow-policy map`)
+      throw new Error(`dsh-cli: Host Port "${portName}" method "${key}" is missing from the shadow-policy map`)
     }
     const descriptor = Object.getOwnPropertyDescriptor(port, key)
     if (descriptor?.get !== undefined) {
@@ -192,13 +192,13 @@ function wrapChannelPort(port: HostChannelPort, mode: AdapterMode): HostChannelP
     if (subPort === undefined) continue
     const capabilities = CHANNEL_PORT_CAPABILITIES[subName]
     if (capabilities === undefined) {
-      throw new Error(`dsh-tui: Host Channel sub-port "${subName}" is missing from the shadow-policy map`)
+      throw new Error(`dsh-cli: Host Channel sub-port "${subName}" is missing from the shadow-policy map`)
     }
     const subWrapped: Record<string, unknown> = {}
     for (const key of Object.keys(subPort)) {
       const capability = capabilities[key]
       if (capability === undefined) {
-        throw new Error(`dsh-tui: Host Channel "${subName}" method "${key}" is missing from the shadow-policy map`)
+        throw new Error(`dsh-cli: Host Channel "${subName}" method "${key}" is missing from the shadow-policy map`)
       }
       const original = subPort[key]
       if (typeof original === 'function') {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://dsh.community/schemas/dsh-plugin-0.15.json",
-  "id": "com.dsh-tui.dsh-auth",
+  "id": "com.dsh-cli.dsh-auth",
   "name": "dsh-auth",
   "version": "0.2.0",
   "manifestVersion": "0.15",

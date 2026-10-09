@@ -6,7 +6,7 @@ import { valid } from 'semver'
 const PACKAGE_NAME = '@askdkc/dsh-cli'
 
 /** Read the version from either the compiled package or the source checkout. */
-export function installedTuiVersion(): string | undefined {
+export function installedCliVersion(): string | undefined {
   const here = dirname(fileURLToPath(import.meta.url))
   for (const relativePath of ['../../package.json', '../package.json']) {
     try {

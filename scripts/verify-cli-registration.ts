@@ -11,7 +11,7 @@ const dshHome = join(home, "dsh 'home")
 const target = join(dshHome, 'profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli', 'bin')
 mkdirSync(target, { recursive: true })
 writeFileSync(join(target, '..', 'package.json'), JSON.stringify({ name: '@askdkc/dsh-cli' }))
-writeFileSync(join(target, 'dsh-tui.js'), 'if (process.argv[2] === "signal") setInterval(() => {}, 1000); else { console.log(process.argv.slice(2).join("|")); process.exit(7) }\n')
+writeFileSync(join(target, 'dsh-cli.js'), 'if (process.argv[2] === "signal") setInterval(() => {}, 1000); else { console.log(process.argv.slice(2).join("|")); process.exit(7) }\n')
 writeFileSync(join(home, '.zshrc'), '# user setting\n')
 const options = { home, dshHome, shell: '/bin/zsh', path: '', platform: 'darwin' as const, zdotdir: home, dshRoot: '' }
 const result = ensureCliRegistered(options)
@@ -22,7 +22,7 @@ assert.equal(readFileSync(join(home, '.zshrc'), 'utf8').match(/BEGIN dsh-cli man
 const before = readFileSync(join(home, '.zshrc'), 'utf8')
 ensureCliRegistered(options)
 assert.equal(readFileSync(join(home, '.zshrc'), 'utf8'), before)
-assert.equal(before.includes('DSH_TUI_DSH_ROOT'), false)
+assert.equal(before.includes('DSH_CLI_DSH_ROOT'), false)
 
 const sourceHome = join(home, 'source-shell')
 const sourceRoot = join(home, "Harness 'source")
@@ -36,12 +36,12 @@ writeFileSync(join(sourceHome, '.zshrc'), '# keep user setting\n')
 const sourceOptions = { ...options, home: sourceHome, zdotdir: sourceHome, cliEntry: sourceEntry }
 assert.match(ensureCliRegistered(sourceOptions), /Registered/)
 const sourceRc = readFileSync(join(sourceHome, '.zshrc'), 'utf8')
-assert.match(sourceRc, /DSH_TUI_DSH_ROOT/)
+assert.match(sourceRc, /DSH_CLI_DSH_ROOT/)
 assert.match(sourceRc, /# keep user setting/)
-ensureCliRegistered({ ...sourceOptions, cliEntry: join(target, 'dsh-tui.js'), dshRoot: sourceRoot })
+ensureCliRegistered({ ...sourceOptions, cliEntry: join(target, 'dsh-cli.js'), dshRoot: sourceRoot })
 assert.equal(readFileSync(join(sourceHome, '.zshrc'), 'utf8'), sourceRc)
-const sourceShell = spawnSync('zsh', ['-ic', 'print -r -- "$DSH_TUI_DSH_ROOT"'], {
-  env: { ...process.env, ZDOTDIR: sourceHome, DSH_TUI_DSH_ROOT: '' }, encoding: 'utf8',
+const sourceShell = spawnSync('zsh', ['-ic', 'print -r -- "$DSH_CLI_DSH_ROOT"'], {
+  env: { ...process.env, ZDOTDIR: sourceHome, DSH_CLI_DSH_ROOT: '' }, encoding: 'utf8',
 })
 if (sourceShell.error?.code !== 'ENOENT') {
   assert.ifError(sourceShell.error)
@@ -71,7 +71,7 @@ const otherDshHome = join(home, 'another dsh home')
 const otherTarget = join(otherDshHome, 'profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli', 'bin')
 mkdirSync(otherTarget, { recursive: true })
 writeFileSync(join(otherTarget, '..', 'package.json'), JSON.stringify({ name: '@askdkc/dsh-cli' }))
-writeFileSync(join(otherTarget, 'dsh-tui.js'), 'console.log("another|" + process.argv.slice(2).join("|")); process.exit(9)\n')
+writeFileSync(join(otherTarget, 'dsh-cli.js'), 'console.log("another|" + process.argv.slice(2).join("|")); process.exit(9)\n')
 const originalLauncher = readFileSync(command, 'utf8')
 assert.match(ensureCliRegistered({ ...options, dshHome: otherDshHome }), /original DSH_HOME default/)
 assert.equal(readFileSync(command, 'utf8'), originalLauncher)
@@ -133,7 +133,7 @@ for (const startup of ['-ic', '-lc']) {
 const fishHome = join(home, 'fish')
 ensureCliRegistered({ ...options, home: fishHome, shell: '/usr/bin/fish', xdgConfigHome: join(fishHome, '.config'), cliEntry: sourceEntry })
 assert.match(readFileSync(join(fishHome, '.config', 'fish', 'conf.d', 'dsh-cli.fish'), 'utf8'), /contains --/)
-assert.match(readFileSync(join(fishHome, '.config', 'fish', 'conf.d', 'dsh-cli.fish'), 'utf8'), /set -gx DSH_TUI_DSH_ROOT/)
+assert.match(readFileSync(join(fishHome, '.config', 'fish', 'conf.d', 'dsh-cli.fish'), 'utf8'), /set -gx DSH_CLI_DSH_ROOT/)
 
 const windowsHome = join(home, 'windows')
 let userPath = 'C:\\Tools'

@@ -1,7 +1,7 @@
 import type { AgentHandle } from '@deepseek-ai/dsh-agent'
 import { terminalProgressLang } from 'dsh-working-activity/lang'
 import type { SessionModeSpec } from '../../sessionModes.js'
-import { normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../../tuiDisplayPrefs.js'
+import { normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../../cliDisplayPrefs.js'
 import { normalizeActivityPreset } from '../../components/activityFrames.js'
 import type { ChannelState } from './types.js'
 

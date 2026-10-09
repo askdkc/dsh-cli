@@ -63,7 +63,7 @@ export function createChannelConsumer(
     }
     const hasNewError = continuityErrors.length > errorCountBefore
     if (hasNewError && failClosed) {
-      throw new Error(`dsh-tui: Channel continuity violation: ${continuityErrors[continuityErrors.length - 1]}`)
+      throw new Error(`dsh-cli: Channel continuity violation: ${continuityErrors[continuityErrors.length - 1]}`)
     }
     // When not fail-closed, keep advancing `last` to the snapshot that was
     // actually observed so later continuity messages describe the real

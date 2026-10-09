@@ -14,7 +14,7 @@ import {
   renderMermaid,
   type MermaidEngine,
 } from '../terminal-utils/mermaid.js'
-import { getMermaidDiagrams, subscribeMermaidDiagrams } from '../tuiDisplayPrefs.js'
+import { getMermaidDiagrams, subscribeMermaidDiagrams } from '../cliDisplayPrefs.js'
 import { t } from '../i18n.js'
 
 /**

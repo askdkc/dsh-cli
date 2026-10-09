@@ -4,14 +4,14 @@ import { Context } from '@deepseek-ai/cordis'
 import * as tui from '../src/dsh-adapter/index.ts'
 import { settled } from './lib/term-test.mjs'
 
-const saved = Object.fromEntries(['DSH_TUI_LAUNCHER_VERSION', 'DSH_TUI_STANDALONE'].map(name => [name, process.env[name]]))
+const saved = Object.fromEntries(['DSH_CLI_LAUNCHER_VERSION', 'DSH_CLI_STANDALONE'].map(name => [name, process.env[name]]))
 const stdoutTty = Object.getOwnPropertyDescriptor(process.stdout, 'isTTY')
 for (const name of Object.keys(saved)) delete process.env[name]
 const root = new Context()
 let globalWaits = 0
 root.provide('agents', {})
 root.provide('loader', { await() { globalWaits++; return new Promise(() => {}) } })
-const runtime = () => [...root.registry.values()].find(value => value.name === 'dsh-tui-runtime')
+const runtime = () => [...root.registry.values()].find(value => value.name === 'dsh-cli-runtime')
 const runtimeFibers = () => [...(runtime()?.fibers ?? [])]
 try {
   // This fixture exercises a headless host, even when a local build inherits

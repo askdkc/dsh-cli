@@ -1,7 +1,7 @@
 /**
- * Launcher contract for `dsh-tui --resume`: the TUI writes the chosen session
- * id to `~/.dsh-tui/resume.txt`, and the launcher feeds it back as
- * `DSH_TUI_RESUME_SESSION`. Session *records* live in DSH's own persistence
+ * Launcher contract for `dsh-cli --resume`: the TUI writes the chosen session
+ * id to `~/.dsh-cli/resume.txt`, and the launcher feeds it back as
+ * `DSH_CLI_RESUME_SESSION`. Session *records* live in DSH's own persistence
  * backend (dsh-session-persistence-jsonl) — `/resume` lists those via
  * `sessionPersistence.list()`, this file only carries the id across
  * processes. It also keeps a small `last-used.json` of session-id → epoch-ms
@@ -24,7 +24,7 @@ export function resumeCommand(profile: string | undefined, sessionId: string, pl
     : profile === undefined ? 'dsh --config cordis.yml' : `dsh --profile ${profile}`
   return platform === 'win32'
     ? `${boot} --resume ${sessionId}`
-    : `DSH_TUI_RESUME_SESSION=${sessionId} ${boot}`
+    : `DSH_CLI_RESUME_SESSION=${sessionId} ${boot}`
 }
 
 function lastUsedFileStamp(): string | undefined {
@@ -50,7 +50,7 @@ function ensureDir(): void {
 
 /**
  * Store the session to resume and report the launcher invocation.
- * @param sessionId - Session id for `dsh-tui --resume` on the next launch.
+ * @param sessionId - Session id for `dsh-cli --resume` on the next launch.
  */
 export function writeResumeTarget(sessionId: string): void {
   ensureDir()
@@ -67,7 +67,7 @@ export function clearResumeTarget(): void {
 }
 
 /**
- * The session id requested by `dsh-tui --resume`, if any.
+ * The session id requested by `dsh-cli --resume`, if any.
  * @returns The stored session id, or undefined when none is set.
  */
 export function readResumeTarget(): string | undefined {
@@ -83,7 +83,7 @@ export function readResumeTarget(): string | undefined {
  * The session id requested through `--resume`/`-c`/`--continue` in app args,
  * mirroring the standalone bin's interception (issue #120/#53). The
  * `dsh --profile tui` boot path forwards these args to the booted app
- * verbatim and never parses them into DSH_TUI_RESUME_SESSION, so the
+ * verbatim and never parses them into DSH_CLI_RESUME_SESSION, so the
  * in-profile plugin reads them itself. A bare flag with no id defers to the
  * exit-time marker, exactly like the bin.
  * @param argv - the app arguments (typically `process.argv.slice(2)`).

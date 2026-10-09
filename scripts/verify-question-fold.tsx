@@ -11,7 +11,7 @@ import { PassThrough, Writable } from 'node:stream'
 import type { ComponentProps } from 'react'
 
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [React, { Terminal }, { render, ThemeProvider, AlternateScreen }, { Chat },
   { PageMargin }, { QuestionStore }, { ApprovalStore }, { TuiDialogStore },

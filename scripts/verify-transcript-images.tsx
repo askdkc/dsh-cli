@@ -3,7 +3,7 @@
  *
  * Run: node --import tsx/esm scripts/verify-transcript-images.tsx
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '0'
 
 import assert from 'node:assert/strict'
@@ -344,7 +344,7 @@ async function withTerminal(
   graphics = false,
   terminalImages = true,
 ): Promise<void> {
-  const graphicsEnv = ['TMUX', 'STY', 'DSH_TUI_ACCESSIBILITY', 'DSH_TUI_DISABLE_TERMINAL_IMAGES']
+  const graphicsEnv = ['TMUX', 'STY', 'DSH_CLI_ACCESSIBILITY', 'DSH_CLI_DISABLE_TERMINAL_IMAGES']
   const previousEnv = graphicsEnv.map(name => process.env[name])
   if (graphics) for (const name of graphicsEnv) delete process.env[name]
   const terminal = new XTerm({ cols: COLS, rows: ROWS, scrollback: 0, allowProposedApi: true })

@@ -37,7 +37,7 @@ export function enterReplayIsolation(): () => void {
   const state = replayIsolationStorage.getStore()
   if (state === undefined) {
     throw new Error(
-      'dsh-tui: replay isolation must be entered through withReplayIsolation() or runReplayShadow(); a process-global replay permit is not allowed',
+      'dsh-cli: replay isolation must be entered through withReplayIsolation() or runReplayShadow(); a process-global replay permit is not allowed',
     )
   }
   state.depth += 1

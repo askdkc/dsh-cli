@@ -13,7 +13,7 @@
  * Run: node --import tsx/esm scripts/verify-plan-review-scroll.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_LANG = 'zh'
 
 const [
   { PassThrough, Writable },

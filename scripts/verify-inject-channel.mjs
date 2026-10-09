@@ -13,7 +13,7 @@
  * - two messages in one write (split on the newline) both dispatch, in order
  * - close() removes this session's discovery record and unlinks the socket
  *
- * Uses a temp HOME so the real ~/.dsh-tui is never touched.
+ * Uses a temp HOME so the real ~/.dsh-cli is never touched.
  *
  * Run: node --import tsx/esm scripts/verify-inject-channel.mjs
  */

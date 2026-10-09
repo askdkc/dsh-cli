@@ -1,7 +1,7 @@
 import type { SessionModeSpec } from './adapter/ports/channel-display.js'
 export type { SessionModeSpec } from './adapter/ports/channel-display.js'
 /**
- * Configurable Shift+Tab session modes (the `modes` dsh-tui plugin config):
+ * Configurable Shift+Tab session modes (the `modes` dsh-cli plugin config):
  * each mode is a named bundle of optional DSH plane switches — plan mode
  * (dsh-plan-mode `/plan`), sandbox mode (dsh-sandbox-policy `sandbox/mode`
  * session events), approval policy (dsh-user-approval `approval/policy`

@@ -25,14 +25,14 @@ function readPresetPatch(path: string): PresetDefinition {
       if (row.config.id === 'minimal') {
         const persona = row.config.plugins.find((plugin: { id?: string }) => plugin.id === 'persona')
         if (persona?.config?.complete !== true || typeof persona.config.prefix !== 'string') {
-          throw new Error('dsh-tui: bundled Minimal complete persona is missing')
+          throw new Error('dsh-cli: bundled Minimal complete persona is missing')
         }
         persona.config.prefix += `\n\n${RESPONSE_LANGUAGE_POLICY}`
       }
       return row.config as PresetDefinition
     }
   }
-  throw new Error(`dsh-tui: invalid upstream preset declaration: ${path}`)
+  throw new Error(`dsh-cli: invalid upstream preset declaration: ${path}`)
 }
 
 /** Register shipped definitions with the current registry. Profile declarations

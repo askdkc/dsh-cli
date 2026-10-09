@@ -1,5 +1,5 @@
-import { installedTuiVersion } from './package-version.js'
-export { installedTuiVersion } from './package-version.js'
+import { installedCliVersion } from './package-version.js'
+export { installedCliVersion } from './package-version.js'
 import { execFileSync, spawn } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { appendFileSync, chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
@@ -32,12 +32,12 @@ const MAX_ASSET_BYTES = 512 * 1024 * 1024
 /** The SHA256SUMS manifest itself is plain text; anything past this is broken. */
 const MAX_CHECKSUM_MANIFEST_BYTES = 1024 * 1024
 /** env marker set on the /update restart; the new process verifies it at boot. */
-const UPDATED_FROM_ENV = 'DSH_TUI_UPDATED_FROM'
+const UPDATED_FROM_ENV = 'DSH_CLI_UPDATED_FROM'
 /**
  * env marker set on the /restart replacement: its boot logs to restart.log
  * (ordinary launches stay silent, so the file is restart-only evidence).
  */
-const RESTART_CHILD_ENV = 'DSH_TUI_RESTART_CHILD'
+const RESTART_CHILD_ENV = 'DSH_CLI_RESTART_CHILD'
 
 /**
  * Field-diagnosis log for the /restart terminal handoff, appended by BOTH
@@ -62,7 +62,7 @@ function writeRestartLine(line: string): void {
 }
 
 /**
- * Append a /restart handoff event to ~/.dsh-tui/restart.log.
+ * Append a /restart handoff event to ~/.dsh-cli/restart.log.
  * @param event - Short stable event name.
  * @param data - Small JSON-safe detail (never credentials or session text).
  */
@@ -100,7 +100,7 @@ export function writeHandoffNotice(text: string): void {
   }
 }
 
-export interface TuiUpdateInfo {
+export interface CliUpdateInfo {
   current: string
   latest: string
   isStandalone?: boolean
@@ -110,12 +110,12 @@ export interface TuiUpdateInfo {
 }
 
 /** What a fresh registry lookup says about this install. */
-export type TuiUpdateTarget =
+export type CliUpdateTarget =
   | { kind: 'update'; current: string; latest: string; authoritative?: string; isStandalone?: boolean; downloadUrl?: string; checksumUrl?: string }
   | { kind: 'latest'; current: string; isStandalone?: boolean }
   | { kind: 'unknown'; isStandalone?: boolean }
 
-export interface TuiUpdateResult {
+export interface CliUpdateResult {
   /** Exit code of the `dsh plugin update` run (0 = the package was updated). */
   updateCode: number
   /**
@@ -176,7 +176,7 @@ export function isVersionNewer(current: string, previous: string): boolean {
 /**
  * Versions whose compiled plugin hard-injects `tuiWorkspaces`
  * ('0.7.0'–'0.7.1'; removed in 0.7.2). Installing one while the globally
- * installed launcher copy predates the `dsh-tui-workspaces` patch row
+ * installed launcher copy predates the `dsh-cli-workspaces` patch row
  * deadlocks boot forever at "pending (waiting for service: tuiWorkspaces)"
  * (issues #183/#307) — and /update reaching such a target is exactly how
  * stale-mirror installs stranded users. /update must refuse them.
@@ -221,9 +221,9 @@ async function fetchLatestVersion(registryBase: string): Promise<string | undefi
  */
 export function isStandaloneRuntime(): boolean {
   return (
-    process.env.DSH_TUI_STANDALONE === '1' ||
-    process.env.DSH_TUI_STANDALONE_BINARY !== undefined ||
-    (typeof process.env.DSH_HOME === 'string' && process.env.DSH_HOME.includes('dsh-tui-standalone'))
+    process.env.DSH_CLI_STANDALONE === '1' ||
+    process.env.DSH_CLI_STANDALONE_BINARY !== undefined ||
+    (typeof process.env.DSH_HOME === 'string' && process.env.DSH_HOME.includes('dsh-cli-standalone'))
   )
 }
 
@@ -233,7 +233,7 @@ export function isStandaloneRuntime(): boolean {
  * @returns The resolved executable path from environment or `process.execPath`.
  */
 export function getStandaloneBinaryPath(): string {
-  return process.env.DSH_TUI_STANDALONE_BINARY ?? process.execPath
+  return process.env.DSH_CLI_STANDALONE_BINARY ?? process.execPath
 }
 
 /**
@@ -245,16 +245,16 @@ export function getStandaloneBinaryPath(): string {
  */
 export function getStandaloneAssetName(platform = process.platform, arch = process.arch): string {
   if (platform === 'win32') {
-    return 'dsh-tui-standalone-win-x64.zip'
+    return 'dsh-cli-standalone-win-x64.zip'
   }
   if (platform === 'darwin') {
     return arch === 'arm64'
-      ? 'dsh-tui-standalone-darwin-arm64.tar.gz'
-      : 'dsh-tui-standalone-darwin-x64.tar.gz'
+      ? 'dsh-cli-standalone-darwin-arm64.tar.gz'
+      : 'dsh-cli-standalone-darwin-x64.tar.gz'
   }
   return arch === 'arm64'
-    ? 'dsh-tui-standalone-linux-arm64.tar.gz'
-    : 'dsh-tui-standalone-linux-x64.tar.gz'
+    ? 'dsh-cli-standalone-linux-arm64.tar.gz'
+    : 'dsh-cli-standalone-linux-x64.tar.gz'
 }
 
 /** Options for {@link fetchGithubLatestRelease} — injectable for tests. */
@@ -312,7 +312,7 @@ async function probeChecksumManifestUrl(url: string): Promise<string | undefined
   const timeout = setTimeout(() => controller.abort(), UPDATE_CHECK_TIMEOUT_MS)
   try {
     const response = await fetch(url, {
-      headers: { 'user-agent': 'dsh-tui-updater' },
+      headers: { 'user-agent': 'dsh-cli-updater' },
       redirect: 'follow',
       signal: controller.signal,
     })
@@ -338,7 +338,7 @@ export async function fetchGithubLatestRelease(options: GithubReleaseQuery = {})
   const timeout = setTimeout(() => controller.abort(), UPDATE_CHECK_TIMEOUT_MS)
   try {
     const response = await doFetch(`${options.apiBaseUrl ?? 'https://api.github.com'}/repos/${GITHUB_REPO}/releases/latest`, {
-      headers: { accept: 'application/vnd.github.v3+json', 'user-agent': 'dsh-tui-updater' },
+      headers: { accept: 'application/vnd.github.v3+json', 'user-agent': 'dsh-cli-updater' },
       signal: controller.signal,
     })
     if (!response.ok) return undefined
@@ -420,7 +420,7 @@ export function verifyAssetChecksum(buffer: Buffer, manifestText: string, assetN
  * Escape a value for embedding in a PowerShell single-quoted literal: only
  * `''` needs escaping there (same convention as `buildPsScript` in
  * src/utils/clipboard.ts). Extract/archive paths derive from environment
- * variables (`DSH_TUI_STANDALONE_CACHE`), so an unescaped `'` closes the
+ * variables (`DSH_CLI_STANDALONE_CACHE`), so an unescaped `'` closes the
  * literal and turns the rest of the path into executable command text.
  * @param value - Raw string to embed between single quotes.
  * @returns The value with every `'` doubled.
@@ -562,7 +562,7 @@ async function fetchChecksumManifest(
   const timeout = setTimeout(() => controller.abort(), STANDALONE_DOWNLOAD_TIMEOUT_MS)
   try {
     const response = await fetch(checksumUrl, {
-      headers: { 'user-agent': 'dsh-tui-updater' },
+      headers: { 'user-agent': 'dsh-cli-updater' },
       redirect: 'follow',
       signal: controller.signal,
     })
@@ -638,7 +638,7 @@ export async function downloadAndReplaceStandaloneBinary(
 ): Promise<{ success: boolean; error?: string }> {
   const maxAssetBytes = options.maxAssetBytes ?? MAX_ASSET_BYTES
   const tempDir = join(
-    process.env.DSH_TUI_STANDALONE_CACHE ?? join(homedir(), '.cache', 'dsh-tui-standalone'),
+    process.env.DSH_CLI_STANDALONE_CACHE ?? join(homedir(), '.cache', 'dsh-cli-standalone'),
     `.update-${Date.now()}-${process.pid}`,
   )
   try {
@@ -655,7 +655,7 @@ export async function downloadAndReplaceStandaloneBinary(
     let response: Response
     try {
       response = await fetch(downloadUrl, {
-        headers: { 'user-agent': 'dsh-tui-updater' },
+        headers: { 'user-agent': 'dsh-cli-updater' },
         redirect: 'follow',
         signal: controller.signal,
       })
@@ -744,7 +744,7 @@ export async function downloadAndReplaceStandaloneBinary(
       throw new Error(`unsafe release archive rejected: ${treeCheck.reason ?? 'unknown extraction anomaly'}`)
     }
 
-    const binaryName = process.platform === 'win32' ? 'dsh-tui.exe' : 'dsh-tui'
+    const binaryName = process.platform === 'win32' ? 'dsh-cli.exe' : 'dsh-cli'
     const newBinaryPath = join(extractDir, binaryName)
     if (!existsSync(newBinaryPath)) {
       throw new Error('No executable binary found in release archive')
@@ -779,7 +779,7 @@ export async function downloadAndReplaceStandaloneBinary(
         throw copyError
       }
     } else {
-      const stagedTarget = join(targetDir, `.dsh-tui-new-${process.pid}`)
+      const stagedTarget = join(targetDir, `.dsh-cli-new-${process.pid}`)
       copyFileSync(newBinaryPath, stagedTarget)
       chmodSync(stagedTarget, 0o755)
       renameSync(stagedTarget, currentBinary)
@@ -806,8 +806,8 @@ export async function downloadAndReplaceStandaloneBinary(
  * say "installing X now, official latest is Y" instead of silently
  * upgrading to yesterday's version.
  */
-export async function resolveTuiUpdateTarget(): Promise<TuiUpdateTarget> {
-  const current = installedTuiVersion()
+export async function resolveCliUpdateTarget(): Promise<CliUpdateTarget> {
+  const current = installedCliVersion()
   const currentVersion = current === undefined ? null : valid(current)
   if (currentVersion === null) return { kind: 'unknown' }
 
@@ -848,8 +848,8 @@ export async function resolveTuiUpdateTarget(): Promise<TuiUpdateTarget> {
  * are intentionally treated as "no result" so an offline launch never delays
  * or blocks the interactive TUI.
  */
-export async function checkForTuiUpdate(): Promise<TuiUpdateInfo | undefined> {
-  const target = await resolveTuiUpdateTarget()
+export async function checkForCliUpdate(): Promise<CliUpdateInfo | undefined> {
+  const target = await resolveCliUpdateTarget()
   return target.kind === 'update'
     ? {
         current: target.current,
@@ -921,7 +921,7 @@ function runProcess(
 }
 
 /** Build the profile-manager command, preferring a preflight-pinned version. */
-export function tuiUpdatePluginArgs(profile: string, targetVersion?: string): string[] {
+export function cliUpdatePluginArgs(profile: string, targetVersion?: string): string[] {
   return targetVersion === undefined
     ? ['plugin', '--profile', profile, 'update', '--latest', PACKAGE_NAME]
     : ['plugin', '--profile', profile, 'update', `${PACKAGE_NAME}@${targetVersion}`]
@@ -966,7 +966,7 @@ function allowBuildsKeyLine(key: string): string {
 
 /**
  * Make sure the profile's pnpm-workspace.yaml carries explicit `false`
- * allowBuilds entries for the dsh-tui chain's postinstall-only deps, so a
+ * allowBuilds entries for the dsh-cli chain's postinstall-only deps, so a
  * pnpm ≥11 update is not killed by ERR_PNPM_IGNORED_BUILDS. Best effort and
  * idempotent: existing entries are never overwritten (an explicit user
  * decision wins), a missing `allowBuilds:` block is appended, and a missing
@@ -1418,15 +1418,15 @@ export function removeStalePackageInstall(profile: string): StaleInstallRemoval 
 
 /**
  * Best-effort migrate the GLOBAL launcher to the delegating shim (0.8.7):
- * after a successful profile update, copy this package's `bin/dsh-tui.js`
+ * after a successful profile update, copy this package's `bin/dsh-cli.js`
  * and `package.json` over the global install so the launcher can never lag
  * the profile again — the shim delegates all logic to the profile copy it
  * just updated. Single-file-safe by contract: the new bin imports nothing
  * from lib/ (see its header), so overwriting it inside an older global
  * install cannot dangle a missing helper.
  *
- * Locating the global dir relies on argv[1] being the global `dsh-tui.js`
- * (true when booted through the `dsh-tui` command). Source checkouts and
+ * Locating the global dir relies on argv[1] being the global `dsh-cli.js`
+ * (true when booted through the `dsh-cli` command). Source checkouts and
  * direct `dsh --profile` boots resolve nothing — the migration is a silent
  * no-op there. Write failures (permissions, locked files) are equally
  * silent: the launcher-alignment warning remains the fallback diagnosis.
@@ -1435,7 +1435,7 @@ export function removeStalePackageInstall(profile: string): StaleInstallRemoval 
  */
 export function migrateGlobalLauncher(): boolean {
   const launcherBin = process.argv[1]
-  if (launcherBin === undefined || !launcherBin.endsWith('dsh-tui.js')) return false
+  if (launcherBin === undefined || !launcherBin.endsWith('dsh-cli.js')) return false
   // Walk up from the bin to the containing package; accept it only when it
   // is OUR package and not the profile copy we are running from (junction
   // layouts collapse both onto the same real path — copying onto ourselves
@@ -1460,11 +1460,11 @@ export function migrateGlobalLauncher(): boolean {
         // tmp + rename keeps each file atomic; a crash mid-migration leaves
         // either the old or the new file, never a truncated one.
         const replace = (target: string, source: string): void => {
-          const staged = `${target}.dsh-tui-migrate`
+          const staged = `${target}.dsh-cli-migrate`
           writeFileSync(staged, readFileSync(source))
           renameSync(staged, target)
         }
-        replace(join(dir, 'bin', 'dsh-tui.js'), join(ownDir, 'bin', 'dsh-tui.js'))
+        replace(join(dir, 'bin', 'dsh-cli.js'), join(ownDir, 'bin', 'dsh-cli.js'))
         replace(manifest, join(ownDir, 'package.json'))
         return true
       }
@@ -1479,7 +1479,7 @@ export function migrateGlobalLauncher(): boolean {
 }
 
 /** Outcome of the install-only half of an update (no restart). */
-export interface TuiUpdateOutcome {
+export interface CliUpdateOutcome {
   /** 0 = the profile now runs the intended version; non-zero = failed. */
   code: number
   /** Version installed before the update ran (the #307 stamp). */
@@ -1491,7 +1491,7 @@ export interface TuiUpdateOutcome {
 /**
  * Install-only half of `/update`: run `dsh plugin add`, refuse boot-deadlock
  * targets, verify the profile actually advanced, and migrate the global
- * launcher. No restart — `updateTuiAndRestart` layers the session-preserving
+ * launcher. No restart — `updateCliAndRestart` layers the session-preserving
  * restart on top, and the `dsh-cli update` CLI stops here.
  *
  * @param profile - The dsh profile to update.
@@ -1499,19 +1499,19 @@ export interface TuiUpdateOutcome {
  *   undefined when that check failed and pnpm should resolve latest.
  * @returns The update exit code plus the before/after versions.
  */
-export async function updateTui(
+export async function updateCli(
   profile: string,
   targetVersion?: string,
-): Promise<TuiUpdateOutcome> {
+): Promise<CliUpdateOutcome> {
   // Stamp the pre-update version BEFORE pnpm runs: it reads this package's
   // manifest from disk, which the update replaces on the fly — a
   // post-update read already sees the NEW version, and the restarted
   // process then compares new-vs-new and false-alarms "version did not
   // advance" on every successful update (issue #307's screenshots).
-  const updatedFrom = installedTuiVersion() ?? ''
+  const updatedFrom = installedCliVersion() ?? ''
 
   if (isStandaloneRuntime()) {
-    const target = await resolveTuiUpdateTarget()
+    const target = await resolveCliUpdateTarget()
     const latestVersion = targetVersion ?? (target.kind === 'update' ? target.latest : undefined)
     const downloadUrl = (target.kind === 'update' && target.downloadUrl)
       ? target.downloadUrl
@@ -1535,7 +1535,7 @@ export async function updateTui(
   }
 
   const dsh = process.platform === 'win32' ? 'dsh.cmd' : 'dsh'
-  const updateArgs = tuiUpdatePluginArgs(profile, targetVersion)
+  const updateArgs = cliUpdatePluginArgs(profile, targetVersion)
   // pnpm ≥11 hard-fails installs whose dependency tree carries un-allowlisted
   // build scripts (ERR_PNPM_IGNORED_BUILDS). The dsh-auth chain pulls in
   // postinstall-only deps (@google/genai/protobufjs via pi-ai), so pre-seed
@@ -1607,7 +1607,7 @@ export async function updateTui(
   // #183/#307. Refuse the restart when the version JUST moved there; a user
   // who was already on it keeps their restart (their combo demonstrably
   // boots) and gets the repair hint on the next /update instead.
-  const installedNow = installedTuiVersion()
+  const installedNow = installedCliVersion()
   if (installedNow !== undefined && installedNow !== updatedFrom && isBootDeadlockTarget(installedNow)) {
     process.stderr.write(
       `dsh-cli: update landed on ${installedNow}, which can permanently deadlock boot under older launcher patches ` +
@@ -1624,10 +1624,10 @@ export async function updateTui(
   // node_modules, and if the mismatch survives, stop before restarting into
   // a mixed state and hand the user the exact repair command instead.
   if (targetVersion !== undefined) {
-    let installed = installedTuiVersion()
+    let installed = installedCliVersion()
     if (installed !== targetVersion) {
       await runProcess(dsh, ['plugin', '--profile', profile, 'install'], { shell: true })
-      installed = installedTuiVersion()
+      installed = installedCliVersion()
     }
     if (installed !== targetVersion) {
       process.stderr.write(
@@ -1647,11 +1647,11 @@ export async function updateTui(
     process.stderr.write('dsh-cli: global launcher aligned to the delegating shim (no manual npm i -g needed anymore).\n')
   }
 
-  return { code: 0, updatedFrom, installed: installedTuiVersion() }
+  return { code: 0, updatedFrom, installed: installedCliVersion() }
 }
 
 /**
- * Update the installed dsh-tui package and restart the same launcher while
+ * Update the installed dsh-cli package and restart the same launcher while
  * preserving the active session. The TUI must already be unmounted before
  * this is called so pnpm output cannot corrupt the rendered terminal frame.
  *
@@ -1668,12 +1668,12 @@ export async function updateTui(
  *   check, or undefined when that check failed and pnpm should resolve latest.
  * @returns Exit codes for the update run and the replacement process.
  */
-export async function updateTuiAndRestart(
+export async function updateCliAndRestart(
   sessionId: string,
   profile: string,
   targetVersion?: string,
-): Promise<TuiUpdateResult> {
-  const outcome = await updateTui(profile, targetVersion)
+): Promise<CliUpdateResult> {
+  const outcome = await updateCli(profile, targetVersion)
   const { updatedFrom } = outcome
   if (outcome.code !== 0) return { updateCode: outcome.code, restartCode: outcome.code }
 
@@ -1684,7 +1684,7 @@ export async function updateTuiAndRestart(
   // child's keypresses, and capture a fast-death stderr report. The old
   // plain inherit spawn raced the interpreter for input on Windows
   // Terminal (issue #483: "cannot type anything after /update").
-  const restartCode = await restartTui(sessionId, {
+  const restartCode = await restartCli(sessionId, {
     env: { [UPDATED_FROM_ENV]: updatedFrom },
     kind: 'update',
   })
@@ -1701,7 +1701,7 @@ export async function updateTuiAndRestart(
  * @returns Process exit code: 0 on success or already-latest, 1 otherwise.
  */
 export async function cliUpdate(profile: string): Promise<number> {
-  const target = await resolveTuiUpdateTarget()
+  const target = await resolveCliUpdateTarget()
   if (target.kind === 'latest') {
     process.stdout.write(`dsh-cli: already the latest version (${target.current}).\n`)
     return 0
@@ -1709,7 +1709,7 @@ export async function cliUpdate(profile: string): Promise<number> {
   if (isStandaloneRuntime()) {
     if (target.kind === 'update') {
       process.stdout.write(`dsh-cli: updating standalone binary ${target.current} → ${target.latest}…\n`)
-      const outcome = await updateTui(profile, target.latest)
+      const outcome = await updateCli(profile, target.latest)
       if (outcome.code === 0) {
         process.stdout.write(`dsh-cli: standalone binary updated successfully (${outcome.updatedFrom || target.current} → ${outcome.installed}).\n`)
       }
@@ -1741,12 +1741,12 @@ export async function cliUpdate(profile: string): Promise<number> {
   } else {
     process.stdout.write('dsh-cli: version check failed (offline or unreadable install) — falling back to `--latest`.\n')
   }
-  const outcome = await updateTui(profile, targetVersion)
+  const outcome = await updateCli(profile, targetVersion)
   if (outcome.code === 0) {
     // A preflight-less run (`--latest` fallback) can "succeed" as a pnpm
     // no-op: same manifest before and after. Say so instead of printing a
     // vacuous `updated X → X` — the /update path surfaces the same state via
-    // the DSH_TUI_UPDATED_FROM stamp on restart.
+    // the DSH_CLI_UPDATED_FROM stamp on restart.
     if (targetVersion === undefined && outcome.installed !== undefined && outcome.installed === outcome.updatedFrom) {
       process.stdout.write(
         `dsh-cli: version did not advance (still ${outcome.installed}) — already the latest, or the registry has no newer release yet.\n`,
@@ -1772,12 +1772,12 @@ export async function cliUpdate(profile: string): Promise<number> {
  * update restarts into a TUI that takes no input).
  *
  * The TUI must already be unmounted before this is called (same terminal
- * handoff contract as `updateTuiAndRestart`): the caller runs this from the
+ * handoff contract as `updateCliAndRestart`): the caller runs this from the
  * exit funnel's done callback, after finishExit detached the terminal and
  * the readable stdin pump.
  *
  * This waits for the replacement's natural exit: the outer command
- * interpreter that ran `dsh-tui` reclaims the console the moment the
+ * interpreter that ran `dsh-cli` reclaims the console the moment the
  * launch chain (cmd → wrapper → this process) unwinds, and an orphaned
  * replacement still attached to the console then fights the interpreter's
  * own prompt and line reader for every keypress (field evidence
@@ -1795,22 +1795,22 @@ export async function cliUpdate(profile: string): Promise<number> {
  * @param sessionId - Session to resume in the replacement process.
  * @param options - `kind: 'update'` drops the /restart boot-diagnosis
  *   marker and tags restart.log events for the update flow; `env` adds
- *   marker variables for the replacement (e.g. DSH_TUI_UPDATED_FROM).
+ *   marker variables for the replacement (e.g. DSH_CLI_UPDATED_FROM).
  * @returns 0 when the replacement ran and exited cleanly, 127 when it
  *   failed to start, otherwise the child's own exit code.
  */
-export interface TuiRestartOptions {
+export interface CliRestartOptions {
   /** Extra env markers for the replacement process (/update's stamp). */
   env?: Record<string, string>
   /**
    * 'update' reuses this handoff after an install: no
-   * DSH_TUI_RESTART_CHILD marker (that flag is /restart-only boot
+   * DSH_CLI_RESTART_CHILD marker (that flag is /restart-only boot
    * diagnostics) and restart.log events carry the update-restart tag.
    */
   kind?: 'restart' | 'update'
 }
 
-export async function restartTui(sessionId: string, options: TuiRestartOptions = {}): Promise<number> {
+export async function restartCli(sessionId: string, options: CliRestartOptions = {}): Promise<number> {
   const kind = options.kind ?? 'restart'
   const tag = kind === 'update' ? 'update-restart' : 'restart'
   const argv = [...process.execArgv, ...process.argv.slice(1)]
@@ -1830,8 +1830,8 @@ export async function restartTui(sessionId: string, options: TuiRestartOptions =
       env: {
         ...process.env,
         // The replacement resumes the current session through the launcher
-        // contract (DSH_TUI_RESUME_SESSION; see src/sessionHistory.ts).
-        DSH_TUI_RESUME_SESSION: sessionId,
+        // contract (DSH_CLI_RESUME_SESSION; see src/sessionHistory.ts).
+        DSH_CLI_RESUME_SESSION: sessionId,
         // Marks the replacement so its own boot logs to restart.log without
         // noisy logging on every ordinary launch (/restart only).
         ...(kind === 'restart' ? { [RESTART_CHILD_ENV]: '1' } : {}),

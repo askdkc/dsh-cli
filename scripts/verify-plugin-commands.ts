@@ -29,8 +29,8 @@ import { fileURLToPath } from 'node:url'
 const fakeHome = mkdtempSync(join(tmpdir(), 'dsh-plugin-commands-home-'))
 process.env.HOME = fakeHome
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_LANG = 'zh'
-process.env.DSH_TUI_ADAPTER_MODE = 'new'
+process.env.DSH_CLI_LANG = 'zh'
+process.env.DSH_CLI_ADAPTER_MODE = 'new'
 
 const { Context } = await import('@deepseek-ai/cordis')
 const { default: CommandRuntime } = await import('@deepseek-ai/dsh-commands')

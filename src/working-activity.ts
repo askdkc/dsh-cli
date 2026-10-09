@@ -35,7 +35,7 @@ export * from 'dsh-working-activity'
 type MountedContext = Parameters<typeof mountedApply>[0]
 
 export const apply = (ctx: MountedContext, config: Parameters<typeof mountedApply>[1] = {}): void => {
-  // The user's own file (~/.dsh-tui/working-activity.json — what /activity
+  // The user's own file (~/.dsh-cli/working-activity.json — what /activity
   // and the settings panel write) folds in under the row: an explicit row
   // value wins, otherwise the file's feature switches, phrases, tok-per-sec
   // and work reminder reach the plugin, as they did when the line was folded

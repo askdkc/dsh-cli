@@ -162,13 +162,13 @@ export function callWithUpdateOverflowGuard(source: string, onChange: () => void
  * This installs uncaughtException/unhandledRejection handlers that absorb
  * exactly the overflow error class (same self-healing contract: React
  * already reset the counter before throwing) and rethrow everything else
- * unchanged. Idempotent; opt out with DSH_TUI_NO_185_PROCESS_GUARD=1 when a
+ * unchanged. Idempotent; opt out with DSH_CLI_NO_185_PROCESS_GUARD=1 when a
  * host owns process error policy.
  */
 let processGuardInstalled = false
 export function installNestedUpdateOverflowProcessGuard(): void {
   if (processGuardInstalled) return
-  if (process.env.DSH_TUI_NO_185_PROCESS_GUARD === '1') return
+  if (process.env.DSH_CLI_NO_185_PROCESS_GUARD === '1') return
   processGuardInstalled = true
   process.on('uncaughtException', error => {
     if (swallowNestedUpdateOverflow(error, 'process.uncaught')) return

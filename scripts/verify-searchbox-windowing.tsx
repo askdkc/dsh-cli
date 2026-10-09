@@ -22,8 +22,8 @@ export {} // 模块边界：避免顶层 await/全局名与其他 verify 脚本�
 // 语言与主题在 import 前钉死：文案断言与布局测量都依赖确定的界面语言，
 // CI 的 LANG 环境不应影响默认语言解析（verify-session-tree 同款做法）。
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 
 // 静态 import 会提升到上面的 env 钉死之前，但 term-test 只读 process.env.CI，
 // 与语言/主题无关，顺序安全。

@@ -94,7 +94,7 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
   const assertPrepared = (candidate: AgentHandle, capture: BindingCapture): void => {
     if (pending.get(candidate) !== capture || !isCaptureCurrent(capture)) {
       startClose(disposePending(candidate))
-      throw new Error('dsh-tui: Channel binding changed before adoption')
+      throw new Error('dsh-cli: Channel binding changed before adoption')
     }
   }
   const settlePrevious = (previous: BindingCommit, disposition: PreviousDisposition): void => {
@@ -121,7 +121,7 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
       // would publish a binding whose cleanup authority was contested.
       handoff = undefined
       disposePending(candidate)
-      throw new Error('dsh-tui: Channel binding handoff is already in progress')
+      throw new Error('dsh-cli: Channel binding handoff is already in progress')
     }
     assertPrepared(candidate, capture)
     const token = Symbol('channel-binding-handoff')
@@ -130,19 +130,19 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
     let disposition: PreviousDisposition | undefined
     const decidePrevious = (next: PreviousDisposition): void => {
       if (disposition === undefined || disposition === next) { disposition = next; return }
-      throw new Error('dsh-tui: Channel binding previous disposition changed')
+      throw new Error('dsh-cli: Channel binding previous disposition changed')
     }
     let succeeded = false
     try {
       const cleanupFailure = clearSubscriptions(() => {
         if (handoff !== token || !isCaptureCurrent(capture) || pending.get(candidate) !== capture) {
-          throw new Error('dsh-tui: Channel binding changed before adoption')
+          throw new Error('dsh-cli: Channel binding changed before adoption')
         }
       })
       if (cleanupFailure !== undefined) throw cleanupFailure
       // Unsubscription is external code: it can revoke the owner or attempt a
       // rival adoption. Never write a candidate after either event.
-      if (handoff !== token) throw new Error('dsh-tui: Channel binding handoff was superseded')
+      if (handoff !== token) throw new Error('dsh-cli: Channel binding handoff was superseded')
       assertPrepared(candidate, capture)
       pending.delete(candidate)
       currentAgent = candidate.agent
@@ -152,7 +152,7 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
       // Tail callbacks include notifier/listener code and therefore remain a
       // synchronous reentrancy boundary even though they contain no await.
       if (handoff !== token || !owner.current() || currentHandle !== candidate) {
-        throw new Error('dsh-tui: Channel binding changed during adoption')
+        throw new Error('dsh-cli: Channel binding changed during adoption')
       }
       succeeded = true
       return result
@@ -179,7 +179,7 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
     owner.assertActive()
     if (handoff !== undefined) {
       handoff = undefined
-      throw new Error('dsh-tui: Channel binding handoff is already in progress')
+      throw new Error('dsh-cli: Channel binding handoff is already in progress')
     }
     const token = Symbol('channel-binding-handoff')
     handoff = token
@@ -187,21 +187,21 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
     let disposition: PreviousDisposition | undefined
     const decidePrevious = (next: PreviousDisposition): void => {
       if (disposition === undefined || disposition === next) { disposition = next; return }
-      throw new Error('dsh-tui: Channel binding previous disposition changed')
+      throw new Error('dsh-cli: Channel binding previous disposition changed')
     }
     let succeeded = false
     try {
       const cleanupFailure = clearSubscriptions(() => {
-        if (handoff !== token || !owner.current()) throw new Error('dsh-tui: Channel binding changed during adoption')
+        if (handoff !== token || !owner.current()) throw new Error('dsh-cli: Channel binding changed during adoption')
       })
       if (cleanupFailure !== undefined) throw cleanupFailure
-      if (handoff !== token || !owner.current()) throw new Error('dsh-tui: Channel binding changed during adoption')
+      if (handoff !== token || !owner.current()) throw new Error('dsh-cli: Channel binding changed during adoption')
       currentAgent = agent
       currentHandle = nextHandle
       generation += 1
       const result = tail(previous, decidePrevious)
       if (handoff !== token || !owner.current() || currentAgent !== agent || currentHandle !== nextHandle) {
-        throw new Error('dsh-tui: Channel binding changed during adoption')
+        throw new Error('dsh-cli: Channel binding changed during adoption')
       }
       succeeded = true
       return result
@@ -234,18 +234,18 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
      */
     async prepare(capture: BindingCapture, create: () => Promise<AgentHandle>): Promise<AgentHandle> {
       owner.assertActive()
-      if (!isCaptureCurrent(capture)) throw new Error('dsh-tui: Channel binding changed before preparation')
+      if (!isCaptureCurrent(capture)) throw new Error('dsh-cli: Channel binding changed before preparation')
       const candidate = await create()
       if (!isCaptureCurrent(capture)) {
         await dispose(candidate)
-        throw new Error('dsh-tui: Channel binding changed during preparation')
+        throw new Error('dsh-cli: Channel binding changed during preparation')
       }
       pending.set(candidate, capture)
       // Owner disposal may synchronously occur through embedding hooks while
       // ownership is registered; verify the pending entry itself as well.
       if (!isCaptureCurrent(capture) || pending.get(candidate) !== capture) {
         await disposePending(candidate)
-        throw new Error('dsh-tui: Channel binding changed during preparation')
+        throw new Error('dsh-cli: Channel binding changed during preparation')
       }
       return candidate
     },

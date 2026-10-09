@@ -200,8 +200,8 @@ function createWorkspacePort(host: TuiWorkspaceHost): HostWorkspacePort {
 }
 
 export const workspaceDriver: UpstreamDriver = {
-  id: 'dsh-tui-workspace',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-workspace',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.workspaces',
   mountEffectClass: 'mutate',
   detect: detectWorkspaceCapability,

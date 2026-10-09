@@ -2,7 +2,7 @@
 
 [Documentation index](README.md) · [简体中文](community-management.md)
 
-This document defines how the dsh-TUI community proposes, discusses, tracks, and
+This document defines how the dsh-CLI community proposes, discusses, tracks, and
 delivers public work. It does not replace the [contributing guide](contributing.en.md),
 [Code of Conduct](../CODE_OF_CONDUCT.en.md), or the security reporting process.
 
@@ -64,7 +64,7 @@ User problem or idea
 
 - Who has the problem and in what workflow;
 - current and expected behavior;
-- why dsh-TUI should solve it rather than DSH or an external plugin;
+- why dsh-CLI should solve it rather than DSH or an external plugin;
 - affected users, platforms, and compatibility versions;
 - how completion will be verified;
 - whether it requires a public API, configuration, or persistence change.

@@ -19,7 +19,7 @@ const PATTERNS = [
   {
     id: 'stdout-debug-output',
     regex: /\bconsole\.(?:log|info|debug)\s*\(/,
-    signal: 'Potential stdout/debug output added; dsh-TUI must stay quiet while rendering',
+    signal: 'Potential stdout/debug output added; dsh-CLI must stay quiet while rendering',
     confidence: 'high-signal',
   },
   {

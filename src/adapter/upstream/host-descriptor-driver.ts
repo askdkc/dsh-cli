@@ -247,10 +247,10 @@ async function probeCommandLive(service: unknown): Promise<ProbeResult> {
   if (!hasFunction(service, 'register') || !hasFunction(service, 'list') || !hasFunction(service, 'find')) {
     return { evidence: [], missing: ['commands.register()', 'commands.list()', 'commands.find()'] }
   }
-  const name = `dsh_tui_live_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
+  const name = `dsh_cli_live_probe_${randomUUID().replace(/-/g, '').slice(0, 12)}`
   const definition = {
     name,
-    description: 'dsh-tui adapter reversible live probe',
+    description: 'dsh-cli adapter reversible live probe',
     handler: () => ({ kind: 'success' as const, text: 'ok' }),
   }
   let dispose: (() => void) | undefined
@@ -591,8 +591,8 @@ export async function refreshHostCapabilityLifecycles(ctx: unknown): Promise<Cap
 
 /** The driver object for future kernel composition. */
 export const hostDescriptorDriver: UpstreamDriver = {
-  id: 'dsh-tui-host-descriptor',
-  upstreamFamily: 'dsh-tui',
+  id: 'dsh-cli-host-descriptor',
+  upstreamFamily: 'dsh-cli',
   capability: 'host.descriptor',
   mountEffectClass: 'read-only',
   detect: detectHostDescriptorCapability,

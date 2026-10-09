@@ -9,7 +9,7 @@
 process.env.FORCE_COLOR = '3'
 // 固定英文 UI：本脚本的断言全部针对 en 文案（折叠/退出码/工具名），
 // 不 pin 会随宿主 locale 漂移（zh 机器上这些串已本地化，见 verify-toolcard-i18n）。
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 
 const [{ Writable }, React, { Terminal: XTerm }, { render }, { AssistantToolUseMessage }, { settled, sleep }] = await Promise.all([
   import('node:stream'),
@@ -264,7 +264,7 @@ show('glob', {
 })
 check('Glob paths 逐行列出', await settled(() => rowOf('src/a.ts') >= 0 && rowOf('src/b.ts') >= 0))
 
-// 13. 终端命令折叠（dsh-tui.foldTerminalCommand）：多行脚本标题收起为
+// 13. 终端命令折叠（dsh-cli.foldTerminalCommand）：多行脚本标题收起为
 //     首行 + `… +N lines` 提示；提示与正文折叠提示（capLines）同格式。
 const pwshTool = {
   name: 'powershell',

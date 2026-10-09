@@ -10,7 +10,7 @@ import { join } from 'node:path'
 import { setImmediate } from 'node:timers/promises'
 import { settled } from './lib/term-test.mjs'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-shell-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-shell-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
 process.env.DSH_HOME = home

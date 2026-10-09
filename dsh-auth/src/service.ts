@@ -1,6 +1,6 @@
 /**
  * The `ctx.dshAuth` service: the programmatic surface over this plugin's
- * mounted provider routes. UIs (the dsh-tui /provider wizard, a web settings
+ * mounted provider routes. UIs (the dsh-cli /provider wizard, a web settings
  * page) enumerate providers with masked sign-in state and drive login/logout
  * without touching the credential file or the pi-ai flow objects; the `/auth`
  * command in `command.ts` is a thin textual veneer over the same api.
@@ -252,7 +252,7 @@ export function createDshAuthApi(deps: DshAuthApiDeps): DshAuthApi {
       }
       if (ask === undefined) {
         throw new Error(
-          `dsh-auth: signing in to "${target}" needs an interactive surface (run inside dsh-tui or the web client); `
+          `dsh-auth: signing in to "${target}" needs an interactive surface (run inside dsh-cli or the web client); `
           + 'this plugin refuses to assume a browser on this machine',
         )
       }

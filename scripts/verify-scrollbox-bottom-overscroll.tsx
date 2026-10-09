@@ -16,8 +16,8 @@
  * Run: node --import tsx/esm scripts/verify-scrollbox-bottom-overscroll.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 delete process.env.WT_SESSION
 delete process.env.TERM_PROGRAM
 delete process.env.TMUX

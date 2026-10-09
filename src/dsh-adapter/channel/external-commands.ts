@@ -34,14 +34,14 @@ export function createExternalCommandInvoker(
     // Derive identity from the effective definition, never the display name:
     // scoped same-name handlers can have different verified owners.
     const owner = commandOwner(ctx, definition)
-    const rootScope = owner?.commandId ?? (/^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*)+$/u.test(name) ? name : `dsh-tui.${name.toLowerCase().replace(/[^a-z0-9-]+/gu, '-').replace(/^-+|-+$/gu, '') || 'command'}`)
+    const rootScope = owner?.commandId ?? (/^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*)+$/u.test(name) ? name : `dsh-cli.${name.toLowerCase().replace(/[^a-z0-9-]+/gu, '-').replace(/^-+|-+$/gu, '') || 'command'}`)
     if (!deps.allows({ componentId: 'root' }, 'commands.invoke', rootScope)) {
-      ctx.logger.warn('dsh-tui: registry command invocation denied (commands.invoke revoked for "root" in the grants file)')
+      ctx.logger.warn('dsh-cli: registry command invocation denied (commands.invoke revoked for "root" in the grants file)')
       ctx.get('tuiEffectLedger')?.record({ operation: 'bind', resource: { kind: 'permission', id: `root:commands.invoke:${rootScope}` }, result: 'failed', errorCode: 'PERMISSION_NOT_GRANTED' }, ctx)
       return t('command-invoke-denied')
     }
     if (owner !== undefined && !deps.allows({ componentId: owner.componentId, activationId: owner.activationId }, 'commands.invoke', owner.commandId)) {
-      ctx.logger.warn(`dsh-tui: registry command "/${name}" invocation denied — owner Component "${owner.componentId}" lost commands.invoke for "${owner.commandId}"`)
+      ctx.logger.warn(`dsh-cli: registry command "/${name}" invocation denied — owner Component "${owner.componentId}" lost commands.invoke for "${owner.commandId}"`)
       ctx.get('tuiEffectLedger')?.record({ operation: 'bind', resource: { kind: 'permission', id: `${owner.componentId}:commands.invoke:${owner.commandId}` }, result: 'failed', errorCode: 'PERMISSION_NOT_GRANTED' }, ctx)
       return t('command-invoke-denied-owner', { name, owner: owner.componentId })
     }

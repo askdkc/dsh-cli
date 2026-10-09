@@ -133,9 +133,9 @@ export function createRewindToAction(
           cwd: state.cwd,
         }, normalizeRewindDoneSummary).then(summary => {
           if (typeof summary === 'string') deps.notify(summary, { timeoutMs: 6000 })
-        }).catch((error: unknown) => ctx.logger.warn('dsh-tui: tui/rewind-done dispatch failed: %o', error))
+        }).catch((error: unknown) => ctx.logger.warn('dsh-cli: tui/rewind-done dispatch failed: %o', error))
       } catch (error) {
-        ctx.logger.warn('dsh-tui: tui/rewind-done dispatch failed: %o', error)
+        ctx.logger.warn('dsh-cli: tui/rewind-done dispatch failed: %o', error)
       }
       deps.notifySessionSwitched('rewind', String(childId), sourceSessionId)
       return row.text

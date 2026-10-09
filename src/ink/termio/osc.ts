@@ -507,7 +507,7 @@ export const CLEAR_TAB_STATUS = osc(
 
 /** Enable experimental tab status only when explicitly requested by the terminal owner. */
 export function supportsTabStatus(): boolean {
-  return process.env.DSH_TUI_TAB_STATUS === '1'
+  return process.env.DSH_CLI_TAB_STATUS === '1'
 }
 
 /**

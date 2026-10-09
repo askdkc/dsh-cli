@@ -20,11 +20,11 @@ import { createUserMessage, createAssistantMessage, type UserMessage } from '@de
 import type { CreateAgentOptions } from '@deepseek-ai/dsh-agent'
 import { settled, sleep, viewportLines } from './lib/term-test.mjs'
 
-const home = mkdtempSync(join(tmpdir(), 'dsh-tui-rewind-edit-'))
+const home = mkdtempSync(join(tmpdir(), 'dsh-cli-rewind-edit-'))
 process.env.HOME = home
 process.env.USERPROFILE = home
-process.env.DSH_TUI_LANG = 'en'
-process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES = '1'
+process.env.DSH_CLI_LANG = 'en'
+process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES = '1'
 
 const [{ render, AlternateScreen }, { Chat }, { QuestionStore }, { createChannel }, { createChannelUi, createChannelUiLease }] = await Promise.all([
   import('../src/ui.js'),

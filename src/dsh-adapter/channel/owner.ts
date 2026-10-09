@@ -9,7 +9,7 @@ export function createChannelOwner() {
     try { return externalCheck() } catch { return false }
   }
   const assertActive = () => {
-    if (!current()) throw new Error('dsh-tui: Channel lifetime has ended')
+    if (!current()) throw new Error('dsh-cli: Channel lifetime has ended')
   }
   return {
     current, assertActive,
@@ -39,7 +39,7 @@ export function createChannelOwner() {
         try { cleanup() } catch (error) { failures.push(error) }
       }
       if (failures.length === 1) throw failures[0]
-      if (failures.length > 1) throw new AggregateError(failures, 'dsh-tui: Channel cleanup failed')
+      if (failures.length > 1) throw new AggregateError(failures, 'dsh-cli: Channel cleanup failed')
     },
   }
 }

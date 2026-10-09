@@ -14,8 +14,8 @@
  * Run: node --import tsx/esm scripts/repro-user-drag-wheel-render.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 process.env.WT_SESSION = 'headless-windows-terminal-probe'
 delete process.env.TERM_PROGRAM
 delete process.env.TMUX

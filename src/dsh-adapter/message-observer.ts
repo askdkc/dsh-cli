@@ -1,7 +1,7 @@
 /**
  * messages.observe contract surface (C-042,
  * `messages.dsh/v1alpha1#MessageObserver`): the host event broker, mounted
- * by the dsh-tui-plugin-host row as `ctx.tuiMessageObserver`.
+ * by the dsh-cli-plugin-host row as `ctx.tuiMessageObserver`.
  *
  * Mapping (deliberately narrow):
  *
@@ -250,7 +250,7 @@ export class TuiMessageObserverRuntime extends Service {
       /**
        * @deprecated Use `validateEnvelope` instead.
        * Compatibility alias retained as a long-term face for existing
-       * embedders/tests. OWNER: dsh-tui adapter. UNTIL: no scheduled removal.
+       * embedders/tests. OWNER: dsh-cli adapter. UNTIL: no scheduled removal.
        */
       envelopeSchema?: Record<string, unknown>
     } = {},
@@ -275,7 +275,7 @@ hostContext: compositionRoot(ctx),
           runtime.#publishGuarded(session, event)
         } catch (error) {
           runtime.ctx.logger.warn(
-            'dsh-tui: messages.observe publish failed (event dropped)',
+            'dsh-cli: messages.observe publish failed (event dropped)',
           )
         }
       },
@@ -354,20 +354,20 @@ hostContext: compositionRoot(ctx),
     const state = observerStateFor(this)
     const before = state.subscriptions.size
     const identity: VerifiedComponentIdentity = {
-      componentId: '__dsh_tui_live_probe__',
-      activationId: '__dsh_tui_live_probe__',
+      componentId: '__dsh_cli_live_probe__',
+      activationId: '__dsh_cli_live_probe__',
       version: '0.0.0',
       facet: 'host',
-      manifest: { id: '__dsh_tui_live_probe__' } as never,
-      projection: { id: '__dsh_tui_live_probe__' } as never,
+      manifest: { id: '__dsh_cli_live_probe__' } as never,
+      projection: { id: '__dsh_cli_live_probe__' } as never,
     }
     const self = concreteService(this) as TuiMessageObserverRuntime
     const received: MessagesObserveEnvelope[] = []
     const release = self.#registerSubscription(
       state.hostContext,
       identity,
-      '__dsh_tui_live_probe__',
-      'session:__dsh_tui_live_probe__',
+      '__dsh_cli_live_probe__',
+      'session:__dsh_cli_live_probe__',
       envelope => { received.push(envelope) },
       { enforceGrants: false, recordLedger: false, bindLifecycle: false },
     )
@@ -377,7 +377,7 @@ hostContext: compositionRoot(ctx),
         throw new Error(`temporary subscription did not enter the broker (${before} -> ${during})`)
       }
       self.#publishGuarded(
-        { id: '__dsh_tui_live_probe__' },
+        { id: '__dsh_cli_live_probe__' },
         {
           type: 'user/message',
           seq: 1,
@@ -435,13 +435,13 @@ hostContext: compositionRoot(ctx),
   subscribe(pluginCtx: Context, listener: MessagesObserveListener, options: { scope: string }): () => void {
     assertCapabilityShadowPolicy('host.messages.subscribe', observerStateFor(this).runtime.mode, observerStateFor(this).runtime.slices)
     const caller = activationContext(pluginCtx)
-    if (caller === undefined) throw new Error('dsh-tui: messages.observe.subscribe requires a live activation context')
+    if (caller === undefined) throw new Error('dsh-cli: messages.observe.subscribe requires a live activation context')
     assertCallerContext(this.ctx, caller, 'messages.observe.subscribe', this)
     const identity = requireComponentIdentity(caller)
     const plugin = identity.componentId
     if (!requiresContract(identity, 'messages.dsh/v1alpha1', 'MessageObserver')) {
       observerStateFor(this).hostContext.logger.warn(
-        `dsh-tui: messages.observe subscription from Component "${plugin}" denied — ` +
+        `dsh-cli: messages.observe subscription from Component "${plugin}" denied — ` +
         'the messages.dsh/v1alpha1#MessageObserver contract was not required',
       )
       return () => false
@@ -449,7 +449,7 @@ hostContext: compositionRoot(ctx),
     const scope = typeof options?.scope === 'string' ? options.scope : ''
     if (scope === '' || scope.length > OBSERVE_SCOPE_MAX_CHARS) {
       observerStateFor(this).hostContext.logger.warn(
-        `dsh-tui: messages.observe subscription from plugin "${plugin}" refused — options.scope must be a ` +
+        `dsh-cli: messages.observe subscription from plugin "${plugin}" refused — options.scope must be a ` +
         `non-empty string of at most ${OBSERVE_SCOPE_MAX_CHARS} characters (e.g. "session:<id>")`,
       )
       return () => false
@@ -491,7 +491,7 @@ hostContext: compositionRoot(ctx),
             scope,
           )))) {
       observerStateFor(this).hostContext.logger.warn(
-        `dsh-tui: messages.observe subscription from Component "${plugin}" denied — ` +
+        `dsh-cli: messages.observe subscription from Component "${plugin}" denied — ` +
         'the scope is not statically declared or the current grant does not cover it; the listener was NOT registered',
       )
       if (options.recordLedger) {
@@ -557,7 +557,7 @@ hostContext: compositionRoot(ctx),
 
     const sessionId = (session as { id?: unknown })?.id
     if (typeof sessionId !== 'string' || sessionId === '') {
-      observerStateFor(this).hostContext.logger.warn('dsh-tui: messages.observe publish skipped — the session carries no string id')
+      observerStateFor(this).hostContext.logger.warn('dsh-cli: messages.observe publish skipped — the session carries no string id')
       return
     }
     const data = (record.data ?? {}) as Record<string, unknown>
@@ -570,7 +570,7 @@ hostContext: compositionRoot(ctx),
     // distinct long ids can otherwise collapse into one subscription scope.
     if (scope.length > OBSERVE_SCOPE_MAX_CHARS) {
       observerStateFor(this).hostContext.logger.warn(
-        `dsh-tui: messages.observe publish skipped — the session scope exceeds ${OBSERVE_SCOPE_MAX_CHARS} characters`,
+        `dsh-cli: messages.observe publish skipped — the session scope exceeds ${OBSERVE_SCOPE_MAX_CHARS} characters`,
       )
       return
     }
@@ -629,7 +629,7 @@ hostContext: compositionRoot(ctx),
       if (state.validatorUnavailable) {
         if (!state.validatorWarned) {
           state.validatorWarned = true
-          observerStateFor(this).hostContext.logger.warn('dsh-tui: standard message envelope validator unavailable — delivery is fail-closed')
+          observerStateFor(this).hostContext.logger.warn('dsh-cli: standard message envelope validator unavailable — delivery is fail-closed')
         }
         return
       }
@@ -637,7 +637,7 @@ hostContext: compositionRoot(ctx),
         state.validateEnvelope(envelope)
       } catch (error) {
         observerStateFor(this).hostContext.logger.warn(
-          'dsh-tui: messages.observe envelope failed the standard validator and was dropped',
+          'dsh-cli: messages.observe envelope failed the standard validator and was dropped',
         )
         return
       }
@@ -654,14 +654,14 @@ hostContext: compositionRoot(ctx),
           scope,
         )) {
           observerStateFor(this).hostContext.logger.warn(
-            `dsh-tui: messages.observe subscription of plugin "${subscription.plugin}" released — the grant was revoked`,
+            `dsh-cli: messages.observe subscription of plugin "${subscription.plugin}" released — the grant was revoked`,
           )
           this.drop(subscription)
           continue
         }
         if (subscription.pendingCallbacks >= OBSERVE_CALLBACK_QUEUE_LIMIT) {
           observerStateFor(this).hostContext.logger.warn(
-            `dsh-tui: messages.observe listener of Component "${subscription.plugin}" reached its ` +
+            `dsh-cli: messages.observe listener of Component "${subscription.plugin}" reached its ` +
             `${OBSERVE_CALLBACK_QUEUE_LIMIT}-callback queue limit; this envelope was skipped`,
           )
           continue
@@ -679,7 +679,7 @@ hostContext: compositionRoot(ctx),
             scope,
           )) {
             observerStateFor(this).hostContext.logger.warn(
-              `dsh-tui: messages.observe subscription of plugin "${subscription.plugin}" released — the grant was revoked`,
+              `dsh-cli: messages.observe subscription of plugin "${subscription.plugin}" released — the grant was revoked`,
             )
             this.drop(subscription)
             return
@@ -691,23 +691,23 @@ hostContext: compositionRoot(ctx),
           )
           if (result.kind === 'timeout') {
             observerStateFor(this).hostContext.logger.warn(
-              `dsh-tui: messages.observe listener of Component "${subscription.plugin}" exceeded ` +
+              `dsh-cli: messages.observe listener of Component "${subscription.plugin}" exceeded ` +
               `${OBSERVE_CALLBACK_TIMEOUT_MS}ms and the subscription was closed`,
             )
             this.drop(subscription)
           } else if (result.kind === 'rejected') {
             observerStateFor(this).hostContext.logger.warn(
-              `dsh-tui: messages.observe listener of Component "${subscription.plugin}" failed; delivery continues`,
+              `dsh-cli: messages.observe listener of Component "${subscription.plugin}" failed; delivery continues`,
             )
           }
         })
         subscription.chain = run.catch(error => {
-          observerStateFor(this).hostContext.logger.warn('dsh-tui: messages.observe delivery failed')
+          observerStateFor(this).hostContext.logger.warn('dsh-cli: messages.observe delivery failed')
         }).finally(() => { subscription.pendingCallbacks -= 1 })
       }
     } catch (error) {
       observerStateFor(this).hostContext.logger.warn(
-        'dsh-tui: messages.observe publish failed (event dropped)',
+        'dsh-cli: messages.observe publish failed (event dropped)',
       )
     }
   }

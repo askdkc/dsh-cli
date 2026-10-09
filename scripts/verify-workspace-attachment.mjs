@@ -81,7 +81,7 @@ assert.equal(
 // Exercise the real four-plugin stack used by the profile patch. The Session
 // is live (the same state immediately after agents.create), so attachSession
 // validates its immutable header and persists the Workspace account.
-const actualRoot = mkdtempSync(join(tmpdir(), 'dsh-tui-workspace-'))
+const actualRoot = mkdtempSync(join(tmpdir(), 'dsh-cli-workspace-'))
 const actualCwd = join(actualRoot, 'project')
 mkdirSync(actualCwd)
 const actualHeader = {
@@ -165,17 +165,17 @@ assert.equal(
   'rewind, /resume, /new, model-switch, tree rewindToNode, /fork, and agent-view background paths all attach ownership across extracted actions',
 )
 for (const id of ['storage', 'storage-json', 'storage-domain', 'workspace']) {
-  assert.match(patch, new RegExp(`- id: dsh-tui-${id}\\n`), `profile patch mounts scoped dsh-tui-${id}`)
+  assert.match(patch, new RegExp(`- id: dsh-cli-${id}\\n`), `profile patch mounts scoped dsh-cli-${id}`)
   assert.match(
     patch,
-    new RegExp(`dsh-tui-${id}[\\s\\S]{0,260}entry\\.options\\.id === '${id}'`),
-    `scoped dsh-tui-${id} yields to the official ${id} row`,
+    new RegExp(`dsh-cli-${id}[\\s\\S]{0,260}entry\\.options\\.id === '${id}'`),
+    `scoped dsh-cli-${id} yields to the official ${id} row`,
   )
 }
 assert.match(patch, /root: !!js dshHomePath\('storages'\)/)
 assert.match(
   patch,
-  /- id: dsh-tui\n\s+name: '@askdkc\/dsh-cli'\n[\s\S]{0,240}inject: \[[^\]]*\bworkspaceRegistry\b[^\]]*\]/,
+  /- id: dsh-cli\n\s+name: '@askdkc\/dsh-cli'\n[\s\S]{0,240}inject: \[[^\]]*\bworkspaceRegistry\b[^\]]*\]/,
   'profile waits for WorkspaceRegistry before the TUI creates its startup session',
 )
 

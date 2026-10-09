@@ -8,7 +8,7 @@
  *
  * Run: node --import tsx/esm scripts/verify-streaming-markdown-spacing.tsx
  */
-process.env.DSH_TUI_LANG = 'en'
+process.env.DSH_CLI_LANG = 'en'
 process.env.FORCE_COLOR = '3'
 
 const [

@@ -259,8 +259,8 @@ await (async () => {
 await (async () => {
   checks += 1
   try {
-    const previousMode = process.env.DSH_TUI_ADAPTER_MODE
-    process.env.DSH_TUI_ADAPTER_MODE = 'legacy'
+    const previousMode = process.env.DSH_CLI_ADAPTER_MODE
+    process.env.DSH_CLI_ADAPTER_MODE = 'legacy'
     const { Context } = await import('@deepseek-ai/cordis')
     const { default: CommandRuntime } = await import('@deepseek-ai/dsh-commands')
     const pluginHostRow = await import('../src/dsh-adapter/plugin-host.js')
@@ -296,8 +296,8 @@ await (async () => {
     assert.ok(admitted.context !== undefined)
     await Promise.resolve(admitted.fiber.dispose())
 
-    if (previousMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-    else process.env.DSH_TUI_ADAPTER_MODE = previousMode
+    if (previousMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+    else process.env.DSH_CLI_ADAPTER_MODE = previousMode
   } catch (error) {
     console.error('verify:adapter-descriptor FAILED: default legacy full-service regression')
     console.error(error instanceof Error ? error.message : String(error))
@@ -314,7 +314,7 @@ await (async () => {
   const pluginHostRow = await import('../src/dsh-adapter/plugin-host.js')
   const { KernelRuntime } = await import('../src/adapter/kernel/kernel-runtime.js')
   const { hostDescriptorDriver } = await import('../src/adapter/upstream/host-descriptor-driver.js')
-  const previousMode = process.env.DSH_TUI_ADAPTER_MODE
+  const previousMode = process.env.DSH_CLI_ADAPTER_MODE
   const originalRefresh = KernelRuntime.prototype.refresh
   const originalVerifier = hostDescriptorDriver.verifyLive
   for (const scenario of ['passive-shadow', 'replay-shadow', 'new-pending', 'new-failed', 'new-completed']) {
@@ -324,7 +324,7 @@ await (async () => {
     let kernel: InstanceType<typeof KernelRuntime> | undefined
     const fibers: { dispose(): unknown }[] = []
     try {
-      process.env.DSH_TUI_ADAPTER_MODE = scenario.startsWith('new-') ? 'new' : scenario
+      process.env.DSH_CLI_ADAPTER_MODE = scenario.startsWith('new-') ? 'new' : scenario
       const pending = scenario === 'new-pending'
         ? new Promise<void>(resolve => { releaseRefresh = resolve })
         : Promise.resolve()
@@ -365,7 +365,7 @@ await (async () => {
       } else {
         assertNoLegacy()
         // Changing process env later cannot relax the captured composition mode.
-        process.env.DSH_TUI_ADAPTER_MODE = 'legacy'
+        process.env.DSH_CLI_ADAPTER_MODE = 'legacy'
         assertNoLegacy()
       }
       await Promise.resolve(fiber.dispose())
@@ -381,8 +381,8 @@ await (async () => {
       KernelRuntime.prototype.refresh = originalRefresh
       hostDescriptorDriver.verifyLive = originalVerifier
       for (const fiber of fibers.reverse()) await Promise.resolve(fiber.dispose())
-      if (previousMode === undefined) delete process.env.DSH_TUI_ADAPTER_MODE
-      else process.env.DSH_TUI_ADAPTER_MODE = previousMode
+      if (previousMode === undefined) delete process.env.DSH_CLI_ADAPTER_MODE
+      else process.env.DSH_CLI_ADAPTER_MODE = previousMode
     }
   }
 }

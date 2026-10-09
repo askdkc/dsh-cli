@@ -75,7 +75,7 @@ export function mountChannelUi(
     const facade = facadeNow()
     const ui = facade?.channel?.projection.ui
     if (ui === undefined) {
-      if (mounted !== undefined) throw new Error('dsh-tui: mounted HostFacade lost Channel UI')
+      if (mounted !== undefined) throw new Error('dsh-cli: mounted HostFacade lost Channel UI')
       return local
     }
     const next = ui()
@@ -115,7 +115,7 @@ export function mountChannelUi(
       for (const cleanup of [unsubscribe, () => lease.dispose(), releaseOwnerLease, releaseOwner]) {
         try { cleanup() } catch (error) { failures.push(error) }
       }
-      throwCleanupFailures(failures, 'dsh-tui: Channel UI cleanup failed')
+      throwCleanupFailures(failures, 'dsh-cli: Channel UI cleanup failed')
     },
   }
 }

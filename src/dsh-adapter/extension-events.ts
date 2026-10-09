@@ -131,12 +131,12 @@ export async function dispatchTuiDecision<T>(
         permission,
         scope ?? handler.scope,
       )) {
-      log(`dsh-tui: ${name} handler from Component "${handler.componentId}" skipped after grant revocation`)
+      log(`dsh-cli: ${name} handler from Component "${handler.componentId}" skipped after grant revocation`)
       continue
     }
     const remaining = DECISION_TOTAL_TIMEOUT_MS - (Date.now() - started)
     if (remaining <= 0) {
-      log(`dsh-tui: ${name} total decision budget exceeded; remaining handlers skipped`)
+      log(`dsh-cli: ${name} total decision budget exceeded; remaining handlers skipped`)
       break
     }
     const bounded = await runBounded(
@@ -144,11 +144,11 @@ export async function dispatchTuiDecision<T>(
       Math.min(DECISION_HANDLER_TIMEOUT_MS, remaining),
     )
     if (bounded.kind === 'timeout') {
-      log(`dsh-tui: ${name} handler from Component "${handler.componentId}" exceeded ${DECISION_HANDLER_TIMEOUT_MS}ms; continuing`)
+      log(`dsh-cli: ${name} handler from Component "${handler.componentId}" exceeded ${DECISION_HANDLER_TIMEOUT_MS}ms; continuing`)
       continue
     }
     if (bounded.kind === 'error') {
-      log(`dsh-tui: ${name} listener failed; continuing with the next listener: %o`, bounded.error)
+      log(`dsh-cli: ${name} listener failed; continuing with the next listener: %o`, bounded.error)
       continue
     }
     const result = bounded.value
@@ -158,9 +158,9 @@ export async function dispatchTuiDecision<T>(
     // unhandled rejections at the fire-and-forget call sites.
     let decision: T | undefined
     try {
-      decision = normalize(result, what => log(`dsh-tui: ${name} listener returned ${what}; ignored`))
+      decision = normalize(result, what => log(`dsh-cli: ${name} listener returned ${what}; ignored`))
     } catch (error) {
-      log(`dsh-tui: ${name} listener returned a value that threw during validation; ignored: %o`, error)
+      log(`dsh-cli: ${name} listener returned a value that threw during validation; ignored: %o`, error)
       continue
     }
     if (decision !== undefined) return decision
@@ -196,12 +196,12 @@ export async function dispatchTuiNotification(
     const principal = { componentId: handler.componentId, activationId: handler.activationId }
     if (permission !== undefined
       && !decisionRegistryOf(ctx).grants.allows(principal, permission, scope ?? handler.scope)) {
-      log(`dsh-tui: ${name} handler from Component "${handler.componentId}" skipped after grant revocation`)
+      log(`dsh-cli: ${name} handler from Component "${handler.componentId}" skipped after grant revocation`)
       return
     }
     const remaining = DECISION_TOTAL_TIMEOUT_MS - (Date.now() - started)
     if (remaining <= 0) {
-      log(`dsh-tui: ${name} total decision budget exceeded; handler skipped`)
+      log(`dsh-cli: ${name} total decision budget exceeded; handler skipped`)
       return
     }
     const bounded = await runBounded(
@@ -209,9 +209,9 @@ export async function dispatchTuiNotification(
       Math.min(DECISION_HANDLER_TIMEOUT_MS, remaining),
     )
     if (bounded.kind === 'timeout') {
-      log(`dsh-tui: ${name} handler from Component "${handler.componentId}" exceeded ${DECISION_HANDLER_TIMEOUT_MS}ms; continuing`)
+      log(`dsh-cli: ${name} handler from Component "${handler.componentId}" exceeded ${DECISION_HANDLER_TIMEOUT_MS}ms; continuing`)
     } else if (bounded.kind === 'error') {
-      log(`dsh-tui: ${name} listener failed; continuing with the other listeners: %o`, bounded.error)
+      log(`dsh-cli: ${name} listener failed; continuing with the other listeners: %o`, bounded.error)
     }
   }))
 }

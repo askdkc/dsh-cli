@@ -99,7 +99,7 @@ export function createReportActions(ctx: Context, deps: {
     }
     if (!current(capture)) return null
     try {
-      const target = join(deps.cwd(), `dsh-tui-export-${Date.now()}.md`)
+      const target = join(deps.cwd(), `dsh-cli-export-${Date.now()}.md`)
       writeFileSync(target, parts.join('\n'), 'utf8')
       return current(capture) ? target : null
     } catch { return null }
@@ -120,7 +120,7 @@ export function createReportActions(ctx: Context, deps: {
   const doctorInfo = (): string[] => {
     const lines = [
       `Node ${process.version} · ${process.platform} ${process.arch}`,
-      // Same predicate as the launcher's doctor (bin/dsh-tui.js): dsh resolves
+      // Same predicate as the launcher's doctor (bin/dsh-cli.js): dsh resolves
       // credential-store refs into the session at launch, so an environment-only
       // check reports a working key as missing. The two doctors must not diverge.
       t('doctor-api-key', {
@@ -135,7 +135,7 @@ export function createReportActions(ctx: Context, deps: {
       t('doctor-context-window', { window: deps.contextWindow() ?? t('doctor-unknown') }),
       `${t('doctor-session', { id: deps.capture().agent.id })}${deps.sessionTitle() ? ` · ${deps.sessionTitle()}` : ''}`,
     ]
-    for (const candidate of [join(homeDir(), '.dsh-tui/cordis.yml'), join(homeDir(), '.dsh/profiles/dsh-tui/cordis.patch.yml')]) {
+    for (const candidate of [join(homeDir(), '.dsh-cli/cordis.yml'), join(homeDir(), '.dsh/profiles/dsh-cli/cordis.patch.yml')]) {
       lines.push(t('doctor-config', { candidate, state: existsSync(candidate) ? '✓' : t('doctor-config-missing') }))
     }
     for (const dir of sessionsRoots()) lines.push(t('doctor-storage', { dir, state: existsSync(dir) ? '✓' : t('doctor-storage-uninit') }))

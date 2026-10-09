@@ -1,4 +1,4 @@
-# dsh-TUI 契约门禁
+# dsh-CLI 契约门禁
 真源为当前目标分支的 package.json、ADAPTER.md、src/dsh-adapter/contract.ts、src/plugin-host.ts、cordis.patch.yml、patch-surface.snapshot.json、dsh-ecosystem-spec/protocols/tui-channel.js、CI 及 docs/contributing.md。本文件仅检查顺序，不存日期化常量；契约变更缺兼容策略/迁移/验证默认阻断，新增公共面也须显审。
 
 ## 先生成结构化快照

@@ -307,7 +307,7 @@ export function createAgentViewProjection(
     }
     backgroundHandles.clear()
     if (failures.length === 1) throw failures[0]
-    if (failures.length > 1) throw new AggregateError(failures, 'dsh-tui: agent-view cleanup failed')
+    if (failures.length > 1) throw new AggregateError(failures, 'dsh-cli: agent-view cleanup failed')
   }
   deps.owner.own(dispose)
   return {

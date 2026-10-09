@@ -110,7 +110,7 @@ When changing `src/ink/` or Yoga, run the CI questionnaire/tool-card
 regressions and the affected scroll, resize, copy-on-select, or PTY harness.
 
 Do not print diagnostics to an active TUI's stdout; use stderr
-`DSH_TUI_DEBUG` or `DSH_TUI_RENDER_LOG`.
+`DSH_CLI_DEBUG` or `DSH_CLI_RENDER_LOG`.
 
 ## Status meters and working activity
 
@@ -144,45 +144,45 @@ be checked in both modes, especially on narrow terminals and Windows ConPTY.
 | Path | Contents |
 | --- | --- |
 | `~/.dsh/sessions/` | Shared JSONL session events for profile TUI and Web |
-| `~/.dsh-tui/sessions/` | JSONL session events for direct `cordis.yml` runs |
-| `~/.dsh-tui/resume.txt` | Recent session ID used by the Windows launcher and exit hint |
-| `~/.dsh-tui/last-used.json` | `/resume` recency metadata |
-| `~/.dsh-tui/theme.json` | Current built-in, static, or plugin theme ID |
-| `~/.dsh-tui/themes/` | User theme JSON files; runtime plugin themes do not write here |
-| `~/.dsh-tui/working-activity.json` | Activity animation selection |
-| `~/.dsh-tui/agent-preset.json` | Default Agent preset for new sessions |
+| `~/.dsh-cli/sessions/` | JSONL session events for direct `cordis.yml` runs |
+| `~/.dsh-cli/resume.txt` | Recent session ID used by the Windows launcher and exit hint |
+| `~/.dsh-cli/last-used.json` | `/resume` recency metadata |
+| `~/.dsh-cli/theme.json` | Current built-in, static, or plugin theme ID |
+| `~/.dsh-cli/themes/` | User theme JSON files; runtime plugin themes do not write here |
+| `~/.dsh-cli/working-activity.json` | Activity animation selection |
+| `~/.dsh-cli/agent-preset.json` | Default Agent preset for new sessions |
 
-`DSH_TUI_SESSION_ROOT` overrides the JSONL root in either composition. The
+`DSH_CLI_SESSION_ROOT` overrides the JSONL root in either composition. The
 profile defaults to `$DSH_HOME/sessions` (normally `~/.dsh/sessions/`);
-direct `cordis.yml` runs default to `~/.dsh-tui/sessions/`.
+direct `cordis.yml` runs default to `~/.dsh-cli/sessions/`.
 
 Preference files are optional state: malformed or missing files fall back
 silently rather than preventing startup.
 
-The data directory is `~/.dsh-tui` (early releases used `~/.dsh-cc`; code
-since the rename reads and writes only `~/.dsh-tui` and does not migrate the
+The data directory is `~/.dsh-cli` (early releases used `~/.dsh-cc`; code
+since the rename reads and writes only `~/.dsh-cli` and does not migrate the
 old directory automatically).
 
 ## VS Code channel details
 
 The `dsh-tui-vscode` companion extension's integration surface with the TUI,
-relevant when maintaining the dsh-tui side:
+relevant when maintaining the dsh-cli side:
 
 - **Specific-session resume (env channel)**: clicking a sidebar entry injects
-  the target session id into the terminal env via `DSH_TUI_RESUME_SESSION`
+  the target session id into the terminal env via `DSH_CLI_RESUME_SESSION`
   and deliberately does NOT pass `--resume`. This profile's
   `cordis.patch.yml` reads that env at boot (`sessionId: !!js
-  process.env.DSH_TUI_RESUME_SESSION ?? undefined`) and the TUI resumes the
+  process.env.DSH_CLI_RESUME_SESSION ?? undefined`) and the TUI resumes the
   session. Passing a bare `--resume` (or `-c`/`--continue`) would make the
-  launcher (`bin/dsh-tui.js`) overwrite the env from `~/.dsh-tui/resume.txt` —
+  launcher (`bin/dsh-cli.js`) overwrite the env from `~/.dsh-cli/resume.txt` —
   that is the "resume last session" path; the two do not interfere (verified
-  in the launcher source). CLI users can also use `dsh-tui --resume <id>` or
+  in the launcher source). CLI users can also use `dsh-cli --resume <id>` or
   `--resume=<id>` (since 0.7.0) to resume a specific session — same effect as
   the extension's env channel.
 - **Sidebar session-history data sources**: session logs under
   `~/.dsh/sessions` (zstd JSONL), the dsh-storage ledger
   (`~/.dsh/storages/session_projcache.json`, the source of the web session
-  list's titles), and the TUI's last-used map (`~/.dsh-tui/last-used.json`).
+  list's titles), and the TUI's last-used map (`~/.dsh-cli/last-used.json`).
   Title precedence: log `session/title` event → storage-ledger title → first
   user message → "未命名会话"; the full cwd path and session id go into the
   item tooltip. Grouped by project (cwd short name), most recently active
@@ -191,7 +191,7 @@ relevant when maintaining the dsh-tui side:
 
 ## Permissions and security boundary
 
-`dsh-TUI` does not provide a separate sandbox. It implements the tool-level
+`dsh-CLI` does not provide a separate sandbox. It implements the tool-level
 approval UI (a local panel answering the `approval/request` waterfall), while
 `/permission` preset switching comes from the dsh-base `permission-presets` row.
 
@@ -290,11 +290,11 @@ visual TUI alone does not describe the effective policy.
 | Goal | Method |
 | --- | --- |
 | Environment and profile | Run `/doctor`, `/config`, and `/permission status` inside the TUI |
-| stderr diagnostics | `DSH_TUI_DEBUG=1 dsh --profile dsh-tui` |
-| Raw ANSI frames | `DSH_TUI_RENDER_LOG=/path/to/render.log dsh --profile dsh-tui` |
+| stderr diagnostics | `DSH_CLI_DEBUG=1 dsh --profile dsh-cli` |
+| Raw ANSI frames | `DSH_CLI_RENDER_LOG=/path/to/render.log dsh --profile dsh-cli` |
 | Theme regression | `node --import tsx/esm scripts/verify-themes.mjs` |
 
-`DSH_TUI_RENDER_LOG` and session exports may contain sensitive content. Redact
+`DSH_CLI_RENDER_LOG` and session exports may contain sensitive content. Redact
 them before sharing.
 
 ## Image rendering budgets
@@ -326,7 +326,7 @@ This section records the internal rendering budgets and behaviour.
   elided); historical images use their file name.
 - "Open original" opens the unchanged attachment bytes in the system image viewer,
   independent of deleted or modified source paths.
-- Only an explicit click exports a file to a private `dsh-tui-original-*` system
+- Only an explicit click exports a file to a private `dsh-cli-original-*` system
   temporary directory; it survives TUI exit for the external viewer and can later
   be removed with system temporary-file cleanup.
 - A stale `[Image #N]` placeholder (evicted past 128 staged images or cleared by a

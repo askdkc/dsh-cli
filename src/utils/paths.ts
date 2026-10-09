@@ -1,6 +1,6 @@
 /**
- * Data-directory paths for the dsh-tui profile. All preferences and history
- * live under `~/.dsh-tui`.
+ * Data-directory paths for the dsh-cli profile. All preferences and history
+ * live under `~/.dsh-cli`.
  *
  * The compiled copy (lib/types/utils/paths.js) is also imported by the bin
  * launcher, mirroring the shellQuote precedent.
@@ -18,5 +18,5 @@ export function homeDir(): string {
   return homedir() || process.env.USERPROFILE || process.env.HOME || ''
 }
 
-/** Data directory all preferences/history live in (`~/.dsh-tui`). */
-export const DATA_DIR = join(homeDir(), '.dsh-tui')
+/** Data directory all preferences/history live in (`~/.dsh-cli`). */
+export const DATA_DIR = join(homeDir(), '.dsh-cli')

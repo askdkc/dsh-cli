@@ -58,7 +58,7 @@ const MAX_APPLIED_MEASUREMENTS = 8
 
 /**
  * A horizontal divider line, optionally with a title in the middle
- * in the dsh-TUI visual language.
+ * in the dsh-CLI visual language.
  *
  * The rule fills the width Yoga actually grants it: the Box is measured
  * after layout (SearchBox pattern — a resize re-layouts without any prop

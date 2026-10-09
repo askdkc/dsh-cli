@@ -64,7 +64,7 @@ declare module '@deepseek-ai/cordis' {
   }
 }
 
-export const name = 'dsh-tui-scenes'
+export const name = 'dsh-cli-scenes'
 
 /**
  * Small host-only registry; command execution remains owned by dsh-commands.
@@ -137,11 +137,11 @@ export class TuiSceneRuntime extends Service {
     const state = sceneStateFor(this)
     const caller = requirePluginCaller(this.ctx, 'tuiScenes.register', this)
     const activationOwner = activationFiber(caller)
-    if (activationOwner === undefined) throw new Error('dsh-tui: tuiScenes.register requires a live activation')
+    if (activationOwner === undefined) throw new Error('dsh-cli: tuiScenes.register requires a live activation')
     const callerIdentity = componentIdentityOf(caller)
     const suppliedIdentity = identity === undefined ? callerIdentity : componentIdentityOf(identity)
     if (identity !== undefined && callerIdentity !== undefined && suppliedIdentity !== callerIdentity) {
-      throw new Error('dsh-tui: tuiScenes.register identity belongs to another activation')
+      throw new Error('dsh-cli: tuiScenes.register identity belongs to another activation')
     }
     const id = descriptor.id.trim().toLowerCase()
     if (!/^[a-z][a-z0-9_-]*$/u.test(id)) throw new TypeError(`invalid TUI scene id: ${descriptor.id}`)
@@ -247,11 +247,11 @@ function openScene(runtime: TuiSceneRuntime, id: string, caller?: Context, owner
   const state = sceneStateFor(runtime)
   const scene = state.scenes.get(id.trim().toLowerCase())
   if (scene === undefined) {
-    ;(caller?.logger ?? state.logger).warn(`dsh-tui: no TUI scene registered as "${id}"`)
+    ;(caller?.logger ?? state.logger).warn(`dsh-cli: no TUI scene registered as "${id}"`)
     return false
   }
   if (owner !== undefined && state.owners.get(scene.id) !== owner) {
-    caller?.logger.warn(`dsh-tui: scene "${scene.id}" belongs to another activation`)
+    caller?.logger.warn(`dsh-cli: scene "${scene.id}" belongs to another activation`)
     return false
   }
   if (scene === state.current) return true
@@ -265,7 +265,7 @@ function closeScene(runtime: TuiSceneRuntime, caller?: Context, owner?: object):
   const state = sceneStateFor(runtime)
   if (state.current === undefined) return
   if (owner !== undefined && state.owners.get(state.current.id) !== owner) {
-    caller?.logger.warn(`dsh-tui: scene "${state.current.id}" belongs to another activation`)
+    caller?.logger.warn(`dsh-cli: scene "${state.current.id}" belongs to another activation`)
     return
   }
   const previousOwner = state.owners.get(state.current.id)

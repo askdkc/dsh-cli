@@ -643,7 +643,7 @@ export class ActivityTracker {
   /**
    * Feed one raw durable session event.
    * @deprecated Host-shape input kept for one release so an already-published
-   * consumer that drives this tracker itself (dsh-TUI ≤ 0.11.x calls this
+   * consumer that drives this tracker itself (dsh-CLI ≤ 0.11.x calls this
    * method) keeps working across the upgrade. New code normalizes through
    * `src/compat/*` and calls {@link onEvent}. The parameter type is inferred
    * from the compat function on purpose — this module must not import a DSH

@@ -11,7 +11,7 @@ export const IGNITION_TIMELINE = {
  * Effort ignition motion math — pure functions, zero dependencies.
  *
  * Waveform semantics ported from Codex CLI's effort_ignition(_styles).rs
- * (openai/codex PR #34365) and revalidated in a dsh-TUI integration: a
+ * (openai/codex PR #34365) and revalidated in a dsh-CLI integration: a
  * cosine-bell travelling wave produces per-column colours only — a renderer
  * that keeps glyphs constant and changes colours per frame stays SGR-only
  * by construction.

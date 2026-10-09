@@ -14,7 +14,7 @@ export { parseAnsiRuns, highlightLines } from '../terminal-utils/syntaxRuns.js'
 import { getTheme } from '../theme.js'
 import { t } from '../i18n.js'
 import { useTheme } from './design-system/ThemeProvider.js'
-import type { ToolBackground } from '../tuiDisplayPrefs.js'
+import type { ToolBackground } from '../cliDisplayPrefs.js'
 import { revealLinesOf } from './smoothReveal.js'
 
 /**

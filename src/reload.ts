@@ -1,11 +1,11 @@
 /**
  * `/reload` planning — the pi-style soft reload: re-read the TUI's persisted
- * preference files (`~/.dsh-tui/{theme,lang,agent-preset,model,
+ * preference files (`~/.dsh-cli/{theme,lang,agent-preset,model,
  * working-activity}.json`) and decide what to re-apply live, honoring the
  * same boot-time precedence every picker does:
  *
- *   - theme:    DSH_TUI_THEME wins; else theme.json.
- *   - lang:     DSH_TUI_LANG > settings `dsh-tui.lang` (folded in by the
+ *   - theme:    DSH_CLI_THEME wins; else theme.json.
+ *   - lang:     DSH_CLI_LANG > settings `dsh-cli.lang` (folded in by the
  *               caller as `langOverriddenBySettings`) > cordis.yml `lang`
  *               > lang.json.
  *   - preset:   cordis.yml `preset` wins; else agent-preset.json.
@@ -15,7 +15,7 @@
  *               working-activity.json.
  *
  * Settings-namespace values (settings.yaml user layer) are deliberately NOT
- * re-read here: the dsh-tui namespace applies live through its settings
+ * re-read here: the dsh-cli namespace applies live through its settings
  * watch and hot-reloads its document through the platform's file watcher,
  * so /reload only needs the five boot-only pref files. What no reload can
  * re-read (cordis.yml root config, frozen fullscreen layout, newly built
@@ -34,7 +34,7 @@ import { explicitModelRoute } from './modelRoute.js'
 export type ReloadKind = 'theme' | 'lang' | 'preset' | 'model' | 'activity'
 
 export type ReloadSkipReason =
-  /** A launch-time environment variable pins the value (DSH_TUI_THEME / DSH_TUI_LANG). */
+  /** A launch-time environment variable pins the value (DSH_CLI_THEME / DSH_CLI_LANG). */
   | 'env-wins'
   /** cordis.yml or the settings user layer pins the value; the pref must not override it. */
   | 'config-wins'
@@ -70,9 +70,9 @@ export interface ReloadPlan {
 
 /** Everything the planner needs — caller reads the files and live values. */
 export interface ReloadInput {
-  /** DSH_TUI_THEME, when it holds a valid theme name. */
+  /** DSH_CLI_THEME, when it holds a valid theme name. */
   envTheme?: string
-  /** DSH_TUI_LANG, when it holds a valid language. */
+  /** DSH_CLI_LANG, when it holds a valid language. */
   envLang?: string
   /** Fresh readThemePref(). */
   themePref?: string
@@ -82,7 +82,7 @@ export interface ReloadInput {
   langPref?: Lang
   /** The live UI language. */
   currentLang: Lang
-  /** True when the settings user layer (settings.yaml `dsh-tui.lang`) pins a language. */
+  /** True when the settings user layer (settings.yaml `dsh-cli.lang`) pins a language. */
   langOverriddenBySettings: boolean
   /** cordis.yml's raw `lang` key, when set. */
   configuredLang?: string

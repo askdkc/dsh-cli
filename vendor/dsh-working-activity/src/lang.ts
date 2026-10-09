@@ -1,8 +1,8 @@
 /**
  * Language resolution + copy dictionary for the working-activity plugin.
  *
- * The plugin follows the dsh-tui UI language without importing it: the same
- * chain dsh-tui resolves (`DSH_TUI_LANG` env → `~/.dsh-tui/lang.json` → OS
+ * The plugin follows the dsh-cli UI language without importing it: the same
+ * chain dsh-cli resolves (`DSH_CLI_LANG` env → `~/.dsh-cli/lang.json` → OS
  * locale → en) is read here directly, so a `/lang en|zh` switch (or the
  * /settings language pick) hot-swaps rendered status-line copy. Model-facing
  * narration instructions are locale-independent.
@@ -10,8 +10,8 @@
  * Resolution order:
  *   1. `setLangOverride()` — a plugin-level `lang: zh|en` config key
  *      (cordis.yml) or an explicit test pin.
- *   2. `DSH_TUI_LANG` env var — pinned at process start.
- *   3. `~/.dsh-tui/lang.json` — the persisted dsh-tui choice, mtime-cached
+ *   2. `DSH_CLI_LANG` env var — pinned at process start.
+ *   3. `~/.dsh-cli/lang.json` — the persisted dsh-cli choice, mtime-cached
  *      so the per-tick status render never re-reads an unchanged file.
  *   4. OS locale guess (`LC_ALL` / `LC_MESSAGES` / `LANG`); POSIX/C means
  *      "no locale selected" and maps to English.
@@ -64,8 +64,8 @@ export function detectInputLanguage(input: string): Lang | undefined {
   return undefined
 }
 
-/** The dsh-tui prefs file this plugin mirrors (shared language contract). */
-const LANG_FILE = join(homedir(), '.dsh-tui', 'lang.json')
+/** The dsh-cli prefs file this plugin mirrors (shared language contract). */
+const LANG_FILE = join(homedir(), '.dsh-cli', 'lang.json')
 
 /** Model instructions never inherit the interface or terminal language. */
 export const NARRATE_INSTRUCTION = '[Status line] You have a status line visible to the user. [Required] At the start of each step or subtask (not only before tool calls), write exactly one standalone line at the very beginning of your response: ⏵ a concrete description of what you are doing (20 words max), then continue with the normal response on the next line. Write only one ⏵ line per response and do not repeat it. Prioritize information so the user can understand the current work at a glance; keep the style natural and optionally playful. Examples: ⏵ Fixing the login page styles, ⏵ Investigating the error, ⏵ Running validation for the patch. Update it when the task changes. Write the status description in the same response language chosen for the user request; use English when unclear.'
@@ -118,7 +118,7 @@ export function langNow(): Lang {
   const scoped = progressLanguage.getStore()
   if (scoped !== undefined) return scoped
   if (override !== 'auto') return override
-  const env = process.env.DSH_TUI_LANG
+  const env = process.env.DSH_CLI_LANG
   if (env === 'zh' || env === 'en') return env
   return readLangFile() ?? detectLocaleLang()
 }
@@ -145,7 +145,7 @@ export function isLang(value: unknown): value is Lang {
 const LANG_FILE_PROBE_TTL_MS = 1000
 
 /**
- * Read the persisted dsh-tui language choice.
+ * Read the persisted dsh-cli language choice.
  *
  * The probe is cached twice over: the parsed value is reused while the file's
  * mtime is unchanged, and even the `statSync` itself is skipped for

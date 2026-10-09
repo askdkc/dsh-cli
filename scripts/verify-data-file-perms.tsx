@@ -1,5 +1,5 @@
 /**
- * ~/.dsh-tui 数据文件权限回归（低危修复）：DATA_DIR 建目录 0700、
+ * ~/.dsh-cli 数据文件权限回归（低危修复）：DATA_DIR 建目录 0700、
  * history.jsonl / mouse-debug.log 落盘 0600。
  *
  * history.jsonl 存用户输入全文（含可能粘贴的密钥/内网路径），mouse-debug.log
@@ -29,7 +29,7 @@ const fakeHome = mkdtempSync(join(tmpdir(), 'verify-data-file-perms-'))
 process.env.HOME = fakeHome
 // os.homedir() 在 win32 上优先 USERPROFILE，一并重定向
 process.env.USERPROFILE = fakeHome
-process.env.DSH_TUI_DEBUG_MOUSE = '1'
+process.env.DSH_CLI_DEBUG_MOUSE = '1'
 
 let failures = 0
 function check(name: string, ok: boolean, detail?: string): void {
@@ -57,7 +57,7 @@ try {
     branch: 'feature/x',
   }]]))
 
-  const dataDir = join(fakeHome, '.dsh-tui')
+  const dataDir = join(fakeHome, '.dsh-cli')
   const historyFile = join(dataDir, 'history.jsonl')
   const mouseLog = join(dataDir, 'mouse-debug.log')
   const indexFile = join(dataDir, 'session-index.json')

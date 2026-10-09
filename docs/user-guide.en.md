@@ -1,4 +1,4 @@
-# dsh-TUI User Guide
+# dsh-CLI User Guide
 
 [Documentation index](README.md) · [中文](user-guide.md)
 
@@ -19,16 +19,16 @@
 ### 1.1 Install and launch
 
 ```sh
-# Install the CLI + this plugin (the plugin ships its own dsh-tui command)
-npm install -g @deepseek-ai/dsh dsh-cli
+# Install the CLI + this plugin (the plugin ships its own dsh-cli command)
+npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
 
-# Start (first run auto-initializes the dsh-tui profile, needs pnpm)
-dsh-tui
+# Start (first run auto-initializes the dsh-cli profile, needs pnpm)
+dsh-cli
 ```
 
-- `dsh-tui --resume`: resume the last session. On Windows you can also use `dsh-tui.cmd` from the repo (equivalent).
-- `dsh-tui safe`: safe mode — read-only environment view, lists profile plugins, suggests fixes, and can create a clean rescue profile (see §5.5).
-- `dsh --profile dsh-tui`: manual launch, equivalent to `dsh-tui` (`/update` only works this way).
+- `dsh-cli --resume`: resume the last session. On Windows you can also use `dsh-cli.cmd` from the repo (equivalent).
+- `dsh-cli safe`: safe mode — read-only environment view, lists profile plugins, suggests fixes, and can create a clean rescue profile (see §5.5).
+- `dsh --profile dsh-cli`: manual launch, equivalent to `dsh-cli` (`/update` only works this way).
 - Running a model needs `DEEPSEEK_API_KEY`. Run `/doctor` to check the environment.
 - DSH release labels do not restrict execution. Compatibility is checked through actual APIs, types and patch ownership; see `ADAPTER.md`.
 - If the logo page shows a ⚠ version-drift warning, align the dsh engine:
@@ -36,7 +36,7 @@ dsh-tui
 
 ### 1.2 What you see on first launch
 
-1. **Pixel whale header** (~3.4 s intro animation, then frozen): `✦ dsh-TUI` version,
+1. **Pixel whale header** (~3.4 s intro animation, then frozen): `✦ dsh-CLI` version,
    `DEEPSEEK / HARNESS` big text, current model and effort, working directory, and a
    **startup hint** (`/model` · `/help` · `Tab`). On narrow terminals, the header switches to a smaller complete layout.
    When the dsh engine is out of the verified range, a **⚠ version-drift warning**
@@ -47,7 +47,7 @@ dsh-tui
    `提示：<随机小技巧> · /tips 更多技巧` — changes each launch.
    `/tips` opens the full tips panel (`↑/↓` scroll, `Esc` close).
 4. **First normal launch** (no `--resume`, no workspace, no prompt) enters the
-   **session manager** to pick a workspace. `~/.dsh-tui/home.json` records "seen"
+   **session manager** to pick a workspace. `~/.dsh-cli/home.json` records "seen"
    so later launches go straight to chat. Open it any time with `/resume`, `/home`,
    `/agentview`, `/bg`, or `⌸` at the start of the input line.
 5. Type `/` for the command menu, `?` for the shortcut help.
@@ -168,7 +168,7 @@ Unrecognized keys are ignored, `Esc` does nothing, clear with `Ctrl+C`/`dd`.
 Switching sessions just parks the current one — the running turn keeps going.
 A session taken by another terminal shows red with `占用 pid <pid>`
 and can't be entered; it recovers after that terminal exits.
-Fixed items live in `~/.dsh-tui/session-pins.json`.
+Fixed items live in `~/.dsh-cli/session-pins.json`.
 The workspace menu has four items: edit / new here / rename / remove from list (**removes the entry only**, directory and session log stay).
 
 **Image preview** (open by clicking `[Image #N]` in the input or a thumbnail in the transcript)
@@ -232,7 +232,7 @@ The command menu = built-in commands (50) + DSH registry commands (`/plan` `/goa
 | `/fork` | none | copy the current session into a resumable clone (original unaffected) |
 | `/restart` | none | restart the process and resume this session (rejected mid-turn, `Ctrl+C` first) |
 | `/rename` | `<新名称>` | rename the current session (no arg shows the current title and usage) |
-| `/recap` | none | recent-activity summary (one line) + suggested title; press `a` or click to apply the title. With `dsh-tui.recapOnOpen` (default on), opening/resuming a session auto-shows a divider + `回顾：` summary line at the bottom; hover to view actions, click to expand, gone after the next message |
+| `/recap` | none | recent-activity summary (one line) + suggested title; press `a` or click to apply the title. With `dsh-cli.recapOnOpen` (default on), opening/resuming a session auto-shows a divider + `回顾：` summary line at the bottom; hover to view actions, click to expand, gone after the next message |
 | `/workspace` | `resume` / `rename <名称>` / `open <路径或URI>` | manage workspaces; `open` accepts an absolute path, file URI, or plugin scheme |
 | `/clear` | none | clear the current session view (reset expand/selection state) |
 | `/compact` | none | compact session history (prompts when nothing to compact) |
@@ -240,7 +240,7 @@ The command menu = built-in commands (50) + DSH registry commands (`/plan` `/goa
 | `/btw` | `<问题>` | side question: single turn, no tools, doesn't interrupt the main turn, not written to history |
 | `/trace` | none | open the trace scene (same as `Ctrl+T`) |
 | `/rewind` | none | rewind selector (same as double-press Esc on empty input) |
-| `/exit` (alias `/quit` `/q`) | none | exit dsh-tui |
+| `/exit` (alias `/quit` `/q`) | none | exit dsh-cli |
 
 ### 3.2 Status and diagnostics
 
@@ -263,15 +263,15 @@ The command menu = built-in commands (50) + DSH registry commands (`/plan` `/goa
 
 | Command | Args | Effect |
 |---|---|---|
-| `/model` | none | model selector; **switching = fork the session** (history kept, only routing changes), choice persisted to `~/.dsh-tui/model.json` |
-| `/effort` | `status` / `<id>` | reasoning effort: no-arg slider (`←/→` adjust); `status` current level; `<id>` set directly. Persisted to `~/.dsh-tui/effort.json`; new-session start level follows /settings `effortDefault` (§5.3) |
+| `/model` | none | model selector; **switching = fork the session** (history kept, only routing changes), choice persisted to `~/.dsh-cli/model.json` |
+| `/effort` | `status` / `<id>` | reasoning effort: no-arg slider (`←/→` adjust); `status` current level; `<id>` set directly. Persisted to `~/.dsh-cli/effort.json`; new-session start level follows /settings `effortDefault` (§5.3) |
 | `/thinking` | none | extended-thinking display toggle (thinking expands item by item while streaming) |
 | `/tokens` | none | token usage + context percentage |
-| `/activity` | `frames <名>` / `status` | working-status animation: no-arg selector, `frames <名>` sets directly (includes `random`), default `moon8`. Persisted to `~/.dsh-tui/working-activity.json` |
-| `/preset` | `<id>` / `status` | agent preset: `standard` / `ptc` / `minimal` / `cordis` / **Liangshen mode `liangshen`**; **cannot switch an already-started session**. Persisted to `~/.dsh-tui/agent-preset.json` |
-| `/theme` | `<名字>` / `status` | theme: no-arg selector; `<名字>` switch directly; `status` current theme (auto appends the OSC 11 result). Persisted to `~/.dsh-tui/theme.json` |
+| `/activity` | `frames <名>` / `status` | working-status animation: no-arg selector, `frames <名>` sets directly (includes `random`), default `moon8`. Persisted to `~/.dsh-cli/working-activity.json` |
+| `/preset` | `<id>` / `status` | agent preset: `standard` / `ptc` / `minimal` / `cordis` / **Liangshen mode `liangshen`**; **cannot switch an already-started session**. Persisted to `~/.dsh-cli/agent-preset.json` |
+| `/theme` | `<名字>` / `status` | theme: no-arg selector; `<名字>` switch directly; `status` current theme (auto appends the OSC 11 result). Persisted to `~/.dsh-cli/theme.json` |
 | `/color` | no-arg / `<名>` / `status` / `reset` | session accent color: no-arg opens the palette (`↑/↓` pick, `Enter` apply); `<名>` set directly; `reset` back to default. Colors `red/orange/yellow/green/blue/purple/pink/cyan`, saved per session |
-| `/lang` | `en` / `zh` / `status` | hot-switch UI language. Priority: `DSH_TUI_LANG` > profile config > persisted |
+| `/lang` | `en` / `zh` / `status` | hot-switch UI language. Priority: `DSH_CLI_LANG` > profile config > persisted |
 | `/vim` | none | **vim editing mode toggle** (see §2.4): input switches to vim keys, per-session, not persisted |
 
 ### 3.4 Account / policy / extensions
@@ -293,7 +293,7 @@ The command menu = built-in commands (50) + DSH registry commands (`/plan` `/goa
 
 ### 3.5 Skills
 
-dsh-TUI ships no generic skills; `/skills` browses skills DSH discovers, and a direct-call skill joins the command menu as `/name` (see §4.8).
+dsh-CLI ships no generic skills; `/skills` browses skills DSH discovers, and a direct-call skill joins the command menu as `/name` (see §4.8).
 
 ### 3.6 Placeholder commands
 
@@ -320,12 +320,12 @@ dsh-TUI ships no generic skills; `/skills` browses skills DSH discovers, and a d
 | Resume | `/resume` (same as `/home` `/agentview` `/bg` and `⌸` at the input line start) | the three-in-one **session manager**: `←/→` switch column, type to filter, `Enter` enter, `Ctrl+N` new, `Ctrl+X` stop background session, `★`/`☆` pin. Switching just parks the session, the turn keeps running; a session taken by another terminal shows red and can't be entered (see §2.7) |
 | Rename | `/rename <标题>` | rename immediately and persist (writes a session/title event, readable back in the session manager) |
 | Compact | `/compact` | trigger DSH compaction manually; **rejected mid-turn**; unavailable under minimal preset; the compaction point renders as a Divider summary row |
-| Export | `/export` | export Markdown from the full session log (thinking and tool-call sections), file `dsh-tui-export-<时间戳>.md` in the current session cwd |
+| Export | `/export` | export Markdown from the full session log (thinking and tool-call sections), file `dsh-cli-export-<时间戳>.md` in the current session cwd |
 | Clear | `/clear` | clears the view only, never the session log |
 | Stop | session manager `Ctrl+X` | stop the **background** session under the cursor; the session the current terminal is using can't be stopped (exit the whole TUI with `/exit` or double-press `Ctrl+C`) |
 | Exit | `/exit` (or `/quit` `/q`) | double-press `Ctrl+C` or `Ctrl+D` also exits when idle; mid-work, press `Ctrl+C`/`Ctrl+D` again to force quit when the interrupt won't settle |
 
-Command-line resume: `dsh-tui --resume` (last session) / `dsh-tui --resume <id>` (specific session).
+Command-line resume: `dsh-cli --resume` (last session) / `dsh-cli --resume <id>` (specific session).
 `-c` / `--continue` are equivalent.
 
 ### 4.2 Time-travel rewind (double-press Esc)
@@ -362,7 +362,7 @@ Full-screen view of the whole session timeline (doesn't pollute scrollback); key
 ### 4.6 Model switching and presets
 
 - `/model`: opens the available model list with search ready. Type words in any order to narrow the list (for example, `seek deep` matches DeepSeek); `Tab` switches to provider groups. **Switching = fork the session** (history kept, only routing changes, the old session stays in `/resume`);
-  persisted to `~/.dsh-tui/model.json`.
+  persisted to `~/.dsh-cli/model.json`.
   Type space-separated keywords to filter by model/provider name or ID,
   case-insensitively and in any order. The default list searches all available
   models; inside a provider or Recents it searches only that list. Backspace
@@ -386,7 +386,7 @@ Keys are in §2.7. Key points:
 
 ### 4.8 Skills / registry / Goals-Todos
 
-- `/skills` browses the skill catalog; a direct-call skill joins the command menu as `/name` (dsh-TUI ships no generic skills).
+- `/skills` browses the skill catalog; a direct-call skill joins the command menu as `/name` (dsh-CLI ships no generic skills).
 - `/plan` `/goal` `/feedback` `/permission` come from the DSH registry, merged into the `/` menu.
 - **Goals/Todos panel appears automatically**: when the model writes a goal/todo, it renders above the input
   (🎯 goal + phase badge + tree todo), no action needed.
@@ -397,7 +397,7 @@ Keys are in §2.7. Key points:
   shows a `cordis.patch.yml` snippet when unconfigured.
 - `/workspace`: `resume` / `rename <名>` / `open <路径|file:// URI>`
   (open and start a new session).
-- `dsh-tui <路径>` also accepts a workspace target.
+- `dsh-cli <路径>` also accepts a workspace target.
 - `/doctor` check: Node/platform, API key, model routing, cwd, context window, session storage, plugin host.
 - `/provider` interactive wizard to manage model providers: add / edit / delete.
   - With dsh-auth bound, authenticate ChatGPT / Claude / Grok (OAuth), OpenCode Zen / Go, OrcaRouter, Infron (API key), OpenRouter (OAuth PKCE or API key), and Nous (device-code OAuth or manual Bearer compatibility). Credentials remain in the dsh-auth store; signing in does not switch the active model.
@@ -415,7 +415,7 @@ An empty session shows the whale logo area at the top (scrolls away with the con
 - **Intro animation** (~3.4 s, three picked each launch, `/deepseek` egg re-rolls): classic / heart / sleep.
 - **Welcome idle animation** (`whaleIdle`, default on): fin, blink, tail wag, sleeps with Z after 10 s idle; **click to show a heart and wake it**.
 - After the first agent task, it freezes to a static frame (`/new` re-enters the welcome period).
-- Text column right of the whale: `✦ dsh-TUI v版本号` →
+- Text column right of the whale: `✦ dsh-CLI v版本号` →
   `DEEPSEEK / HARNESS` big text → current model + effort → working directory → startup hint line.
 - Out of the verified range, a **⚠ version-drift warning** appears (with the align command).
 - Centered tagline under the whale: `探索未至之境！`.
@@ -462,12 +462,12 @@ speed **≥50 green / ≥20 yellow / <20 red**.
 ### 5.3 The /settings editor
 
 `/settings` opens the plugin settings editor; **changes save automatically**, `Esc` exits directly.
-The dsh-tui block writes to the active profile's `cordis.patch.yml`. Most settings apply live; fullscreen and image-preview need `/restart`.
+The dsh-cli block writes to the active profile's `cordis.patch.yml`. Most settings apply live; fullscreen and image-preview need `/restart`.
 Common items below, full list on the /settings screen:
 
 | Field | Notes |
 |---|---|
-| lang | UI language zh/en (locked when DSH_TUI_LANG is pinned) |
+| lang | UI language zh/en (locked when DSH_CLI_LANG is pinned) |
 | fullscreen | fullscreen mode (default on); takes effect after `/restart` |
 | terminalImages | terminal image preview (default on, needs terminal support); takes effect after `/restart`. Off shows text only and skips preview decode, sending images to the model is unaffected |
 | whale | pixel whale header (default on); three intro animations picked per launch (classic/heart/sleep), `/deepseek` egg re-rolls |
@@ -492,7 +492,7 @@ last `/effort` (effort.json) > model default.
 **pageMargin**: custom `NxM` = `N` columns left/right, `M` rows top/bottom (cap 8x4); only `N` means 1 row top/bottom.
 
 Namespaces not declared as TUI blocks are listed read-only; edit the profile config by hand.
-These settings are **not in /settings**, edit `$DSH_HOME/profiles/dsh-tui/cordis.patch.yml`:
+These settings are **not in /settings**, edit `$DSH_HOME/profiles/dsh-cli/cordis.patch.yml`:
 provider / model / cwd / preset / workspace / sessionId / modes,
 plus the startup-level `effort` key.
 
@@ -502,54 +502,54 @@ plus the startup-level `effort` key.
 - macOS `⌘` modifier needs the extended keyboard protocol (iTerm2 / kitty / WezTerm / ghostty / tmux).
 - Terminal.app: use Ctrl.
 - VS Code: install the companion extension `dsh-tui-vscode` (gets the **IDE selection channel**, needs ≥ 0.7.0).
-- Or run `dsh-tui` directly in the integrated terminal.
+- Or run `dsh-cli` directly in the integrated terminal.
 - **Images**: thumbnails and full preview need Kitty graphics or Sixel (auto-detected, Kitty preferred).
-  - `DSH_TUI_IMAGE_PROTOCOL=auto|kitty|sixel|none` overrides the protocol.
-- `DSH_TUI_DISABLE_TERMINAL_IMAGES=1` forces preview off.
+  - `DSH_CLI_IMAGE_PROTOCOL=auto|kitty|sixel|none` overrides the protocol.
+- `DSH_CLI_DISABLE_TERMINAL_IMAGES=1` forces preview off.
   - tmux/screen, non-TTY, and accessibility mode show text only; sending images to the model is unaffected.
 - Environment check: `/doctor`.
 
-### 5.5 Safe mode and rescue profile (`dsh-tui safe`)
+### 5.5 Safe mode and rescue profile (`dsh-cli safe`)
 
 When dsh exits unexpectedly, safe mode gives a **read-only** environment diagnosis, profile plugin list, and fix guidance.
 
-- **Two entry points**: run `dsh-tui safe` manually; or follow the on-screen prompt after a non-zero dsh exit (non-interactive envs just print a line).
+- **Two entry points**: run `dsh-cli safe` manually; or follow the on-screen prompt after a non-zero dsh exit (non-interactive envs just print a line).
 - **Read-only scope**: diagnosis/list/guidance change no state.
-- Exception: retry normal startup, or create/reuse a blank rescue profile (writes only `$DSH_HOME/profiles/dsh-tui-safe/`).
+- Exception: retry normal startup, or create/reuse a blank rescue profile (writes only `$DSH_HOME/profiles/dsh-cli-safe/`).
 - **The rescue profile must prove clean first** (no third-party plugins, no `cordis.patch.yml` entries), else it refuses and prints how to handle it.
-- **Non-interactive**: `dsh-tui safe --rescue` only reports the verdict (ready exits 0, refused exits 1).
+- **Non-interactive**: `dsh-cli safe --rescue` only reports the verdict (ready exits 0, refused exits 1).
 - **Run the fix commands yourself** (safe mode only lists them):
-  - `dsh plugin --profile dsh-tui remove <第三方插件>` remove suspicious plugins.
-  - `dsh plugin --profile dsh-tui add dsh-cli@<版本>`
+  - `dsh plugin --profile dsh-cli remove <第三方插件>` remove suspicious plugins.
+  - `dsh plugin --profile dsh-cli add @askdkc/dsh-cli@<版本>`
     reinstall to align.
-  - `dsh-tui doctor` environment diagnosis.
+  - `dsh-cli doctor` environment diagnosis.
 
 ## 6. Model / preset / theme / language
 
 | Item | Command | Notes |
 |---|---|---|
-| Model | `/model` | selector; **switching = fork the session** (history kept, routing only); persisted to `~/.dsh-tui/model.json`, reused on restart and `/new`. Never chosen → built-in default (currently `deepseek-flash`) |
+| Model | `/model` | selector; **switching = fork the session** (history kept, routing only); persisted to `~/.dsh-cli/model.json`, reused on restart and `/new`. Never chosen → built-in default (currently `deepseek-flash`) |
 | Reasoning effort | `/effort` | slider (`←/→` live) or `/effort <id>`; `/effort status` for current; new-session default in /settings → default reasoning effort |
 | Agent preset | `/preset` | `standard` / `ptc` / `minimal` / `cordis` / **Liangshen mode `liangshen`**; **can't switch an already-started session** |
 | Theme | `/theme` | `auto` (OSC 11 follows terminal background) / `light` / `dark` / `dark-ansi`; `/theme <名>` direct; `/theme status` for the result |
-| Custom theme | manual | `~/.dsh-tui/themes/<名>.json`, `{base, colors}` format, hot-swap on select; naming it `auto` gets shadowed by the built-in |
-| Language | `/lang` | `en` / `zh` hot switch; priority `DSH_TUI_LANG` > profile config > persisted |
+| Custom theme | manual | `~/.dsh-cli/themes/<名>.json`, `{base, colors}` format, hot-swap on select; naming it `auto` gets shadowed by the built-in |
+| Language | `/lang` | `en` / `zh` hot switch; priority `DSH_CLI_LANG` > profile config > persisted |
 | Status animation | `/activity` | selector or `/activity frames <名>`; default `moon8`, `random` randomizes |
 
-**Theme priority**: `DSH_TUI_THEME` > `~/.dsh-tui/theme.json` > OSC 11 terminal-background detection > dark fallback.
+**Theme priority**: `DSH_CLI_THEME` > `~/.dsh-cli/theme.json` > OSC 11 terminal-background detection > dark fallback.
 
-**~/.dsh-tui/ preference files** (all best-effort, fall back on bad files):
+**~/.dsh-cli/ preference files** (all best-effort, fall back on bad files):
 
 - `theme.json`, `model.json`, `agent-preset.json`, `effort.json`, `working-activity.json`, `lang.json`,
   `trajectory.json`, `resume.txt` / `last-used.json`, `themes/<名>.json`
 
 **Common environment variables**:
 
-- `DSH_TUI_LANG`, `DSH_TUI_THEME`, `DSH_TUI_PRESET`, `DSH_TUI_PERSONA`
-- `DSH_TUI_DISABLE_MOUSE`, `DSH_TUI_DISABLE_TERMINAL_IMAGES`, `DSH_TUI_IMAGE_PROTOCOL`,
-  `DSH_TUI_ACCESSIBILITY` (accessibility: no animation/graphics preview)
-- `DSH_TUI_RESUME_SESSION`, `DSH_TUI_WORKSPACE_TARGET`, `DSH_TUI_SESSION_ROOT`, `DSH_TUI_DEBUG`,
-  `DSH_TUI_RENDER_LOG` (frame capture)
+- `DSH_CLI_LANG`, `DSH_CLI_THEME`, `DSH_CLI_PRESET`, `DSH_CLI_PERSONA`
+- `DSH_CLI_DISABLE_MOUSE`, `DSH_CLI_DISABLE_TERMINAL_IMAGES`, `DSH_CLI_IMAGE_PROTOCOL`,
+  `DSH_CLI_ACCESSIBILITY` (accessibility: no animation/graphics preview)
+- `DSH_CLI_RESUME_SESSION`, `DSH_CLI_WORKSPACE_TARGET`, `DSH_CLI_SESSION_ROOT`, `DSH_CLI_DEBUG`,
+  `DSH_CLI_RENDER_LOG` (frame capture)
 - `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `VISUAL`/`EDITOR` (`Ctrl+G` external editor),
   `DSH_PERMISSION_MODE`
 

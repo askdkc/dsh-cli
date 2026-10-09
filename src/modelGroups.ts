@@ -3,7 +3,7 @@
  * The centered picker builds its display rows in modelPickerRows.ts;
  * older group consumers and their regression tests still use the helpers here.
  *
- * @module dsh-tui/modelGroups
+ * @module dsh-cli/modelGroups
  */
 
 import type { LlmModelInfo, LlmProviderInfo } from './adapter/ports/channel-view.js'

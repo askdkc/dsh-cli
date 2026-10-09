@@ -17,8 +17,8 @@
  * 运行：node --import tsx/esm scripts/repro-drag-select-streaming.tsx
  */
 process.env.FORCE_COLOR = '3'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG = 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG = 'zh'
 // 纯 OSC 52 路径：跳过 wl-copy/xclip 探测链，断言只依赖 stdout 帧
 process.env.SSH_CONNECTION = 'headless-repro'
 delete process.env.TMUX

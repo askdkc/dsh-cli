@@ -23,10 +23,10 @@ process.env.FORCE_COLOR = '3'
 const { mkdtempSync, mkdirSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-reset-hygiene-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-reset-hygiene-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 
 const [{ Context }, { createChannel }, { collectRecentActivity }, { settled, sleep }] = await Promise.all([
   import('@deepseek-ai/cordis'),

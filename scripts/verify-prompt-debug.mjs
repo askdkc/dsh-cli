@@ -11,7 +11,7 @@ import { spawnSync } from 'node:child_process'
 import { markAgentLoopRequest } from '@deepseek-ai/dsh-llm'
 import { PROMPT_DEBUG_FILENAME, registerPromptDebug } from '../lib/types/dsh-adapter/promptDebug.js'
 
-const workspace = mkdtempSync(join(tmpdir(), 'dsh-tui-prompt-debug-'))
+const workspace = mkdtempSync(join(tmpdir(), 'dsh-cli-prompt-debug-'))
 const sessionId = 'prompt-debug-session'
 const events = [
   { type: 'turn/start', seq: 0, time: Date.now(), data: { turn: 1 } },

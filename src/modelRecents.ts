@@ -1,12 +1,12 @@
 /**
  * Persisted recently-used models (`/model` picker's 最近使用 group), kept at
- * `~/.dsh-tui/model-recents.json` so the list survives restarts — same
+ * `~/.dsh-cli/model-recents.json` so the list survives restarts — same
  * best-effort pattern as agent-preset.json: a missing/corrupt file simply
  * reads as empty, and a failed write never blocks the switch that caused it.
  * Entries are `{ provider, id }` refs, most-recent-first, deduped, capped at
  * {@link MODEL_RECENTS_LIMIT}.
  *
- * @module dsh-tui/modelRecents
+ * @module dsh-cli/modelRecents
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'

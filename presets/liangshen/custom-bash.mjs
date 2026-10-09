@@ -15,7 +15,7 @@
  *
  * Executable resolution, in order (an explicit entry is the ONLY candidate:
  * a miss fails loudly instead of silently substituting a guess):
- *  1. explicit `config.bashPath` or the `DSH_TUI_LIANGSHEN_BASH_PATH`
+ *  1. explicit `config.bashPath` or the `DSH_CLI_LIANGSHEN_BASH_PATH`
  *     environment variable (absolute path to a Git Bash bash.exe);
  *  2. a `git` on PATH followed to its installation tree — every Windows Git
  *     install ships bash next to git, wherever it was installed, so this
@@ -79,7 +79,7 @@ function addCandidate(candidates, seen, candidate) {
 
 /** The explicit override, if any: `config.bashPath`, else the environment variable. */
 function explicitBashPath(config, environment) {
-  for (const value of [config.bashPath, environment.DSH_TUI_LIANGSHEN_BASH_PATH]) {
+  for (const value of [config.bashPath, environment.DSH_CLI_LIANGSHEN_BASH_PATH]) {
     if (typeof value === 'string' && value.length > 0) return value
   }
   return undefined

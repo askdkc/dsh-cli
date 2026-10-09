@@ -13,27 +13,27 @@
  * 运行：node --import tsx/esm scripts/repro-reload.tsx
  */
 process.env.FORCE_COLOR = '3'
-// 注意：不要设置 DSH_TUI_THEME——那会让 /reload 走"环境变量优先"跳过主题。
+// 注意：不要设置 DSH_CLI_THEME——那会让 /reload 走"环境变量优先"跳过主题。
 // 不设置时 ThemeProvider 在无 querier 的 fake 环境 settle('dark')，themeName
 // 为 'dark'，与预置的 theme.json(light) 不同 → 走 apply 分支。
-process.env.DSH_TUI_LANG = 'zh'     // 固定中文报告文案断言（lang 走 env-skip）
+process.env.DSH_CLI_LANG = 'zh'     // 固定中文报告文案断言（lang 走 env-skip）
 
 // 隔离家目录（同 verify-extension-ui）：Chat 加载即解析 homedir()。
 const { mkdtempSync, mkdirSync, readFileSync, writeFileSync } = await import('node:fs')
 const { tmpdir } = await import('node:os')
 const { join: joinPath } = await import('node:path')
-const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshtui-reload-home-'))
+const isolatedHome = mkdtempSync(joinPath(tmpdir(), 'dshcli-reload-home-'))
 process.env.HOME = isolatedHome
 process.env.USERPROFILE = isolatedHome
-mkdirSync(joinPath(isolatedHome, '.dsh-tui'), { recursive: true })
+mkdirSync(joinPath(isolatedHome, '.dsh-cli'), { recursive: true })
 // 预置 5 个 pref 文件：全部与 live 值不同 → planReload 应全部 apply。
-writeFileSync(joinPath(isolatedHome, '.dsh-tui', 'theme.json'), JSON.stringify({ theme: 'light' }))
-writeFileSync(joinPath(isolatedHome, '.dsh-tui', 'lang.json'), JSON.stringify({ lang: 'en' }))
-const presetPrefPath = joinPath(isolatedHome, '.dsh-tui', 'agent-preset.json')
+writeFileSync(joinPath(isolatedHome, '.dsh-cli', 'theme.json'), JSON.stringify({ theme: 'light' }))
+writeFileSync(joinPath(isolatedHome, '.dsh-cli', 'lang.json'), JSON.stringify({ lang: 'en' }))
+const presetPrefPath = joinPath(isolatedHome, '.dsh-cli', 'agent-preset.json')
 // Intentional legacy fixture: /reload must apply ptc and lazily rewrite it.
 writeFileSync(presetPrefPath, JSON.stringify({ preset: 'code' }))
-writeFileSync(joinPath(isolatedHome, '.dsh-tui', 'model.json'), JSON.stringify({ provider: 'deepseek', model: 'deepseek-chat' }))
-writeFileSync(joinPath(isolatedHome, '.dsh-tui', 'working-activity.json'), JSON.stringify({ frames: 'moon' }))
+writeFileSync(joinPath(isolatedHome, '.dsh-cli', 'model.json'), JSON.stringify({ provider: 'deepseek', model: 'deepseek-chat' }))
+writeFileSync(joinPath(isolatedHome, '.dsh-cli', 'working-activity.json'), JSON.stringify({ frames: 'moon' }))
 
 const [
   { PassThrough, Writable },
@@ -213,7 +213,7 @@ check('报告含 header', localRows.some(r => r.text.includes('已重读偏好�
 check('报告含 4 条 apply（theme/preset/model/activity）', localRows.filter(r => r.text.includes('（已应用）')).length === 4,
   JSON.stringify(localRows))
 check('主题应用 dark → light', localRows.some(r => r.text.includes('light') && r.text.includes('已应用')), JSON.stringify(localRows))
-check('语言跳过（DSH_TUI_LANG 优先）', localRows.some(r => r.text.includes('语言') && r.text.includes('跳过')), JSON.stringify(localRows))
+check('语言跳过（DSH_CLI_LANG 优先）', localRows.some(r => r.text.includes('语言') && r.text.includes('跳过')), JSON.stringify(localRows))
 check('模型应用 deepseek/deepseek-chat', modelCalls.join(',') === 'deepseek/deepseek-chat', modelCalls.join(','))
 check('旧 code 偏好按 ptc 应用', presetCalls.join(',') === 'ptc', presetCalls.join(','))
 check('旧 code 偏好惰性迁移到 ptc', JSON.parse(readFileSync(presetPrefPath, 'utf8')).preset === 'ptc')

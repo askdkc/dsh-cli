@@ -192,7 +192,7 @@ for (const label of ['ctx lookup throws', 'agents.get throws']) {
       isCurrent: () => owner.current(),
       async prepare(_capture, create) {
         const handle = await create()
-        if (!owner.current()) { await handle.dispose(); throw new Error('dsh-tui: Channel lifetime has ended') }
+        if (!owner.current()) { await handle.dispose(); throw new Error('dsh-cli: Channel lifetime has ended') }
         return handle
       },
       async abandon(handle) { await handle.dispose() },

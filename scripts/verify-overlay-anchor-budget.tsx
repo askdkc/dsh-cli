@@ -1,8 +1,8 @@
 /** Root model-dialog geometry and OverlayAbove budget regressions. Run: node --import tsx/esm scripts/verify-overlay-anchor-budget.tsx */
 process.env.FORCE_COLOR = '3'
 process.env.TERM_PROGRAM = 'WezTerm'
-process.env.DSH_TUI_THEME = 'dark'
-process.env.DSH_TUI_LANG ??= 'zh'
+process.env.DSH_CLI_THEME = 'dark'
+process.env.DSH_CLI_LANG ??= 'zh'
 
 const [{ PassThrough, Writable }, React, { Terminal }, { render, Box, Text, AlternateScreen }, { ModelDialogLayer }, { ModelPicker }, { overlaySpaceAbove, clampOverlayHeight }, { settled, viewportLines }] = await Promise.all([
   import('node:stream'), import('react'), import('@xterm/headless'), import('../src/ui.js'),
@@ -56,7 +56,7 @@ for (const [columns, rows, transcriptRows, fullscreen, alternate] of [
     assert.equal(await settled(() => viewportLines(term, rows).some(line => line.includes('DeepSeek V4'))), true,
       `${columns}x${rows}: ${JSON.stringify(viewportLines(term, rows))}`)
     const lines = viewportLines(term, rows)
-    assert.equal(lines.some(line => line.includes(process.env.DSH_TUI_LANG === 'en' ? 'Model' : '模型')), true)
+    assert.equal(lines.some(line => line.includes(process.env.DSH_CLI_LANG === 'en' ? 'Model' : '模型')), true)
     assert.equal(lines.some(line => line.includes('❯')), true)
     assert.equal(output.includes('\x1b[?1049h'), alternate)
     if (process.env.CAPTURE_MODEL_DIALOG && columns === 80 && rows === 24 && !fullscreen) {

@@ -294,9 +294,9 @@ class Output extends Writable {
 const oldEnv = { ...process.env }
 delete process.env.TMUX
 delete process.env.STY
-delete process.env.DSH_TUI_ACCESSIBILITY
-delete process.env.DSH_TUI_DISABLE_TERMINAL_IMAGES
-delete process.env.DSH_TUI_IMAGE_PROTOCOL
+delete process.env.DSH_CLI_ACCESSIBILITY
+delete process.env.DSH_CLI_DISABLE_TERMINAL_IMAGES
+delete process.env.DSH_CLI_IMAGE_PROTOCOL
 const imageTree = (show: boolean, counter = 0, preview = true, covered = false, partial = false, ell = false) => (
   <AlternateScreen>
     <Box width={50} height={17} flexDirection="column">
@@ -572,8 +572,8 @@ clearTranscriptImageCacheForTests()
 
 for (const [name, env, caps] of [
   ['unsupported', {}, '\x1b[?61c'],
-  ['disabled', { DSH_TUI_DISABLE_TERMINAL_IMAGES: '1' }, '\x1b[?61;4c'],
-  ['accessibility', { DSH_TUI_ACCESSIBILITY: '1' }, '\x1b[?61;4c'],
+  ['disabled', { DSH_CLI_DISABLE_TERMINAL_IMAGES: '1' }, '\x1b[?61;4c'],
+  ['accessibility', { DSH_CLI_ACCESSIBILITY: '1' }, '\x1b[?61;4c'],
   ['multiplexer', { TMUX: 'test' }, '\x1b[?61;4c'],
 ] as const) {
   Object.assign(process.env, env)

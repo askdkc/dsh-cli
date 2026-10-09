@@ -24,7 +24,7 @@ export function createChannelUiLease(isCurrent: () => boolean): ChannelUiLease &
   const disposers = new Set<() => void>()
   return {
     assertActive() {
-      if (!active || !isCurrent()) throw new Error('dsh-tui: Channel UI lifetime has ended')
+      if (!active || !isCurrent()) throw new Error('dsh-cli: Channel UI lifetime has ended')
     },
     own(dispose) {
       let released = false
@@ -45,7 +45,7 @@ export function createChannelUiLease(isCurrent: () => boolean): ChannelUiLease &
       for (const dispose of [...disposers]) {
         try { dispose() } catch (error) { failures.push(error) }
       }
-      throwCleanupFailures(failures, 'dsh-tui: Channel UI cleanup failed')
+      throwCleanupFailures(failures, 'dsh-cli: Channel UI cleanup failed')
     },
   }
 }
@@ -67,7 +67,7 @@ export function createChannelUi(channel: ChannelUi, mode: AdapterMode, lease: Ch
     const result: Record<string, unknown> = {}
     for (const key of Object.keys(effects) as (keyof T & string)[]) {
       const fn = target[key]
-      if (typeof fn !== 'function') throw new Error(`dsh-tui: missing Channel handle method ${key}`)
+      if (typeof fn !== 'function') throw new Error(`dsh-cli: missing Channel handle method ${key}`)
       result[key] = (...args: unknown[]) => {
         check(effects[key])
         return settle(Reflect.apply(fn, target, args))
