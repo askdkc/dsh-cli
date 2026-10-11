@@ -384,7 +384,7 @@ dsh-CLI 不预装通用技能；`/skills` 浏览 DSH 发现的技能，可直调
 - `dsh-cli <路径>` 同样接受工作区目标。
 - `/doctor` 自检：Node/平台、API key、模型路由、cwd、上下文窗口、会话存储、插件宿主。
 - `/provider` 交互向导管理模型提供方：添加 / 编辑 / 删除。
-  - 捆绑 dsh-auth 时可认证 ChatGPT / Claude / Grok（OAuth）、OpenCode Zen / Go、OrcaRouter、Infron（API key）、OpenRouter（OAuth PKCE 或 API key）以及 Nous（设备码 OAuth 或手动 Bearer 兼容连接）。凭据保存在 dsh-auth；登录不自动切换当前模型。
+  - 捆绑 dsh-auth 时可认证 ChatGPT / Claude / Grok（OAuth）、OpenCode Zen / Go、Infron（API key）、OpenRouter（OAuth PKCE 或 API key）以及 Nous（设备码 OAuth 或手动 Bearer 兼容连接）。凭据保存在 dsh-auth；登录不自动切换当前模型。
 - 非环境变量密钥写入 `~/.dsh/.credentials.yaml`（0600），界面只显示 `••••••`。
   - 自定义端点需填路由名、API key、baseURL 与协议（`openai-completions` / `openai-responses` /
   `anthropic-messages`）。

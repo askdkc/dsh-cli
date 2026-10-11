@@ -279,8 +279,8 @@ Where it writes:
 | API key | `~/.dsh/.credentials.yaml` (mode 0600), referenced as `<ROUTE>_API_KEY` |
 
 With the bundled dsh-auth plugin mounted, the add branch offers **provider
-authentication**. ChatGPT / Claude / Grok use OAuth; OpenCode Zen / Go,
-OrcaRouter, and Infron accept API keys; OpenRouter offers OAuth PKCE or an API
+authentication**. ChatGPT / Claude / Grok use OAuth; OpenCode Zen / Go
+and Infron accept API keys; OpenRouter offers OAuth PKCE or an API
 key; Nous offers device-code OAuth or a manual Bearer compatibility path.
 `/auth status|login|logout` uses the same credential store at
 `$DSH_HOME/dsh-auth/credentials.json`. Sign in, then choose a model with

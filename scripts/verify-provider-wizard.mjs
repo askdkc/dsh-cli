@@ -553,12 +553,12 @@ function oauthStub(behavior = {}) {
 
 {
   const oauth = oauthStub({
-    providers: [{ provider: 'orcarouter', label: 'OrcaRouter', oauthLabel: 'OrcaRouter', signedIn: false, expiresAt: undefined, expired: false }],
-    loginResult: { provider: 'orcarouter', oauthLabel: 'OrcaRouter', credentialKind: 'api-key', modelWarning: 'HTTP 429' },
+    providers: [{ provider: 'infron', label: 'Infron', oauthLabel: 'Infron', signedIn: false, expiresAt: undefined, expired: false }],
+    loginResult: { provider: 'infron', oauthLabel: 'Infron', credentialKind: 'api-key', modelWarning: 'HTTP 429' },
   })
   const { deps, calls } = makeDeps({
     'mode': { selected: [t('provider-opt-oauth')] },
-    'oauth-provider': { selected: ['orcarouter'] },
+    'oauth-provider': { selected: ['infron'] },
   }, { oauth })
   check('saved credential remains a successful login when model discovery fails', await runProviderWizard(deps) === 'added')
   check('model discovery failure is displayed separately', calls.pushed[0]?.lines.some(line => line.includes('HTTP 429'))

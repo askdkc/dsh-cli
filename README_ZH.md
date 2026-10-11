@@ -35,7 +35,7 @@
 - 像素鲸鱼、实时工作状态、上下文进度条、TPS 仪表和可点击的时间轴。
 - 会话恢复、分支、回溯、后台运行与导出。
 - DSH 预设、技能、MCP、目标、子代理、提供商认证和扩展。
-- 支持 OpenAI、Claude、OpenCode、OpenRouter、Hermes Agent、Infron 和 OrcaRouter 认证。
+- 支持 OpenAI、Claude、OpenCode、OpenRouter、Hermes Agent、Infron 认证。
 - 为长会话提供虚拟化渲染和有界缓存。
 
 ## 快速开始

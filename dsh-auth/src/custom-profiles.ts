@@ -1,11 +1,12 @@
 import type { ResolvedPiAiProviderProfile } from '@deepseek-ai/dsh-llm-pi-ai'
 import type { PiAiProvider } from './pi-ai.js'
 import { buildOAuthProfile, type ModelOverride } from './profiles.js'
+import type { InfronServiceTier } from './routes.js'
 
 type PiModel = ReturnType<PiAiProvider['getModels']>[number]
+type PiStreamOptions = NonNullable<Parameters<PiAiProvider['streamSimple']>[2]>
 
 const CUSTOM = {
-  orcarouter: { name: 'OrcaRouter', baseURL: 'https://api.orcarouter.ai/v1' },
   nous: { name: 'Hermes Agent / Nous Portal', baseURL: 'https://inference-api.nousresearch.com/v1' },
   infron: { name: 'Infron', baseURL: 'https://llm.onerouter.pro/v1' },
 } as const
@@ -32,7 +33,6 @@ function modelFromRow(provider: CustomProviderId, value: unknown, overrides: Rea
   const row = record(value)
   if (row === undefined || typeof row.id !== 'string' || row.id.length === 0) return undefined
   const endpoints = row.supported_endpoint_types
-  if (provider === 'orcarouter' && !Array.isArray(endpoints)) return undefined
   if (Array.isArray(endpoints) && !endpoints.some(item =>
     item === 'openai' || item === 'chat' || item === 'chat_completions' || item === 'openai-chat-completions')) return undefined
   if (provider === 'infron' && (row.category_type !== 'LLM' || row.supports_function_calling === false || row.supports_streaming === false)) return undefined
@@ -87,8 +87,25 @@ function discoveryFailure(name: string, status: number): Error {
   return new Error(`dsh-auth: ${name} model discovery failed (HTTP ${status}: ${reason})`)
 }
 
+/** Merge Infron's routing extension after any caller payload transform. */
+function serviceTierPayload(
+  onPayload: PiStreamOptions['onPayload'],
+  serviceTier: InfronServiceTier,
+): NonNullable<PiStreamOptions['onPayload']> {
+  return async (payload, model) => {
+    const transformed = await onPayload?.(payload, model)
+    const body = record(transformed === undefined ? payload : transformed)
+    if (body === undefined) throw new Error('dsh-auth: Infron request payload must be an object')
+    return { ...body, provider: { ...record(body.provider), service_tier: serviceTier } }
+  }
+}
+
 /** A strict catalog: missing capacity/pricing/endpoint evidence leaves a model unselectable. */
-export function createCustomProfile(id: CustomProviderId, overrides: Readonly<Record<string, ModelOverride>> = {}): CustomProfile {
+export function createCustomProfile(
+  id: CustomProviderId,
+  overrides: Readonly<Record<string, ModelOverride>> = {},
+  serviceTier?: InfronServiceTier,
+): CustomProfile {
   const spec = CUSTOM[id]
   const base = buildOAuthProfile('openrouter')
   const source = base.piProvider
@@ -110,6 +127,11 @@ export function createCustomProfile(id: CustomProviderId, overrides: Readonly<Re
     },
     getModels: () => models,
     refreshModels: undefined,
+    ...(id === 'infron' && serviceTier !== undefined ? {
+      streamSimple: (model, context, options) => source.streamSimple(model, context, {
+        ...options, onPayload: serviceTierPayload(options?.onPayload, serviceTier),
+      }),
+    } satisfies Partial<PiAiProvider> : {}),
   }
   return {
     profile: { ...base, provider: id, displayName: spec.name, piProvider: provider },

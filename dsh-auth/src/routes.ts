@@ -2,7 +2,9 @@
 /** Provider routes this build mounts, in picker order. */
 export const OAUTH_PROVIDER_IDS = ['openai-codex', 'anthropic', 'xai'] as const
 export const CATALOG_PROVIDER_IDS = [...OAUTH_PROVIDER_IDS, 'opencode', 'opencode-go', 'openrouter'] as const
-export const AUTH_PROVIDER_IDS = [...CATALOG_PROVIDER_IDS, 'orcarouter', 'nous', 'infron'] as const
+export const AUTH_PROVIDER_IDS = [...CATALOG_PROVIDER_IDS, 'nous', 'infron'] as const
+export const INFRON_SERVICE_TIERS = ['standard', 'flex'] as const
+export type InfronServiceTier = (typeof INFRON_SERVICE_TIERS)[number]
 export const PROVIDER_ALIASES: Readonly<Record<string, string>> = {
   hermes: 'nous',
   'infron.ai': 'infron',

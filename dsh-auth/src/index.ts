@@ -39,7 +39,7 @@ import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import type { LlmAdapter, LlmModelInfo } from '@deepseek-ai/dsh-llm'
 import type { CommandInvocation, CommandResult } from '@deepseek-ai/dsh-commands'
 import { CredentialFile, defaultCredentialsFile } from './credentials.js'
-import { AUTH_PROVIDER_IDS, canonicalProvider, type ModelOverride } from './routes.js'
+import { AUTH_PROVIDER_IDS, INFRON_SERVICE_TIERS, canonicalProvider, type InfronServiceTier, type ModelOverride } from './routes.js'
 import { OpenCodeAdapter } from './opencode-adapter.js'
 import { OpenCodeCatalog, OPEN_CODE_ROUTES, type OpenCodeRoute } from './opencode-catalog.js'
 import { OPEN_CODE_SNAPSHOTS } from './opencode-owned.generated.js'
@@ -89,6 +89,8 @@ export interface Config {
    */
   modelOverrides?: Record<string, Record<string, ModelOverride>>
   nous?: { clientId?: string }
+  /** Infron routing tier; omitted keeps the gateway's default routing. */
+  infron?: { serviceTier?: InfronServiceTier }
 }
 
 const modelOverride = z.object({
@@ -101,6 +103,7 @@ export const Config: z<Config> = z.object({
   credentialsFile: z.string(),
   modelOverrides: z.dict(z.dict(modelOverride)),
   nous: z.object({ clientId: z.string() }),
+  infron: z.object({ serviceTier: z.union(INFRON_SERVICE_TIERS) }),
 })
 
 export type { DshAuthApi, DshAuthLoginResult, DshAuthSignInStatus, DshAuthService } from './service.js'
@@ -116,6 +119,10 @@ export { OpenCodeCatalog } from './opencode-catalog.js'
 
 /** Mount the routes, the service, and the command. */
 export async function apply(ctx: Context, config: Config): Promise<void> {
+  const serviceTier = config.infron?.serviceTier
+  if (serviceTier !== undefined && !INFRON_SERVICE_TIERS.includes(serviceTier)) {
+    throw new Error('dsh-auth: infron.serviceTier must be standard or flex')
+  }
   const configured = (config.providers ?? [...AUTH_PROVIDER_IDS]).map(canonicalProvider)
   const unknown = configured.filter(id => !(AUTH_PROVIDER_IDS as readonly string[]).includes(id))
   if (unknown.length > 0 || configured.length === 0) {
@@ -142,7 +149,9 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
     try { pi = await import('./pi-routes.js') } catch { ctx.logger.warn('dsh-auth: pi routes unavailable; OpenCode routes remain available') }
     if (pi) for (const id of piIds) {
       try {
-        const entry = pi.CUSTOM_PROVIDER_IDS.includes(id as CustomProviderId) ? pi.createCustomProfile(id as CustomProviderId, overrides[id]) : undefined
+        const entry = pi.CUSTOM_PROVIDER_IDS.includes(id as CustomProviderId)
+          ? pi.createCustomProfile(id as CustomProviderId, overrides[id], id === 'infron' ? serviceTier : undefined)
+          : undefined
         if (entry) custom.set(id as CustomProviderId, entry)
         const profile = entry?.profile ?? pi.buildOAuthProfile(id, overrides[id])
         piProfiles.set(id, profile)

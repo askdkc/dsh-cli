@@ -249,7 +249,7 @@ Profile 模式不再使用旧的 `DSH_CLI_COMPACT_RATIO`、`DSH_CLI_COMPACT_RETA
 | API key | `~/.dsh/.credentials.yaml`（0600），引用名为 `<路由名大写>_API_KEY` |
 
 捆绑 dsh-auth 挂载时，添加分支提供**提供商认证**。ChatGPT / Claude / Grok
-使用 OAuth；OpenCode Zen / Go、OrcaRouter、Infron 使用 API key；OpenRouter
+使用 OAuth；OpenCode Zen / Go、Infron 使用 API key；OpenRouter
 可选择 OAuth PKCE 或 API key；Nous 可选择设备码 OAuth 或手动 Bearer 兼容连接。
 `/auth status|login|logout` 使用同一份 `$DSH_HOME/dsh-auth/credentials.json`。
 登录后用 `/model` 选择模型；登录不会自动切换当前模型。Nous 的手动 Bearer

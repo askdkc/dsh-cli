@@ -400,7 +400,7 @@ Keys are in §2.7. Key points:
 - `dsh-cli <路径>` also accepts a workspace target.
 - `/doctor` check: Node/platform, API key, model routing, cwd, context window, session storage, plugin host.
 - `/provider` interactive wizard to manage model providers: add / edit / delete.
-  - With dsh-auth bound, authenticate ChatGPT / Claude / Grok (OAuth), OpenCode Zen / Go, OrcaRouter, Infron (API key), OpenRouter (OAuth PKCE or API key), and Nous (device-code OAuth or manual Bearer compatibility). Credentials remain in the dsh-auth store; signing in does not switch the active model.
+  - With dsh-auth bound, authenticate ChatGPT / Claude / Grok (OAuth), OpenCode Zen / Go, Infron (API key), OpenRouter (OAuth PKCE or API key), and Nous (device-code OAuth or manual Bearer compatibility). Credentials remain in the dsh-auth store; signing in does not switch the active model.
 - Non-env-variable keys are written to `~/.dsh/.credentials.yaml` (0600), the UI shows only `••••••`.
   - Custom endpoints need route name, API key, baseURL, and protocol (`openai-completions` / `openai-responses` /
   `anthropic-messages`).

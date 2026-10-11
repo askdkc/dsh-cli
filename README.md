@@ -34,7 +34,7 @@ This is dkc's independently developed fork of [dsh-TUI by chimney](https://githu
 - A pixel whale, live work status, context bar, TPS gauge, and clickable timeline.
 - Session management with resume, fork, rewind, background work, and export.
 - DSH presets, skills, MCP, goals, subagents, provider authentication, and extensions.
-- Authentication for OpenAI, Claude, OpenCode, OpenRouter, Hermes Agent, Infron, and OrcaRouter.
+- Authentication for OpenAI, Claude, OpenCode, OpenRouter, Hermes Agent, and Infron.
 - Virtualized rendering and bounded caches for long sessions.
 
 ## Quick Start

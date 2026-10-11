@@ -284,6 +284,6 @@ export function createDshAuthApi(deps: DshAuthApiDeps): DshAuthApi {
 function authMethodsOf(provider: string): DshAuthSignInStatus['authMethods'] {
   if (provider === 'openrouter') return ['oauth', 'api-key']
   if (provider === 'nous') return ['device-code', 'bearer']
-  if (provider === 'opencode' || provider === 'opencode-go' || provider === 'orcarouter' || provider === 'infron') return ['api-key']
+  if (provider === 'opencode' || provider === 'opencode-go' || provider === 'infron') return ['api-key']
   return ['oauth']
 }

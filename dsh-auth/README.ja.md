@@ -5,7 +5,7 @@
 > [dsh-cli](https://github.com/askdkc/dsh-cli) と
 > [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 向けのプロバイダー認証
 
-**ChatGPT、Claude、SuperGrok、OpenCode Zen/Go、OrcaRouter、OpenRouter、
+**ChatGPT、Claude、SuperGrok、OpenCode Zen/Go、OpenRouter、
 Nous Portal、Infron** をモデルの提供元として利用できます。プロバイダーに応じて
 OAuth、デバイスコード、API キーで認証します。dsh 本体のソース修正は不要です。
 このプラグインは DeepSeek Harness のターミナル UI である
@@ -62,7 +62,7 @@ dsh plugin --profile <name> add @askdkc/dsh-auth
   localhost:1455 のコールバックを必要としないため、ヘッドレス環境や
   制限のある環境ではこの方法が最も確実です。
 - OpenCode Zen/Go は API キーに対応します。OpenRouter では pi-ai の OAuth PKCE
-  フローか API キーの手入力を選べます。`orcarouter`、`nous`、`infron` は
+  フローか API キーの手入力を選べます。`nous`、`infron` は
   Chat Completions を使います。各プロバイダーの `/models` 一覧に
   コンテキスト容量と価格のメタデータがなければ、モデルは選択できません。
   `nous` はデバイスコード OAuth に加え、明示的に選択する手入力の Bearer トークン
@@ -84,7 +84,6 @@ dsh plugin --profile <name> add @askdkc/dsh-auth
 /auth login xai                # SuperGrok / X Premium
 /auth login opencode           # OpenCode Zen API key
 /auth login opencode-go        # OpenCode Go API key
-/auth login orcarouter         # OrcaRouter API key
 /auth login openrouter         # OAuth PKCE or API key
 /auth login nous               # device code or manual Bearer
 /auth login infron             # Infron API key
@@ -102,9 +101,11 @@ dsh plugin --profile <name> add @askdkc/dsh-auth
 - id: dsh-auth
   name: '@askdkc/dsh-auth'
   config:
-    providers: [openai-codex, anthropic, xai, opencode, opencode-go, orcarouter, openrouter, nous, infron]
+    providers: [openai-codex, anthropic, xai, opencode, opencode-go, openrouter, nous, infron]
     nous:
       clientId: hermes-cli
+    # infron:
+    #   serviceTier: flex       # standard or flex; omit for gateway defaults
     # credentialsFile: /secure/path/credentials.json
 ```
 
@@ -118,6 +119,12 @@ dsh plugin --profile <name> add @askdkc/dsh-auth
 - Nous のクライアント ID の既定値は `hermes-cli` です。Nous が第三者による
   この ID の再利用を認めるとは限りません。独自の ID がある環境では
   `nous.clientId` を設定してください。
+- `infron.serviceTier` に `standard` または `flex` を指定すると、
+  `z-ai/glm-5.3` を含む Infron の全モデルで使うルーティング階層を選べます。
+  リクエスト本文の直下に `{"provider":{"service_tier":"flex"}}` を送り、
+  通信時には `extra_body` で包みません。省略するとゲートウェイの既定値を使います。
+  Flex が使えない場合は Standard に切り替わることがあります。詳しくは
+  [Infron の API リファレンス](https://models.infron.ai/models/z-ai/glm-5.3/api-reference)を参照してください。
 - 同じプロバイダーを別のアダプター群がすでに使っている場合
   （`llm-pi-ai` の設定プロファイルなど）、レジストリはそのルートの登録を拒否します。
   プラグインは拒否をログに記録し、残りのルートを登録します。

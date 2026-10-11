@@ -17,9 +17,9 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 
-const { CredentialFile, OAUTH_PROVIDER_IDS, canonicalProvider, QuestionBridge, createDshAuthApi, openerFor, apply } =
+const { CredentialFile, OAUTH_PROVIDER_IDS, AUTH_PROVIDER_IDS, Config: AuthConfig, canonicalProvider, QuestionBridge, createDshAuthApi, openerFor, apply } =
   await import('../lib/index.js')
-const { createCustomProfile } = await import('../lib/custom-profiles.js')
+const { createCustomProfile, CUSTOM_PROVIDER_IDS } = await import('../lib/custom-profiles.js')
 const { loginNous, refreshNous } = await import('../lib/nous-oauth.js')
 const { buildOAuthProfile, CredentialGatedAdapter } = await import('../lib/pi-routes.js')
 const { OPEN_CODE_SNAPSHOTS } = await import('../lib/opencode-owned.generated.js')
@@ -53,6 +53,13 @@ const ok = (condition, label) => {
 
 const root = mkdtempSync(join(tmpdir(), 'dsh-auth-smoke-'))
 try {
+  ok(!AUTH_PROVIDER_IDS.includes('orcarouter') && !CUSTOM_PROVIDER_IDS.includes('orcarouter'),
+    'OrcaRouter is absent from mounted authentication and custom model providers')
+  let retiredProviderError = ''
+  try { await apply({}, { providers: ['orcarouter'], credentialsFile: join(root, 'retired.json') }) }
+  catch (error) { retiredProviderError = error.message }
+  ok(retiredProviderError.includes('providers must be a non-empty subset'),
+    'explicit OrcaRouter configuration is rejected before mounting')
   // ── credential store ─────────────────────────────────────────────────────
   console.log('credential store')
   const store = new CredentialFile(join(root, 'creds', 'credentials.json'))
@@ -302,7 +309,7 @@ try {
     'route collision does not add a disposer for the existing owner')
 
   console.log('custom chat-completion profiles')
-  const custom = createCustomProfile('orcarouter')
+  const custom = createCustomProfile('nous')
   const originalFetch = globalThis.fetch
   let requestedUrl = ''
   let requestedAuthorization = ''
@@ -310,21 +317,21 @@ try {
     requestedUrl = String(url)
     requestedAuthorization = options.headers.Authorization
     return new Response(JSON.stringify({ data: [
-      { id: 'chat/model', supported_endpoint_types: ['openai'], context_length: 32768, max_completion_tokens: 4096,
+      { id: 'chat/model', supported_endpoint_types: ['openai'], supported_parameters: ['tools'], context_length: 32768, max_completion_tokens: 4096,
         pricing: { prompt: '0.000001', completion: '0.000002' } },
-      { id: 'response/model', supported_endpoint_types: ['openai-response'], context_length: 32768, max_completion_tokens: 4096,
+      { id: 'response/model', supported_endpoint_types: ['openai-response'], supported_parameters: ['tools'], context_length: 32768, max_completion_tokens: 4096,
         pricing: { prompt: '0.000001', completion: '0.000002' } },
     ] }), { status: 200 })
   }
   try {
     const count = await custom.refresh('fixture-key')
     ok(count === 1 && custom.profile.piProvider.getModels()[0].id === 'chat/model', 'discovery keeps exact chat-compatible model ids')
-    ok(requestedUrl === 'https://api.orcarouter.ai/v1/models' && requestedAuthorization === 'Bearer fixture-key', 'model discovery uses one /v1 and bearer header')
+    ok(requestedUrl === 'https://inference-api.nousresearch.com/v1/models' && requestedAuthorization === 'Bearer fixture-key', 'model discovery uses one /v1 and bearer header')
     ok(custom.profile.piProvider.getModels()[0].api === 'openai-completions', 'custom model uses Chat Completions')
-    const customAdapter = new CredentialGatedAdapter({ ...gateAdapterOptions(), profiles: () => new Map([['orcarouter', custom.profile]]) }, async () => true)
-    ok((await customAdapter.listModels('orcarouter')).some(model => model.id === 'chat/model'), 'refreshed model appears in adapter listing')
+    const customAdapter = new CredentialGatedAdapter({ ...gateAdapterOptions(), profiles: () => new Map([['nous', custom.profile]]) }, async () => true)
+    ok((await customAdapter.listModels('nous')).some(model => model.id === 'chat/model'), 'refreshed model appears in adapter listing')
     custom.clear()
-    ok((await customAdapter.listModels('orcarouter')).length === 0, 'logout removes custom model from adapter listing')
+    ok((await customAdapter.listModels('nous')).length === 0, 'logout removes custom model from adapter listing')
     const infron = createCustomProfile('infron')
     globalThis.fetch = async () => new Response(JSON.stringify({ data: [
       { id: 'vendor/chat', category_type: 'LLM', supported_endpoint_types: ['openai'], context_length: 65536,
@@ -409,6 +416,88 @@ try {
   } finally {
     globalThis.fetch = originalFetch
   }
+
+  console.log('Infron service tier configuration and wire')
+  try {
+    for (const serviceTier of [undefined, 'standard', 'flex']) {
+      ok(AuthConfig({ infron: { serviceTier } }).infron.serviceTier === serviceTier,
+        `configuration schema retains Infron ${serviceTier ?? 'default'} tier`)
+      const requests = []
+      globalThis.fetch = async (url, options) => {
+        if (String(url).endsWith('/models')) return new Response(JSON.stringify({ data: [
+          { id: 'z-ai/glm-5.3', category_type: 'LLM', supported_endpoint_types: ['openai'],
+            context_length: 1024000, max_output_tokens: 128000, supports_function_calling: true,
+            supports_streaming: true, min_prompt_price: 1.4, min_completion_price: 4.4 },
+        ] }), { status: 200 })
+        requests.push({ url: String(url), authorization: new Headers(options.headers).get('authorization'), body: JSON.parse(options.body) })
+        return new Response([
+          'data: {"id":"tier-fixture","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":"tier-ok"},"finish_reason":null}]}',
+          'data: {"id":"tier-fixture","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}',
+          'data: [DONE]', '',
+        ].join('\n\n'), { status: 200, headers: { 'content-type': 'text/event-stream' } })
+      }
+      const holder = { api: undefined }
+      let mounted
+      let lifecycle
+      await apply({
+        get: name => name === 'dshAuth' ? holder
+          : name === 'llm' ? { registerAdapter: (_providers, adapter) => { mounted = adapter; return () => {} } }
+            : name === 'userQuestions' ? { ask: async request => ({ answers: [{ id: request.questions[0].id, selected: [], custom: 'tier-fixture-key' }] }) }
+              : undefined,
+        logger: { warn() {}, error() {} },
+        effect: callback => { lifecycle = callback(); lifecycle.next() },
+      }, { providers: ['infron'], credentialsFile: join(root, `tier-${serviceTier ?? 'default'}.json`),
+        ...(serviceTier === undefined ? {} : { infron: { serviceTier } }),
+      })
+      const login = await holder.api.login('infron')
+      ok(login.modelWarning === undefined && (await mounted.listModels('infron')).some(model => model.id === 'z-ai/glm-5.3'),
+        `Infron ${serviceTier ?? 'default'} configuration discovers the model through sign-in`)
+      const input = { provider: 'infron', model: 'z-ai/glm-5.3',
+        messages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }] }],
+        tools: [{ name: 'probe', description: 'Probe', parameters: { type: 'object', properties: {} } }],
+      }
+      const prepared = await mounted.prepareCall('infron', input.model)
+      for (const stream of [() => mounted.stream(input), () => prepared.stream(input)]) {
+        const chunks = []
+        for await (const chunk of stream()) chunks.push(chunk)
+        const request = requests.at(-1)
+        ok(request?.url === 'https://llm.onerouter.pro/v1/chat/completions'
+          && request.authorization === 'Bearer tier-fixture-key' && request.body.model === input.model
+          && request.body.tools?.[0]?.function?.name === 'probe'
+          && request.body.provider?.service_tier === serviceTier
+          && (serviceTier !== undefined || !Object.hasOwn(request.body, 'provider'))
+          && !Object.hasOwn(request.body, 'extra_body') && !Object.hasOwn(request.body, 'service_tier')
+          && chunks.some(chunk => chunk.type === 'text-delta' && chunk.text === 'tier-ok'),
+        `Infron ${serviceTier ?? 'default'} tier reaches direct and prepared wire requests without an extra_body wrapper`)
+      }
+      if (serviceTier === 'flex') {
+        const custom = createCustomProfile('infron', {}, serviceTier)
+        await custom.refresh('tier-fixture-key')
+        const provider = custom.profile.piProvider
+        let transformed
+        const result = await provider.streamSimple(provider.getModels()[0], { messages: [
+          { role: 'user', content: [{ type: 'text', text: 'hello' }], timestamp: 0 },
+        ] }, { apiKey: 'tier-fixture-key', onPayload: async payload => {
+          transformed = Object.freeze({ ...payload, provider: Object.freeze({ only: ['z-ai'], service_tier: 'standard' }), usage: { include: true } })
+          return transformed
+        } }).result()
+        const body = requests.at(-1)?.body
+        ok(result.stopReason !== 'error' && body?.provider?.service_tier === 'flex'
+          && body.provider.only?.[0] === 'z-ai' && body.usage?.include === true,
+        'Infron tier merges with an async payload transform and retains other routing fields')
+        ok(transformed?.provider.service_tier === 'standard', 'tier injection does not mutate the caller payload')
+      }
+      const drain = lifecycle.next().value
+      await drain()
+      lifecycle.next()
+    }
+    for (const invalid of ['standard/flex', 'priority', '', null, 1]) {
+      let message = ''
+      try { await apply({}, { providers: ['infron'], infron: { serviceTier: invalid } }) }
+      catch (error) { message = error.message }
+      ok(message.includes('infron.serviceTier'), `invalid Infron service tier ${JSON.stringify(invalid)} is rejected before mounting`)
+    }
+  } finally { globalThis.fetch = originalFetch }
 
   // ── question bridge ──────────────────────────────────────────────────────
   console.log('question bridge')

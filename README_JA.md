@@ -35,7 +35,7 @@
 - ピクセルクジラ、作業状況、コンテキストバー、TPS メーター、クリックできるタイムライン。
 - セッションの再開、分岐、巻き戻し、バックグラウンド実行、エクスポート。
 - DSH の preset、skill、MCP、goal、subagent、プロバイダー認証、拡張機能。
-- OpenAI、Claude、Opencode、Openrouter、Hermes Agennt、Infron、OrcaRouter認証をサポート。
+- OpenAI、Claude、Opencode、Openrouter、Hermes Agennt、Infron認証をサポート。
 - 長いセッション向けの仮想化表示と上限付きキャッシュ。
 
 ## クイックスタート

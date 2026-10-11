@@ -5,7 +5,7 @@ English | [日本語](README.ja.md)
 > Provider authentication for [dsh-cli](https://github.com/askdkc/dsh-cli) and
 > [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 
-Use **ChatGPT, Claude, SuperGrok, OpenCode Zen/Go, OrcaRouter, OpenRouter,
+Use **ChatGPT, Claude, SuperGrok, OpenCode Zen/Go, OpenRouter,
 Nous Portal, and Infron** as model providers with OAuth, device code, or an
 API key according to the provider. No dsh source patch is needed. This plugin is developed alongside (and
 bundled into) [dsh-cli](https://github.com/askdkc/dsh-cli), the
@@ -62,7 +62,7 @@ signed-in providers' catalogs (credential-gated — see below).
   login method — the most robust path on headless or locked-down machines
   (no localhost:1455 callback needed).
 - OpenCode Zen/Go accept API keys. OpenRouter offers pi-ai's OAuth PKCE flow
-  or a manual API key. `orcarouter`, `nous`, and `infron` use Chat Completions;
+  or a manual API key. `nous` and `infron` use Chat Completions;
   their `/models` listings must provide capacity and pricing metadata before
   a model is selectable. `nous` offers device-code OAuth and an explicitly
   selected manual Bearer token compatibility path. The latter has not been
@@ -84,7 +84,6 @@ signed-in providers' catalogs (credential-gated — see below).
 /auth login xai                # SuperGrok / X Premium
 /auth login opencode           # OpenCode Zen API key
 /auth login opencode-go        # OpenCode Go API key
-/auth login orcarouter         # OrcaRouter API key
 /auth login openrouter         # OAuth PKCE or API key
 /auth login nous               # device code or manual Bearer
 /auth login infron             # Infron API key
@@ -102,9 +101,11 @@ the `/auth login <provider>` hint — never silently.
 - id: dsh-auth
   name: '@askdkc/dsh-auth'
   config:
-    providers: [openai-codex, anthropic, xai, opencode, opencode-go, orcarouter, openrouter, nous, infron]
+    providers: [openai-codex, anthropic, xai, opencode, opencode-go, openrouter, nous, infron]
     nous:
       clientId: hermes-cli
+    # infron:
+    #   serviceTier: flex       # standard or flex; omit for gateway defaults
     # credentialsFile: /secure/path/credentials.json
 ```
 
@@ -117,6 +118,12 @@ the `/auth login <provider>` hint — never silently.
   `nous`, and `infron`. Credentials are stored under canonical IDs.
 - The Nous client ID defaults to `hermes-cli`; third-party reuse of this ID is
   not guaranteed by Nous. Set `nous.clientId` if your deployment has its own.
+- Set `infron.serviceTier` to `standard` or `flex` to select the routing tier for
+  all Infron models, including `z-ai/glm-5.3`. Requests send
+  `{"provider":{"service_tier":"flex"}}` at the body root; there is no
+  `extra_body` wrapper on the wire. Omit the setting to keep gateway defaults.
+  Flex may fall back to Standard when unavailable; see the
+  [Infron API reference](https://models.infron.ai/models/z-ai/glm-5.3/api-reference).
 - A route another adapter family already owns — an `llm-pi-ai` settings
   profile naming the same provider — is refused by the registry; the plugin
   logs the refusal and mounts the remaining routes. Keep one provider on one
