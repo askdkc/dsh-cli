@@ -134,8 +134,8 @@ importers:
         version: 2.9.1
     devDependencies:
       '@askdkc/dsh-lsp-server':
-        specifier: 0.1.13
-        version: 0.1.13(608cfda57376d61abbadacd3f16e451a)
+        specifier: 0.1.14
+        version: 0.1.14(608cfda57376d61abbadacd3f16e451a)
       '@deepseek-ai/cordis':
         specifier: ^4.0.1
         version: 4.0.4(@deepseek-ai/cordis-plugin-include@1.0.9)(@deepseek-ai/cordis-plugin-loader@1.0.5)
@@ -522,8 +522,8 @@ packages:
       zod:
         optional: true
 
-  '@askdkc/dsh-lsp-server@0.1.13':
-    resolution: {integrity: sha512-mHUyTA6Ip8UV93GNTBomt9WKUXBW+ycd/ClVRNxqfO7iq3sVtLDyTrNUGweyOwgtA+NAzoEVhq36TbPXr66GuA==}
+  '@askdkc/dsh-lsp-server@0.1.14':
+    resolution: {integrity: sha512-EF8B8MnozhR71cPt2sAZES8EB/V/kRfkN+YU/H08yHwrwxLARg8kOLwhB4Le2sMDhFbbwpQDMYnDUc1cISvNlw==}
     engines: {node: ^22.19.0 || >=24.0.0}
     hasBin: true
     peerDependencies:
@@ -4342,7 +4342,7 @@ snapshots:
     optionalDependencies:
       zod: 4.4.3
 
-  '@askdkc/dsh-lsp-server@0.1.13(608cfda57376d61abbadacd3f16e451a)':
+  '@askdkc/dsh-lsp-server@0.1.14(608cfda57376d61abbadacd3f16e451a)':
     dependencies:
       '@deepseek-ai/dsh-lsp': 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-brand@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))(@deepseek-ai/dsh-llm@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))
       '@deepseek-ai/dsh-tool-lsp': 0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-llm@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))(@deepseek-ai/dsh-lsp@0.2.0-rc.2(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-brand@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))(@deepseek-ai/dsh-llm@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)))(@deepseek-ai/dsh-system-prompt@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-llm@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))(@deepseek-ai/dsh-scope@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)))(@deepseek-ai/dsh-timeout@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))(@deepseek-ai/dsh-tools@0.2.1-alpha.1(b62238c1bfb2f5d069375c44c4c30e05))

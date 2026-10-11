@@ -145,7 +145,7 @@ try {
   assert.ok(JSON.stringify(outline).includes('日本語'))
   assert.ok(!JSON.stringify(outline).includes('"handle"'))
   assert.equal(new Set(outline.results.map(result => result.snapshotVersion)).size, 1, 'structure and semantics share a pinned version')
-  const span = await channel.port.analyze({ path: 'fixture.ts', span: { position: { line: 0, character: 20 }, maxChars: 500 } })
+  const span = await channel.port.analyze({ path: 'fixture.ts', span: { position: { line: 0, character: text.indexOf('é') }, maxChars: 500 } })
   assert.equal(span.status, 'ok', JSON.stringify(span))
   assert.ok(span.results.some(result => result.data?.text?.includes('🙂é')))
   console.log('real structure OK (grammar, UTF-16 span, same snapshot)')

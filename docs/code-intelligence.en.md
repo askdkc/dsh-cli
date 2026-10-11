@@ -8,14 +8,13 @@ CLI alone does not install or activate this provider.
 ## Current acceptance status
 
 The implementation is not yet accepted for release across all three target
-operating systems. The published provider `0.1.13` has a reproducible packaging
-failure: its runtime requests `lib/parser-worker.mjs`, while its tarball ships
-`lib/structure/parser-worker.mjs`. Native `lsp_extra` structure queries and the
-public V1 structure query both fail. Do not copy workers or grammars into the CLI
-or hand-edit the installed provider to work around this failure.
+operating systems. The published provider `0.1.14` ships the parser worker at
+`lib/parser-worker.mjs`, matching the runtime's worker URL and fixing the
+packaging failure in `0.1.13`. This repository uses the unmodified published
+provider, with no dependency patch or copied workers/grammars in the CLI.
 
 Local evidence obtained on macOS arm64 with Node `26.5.0`, CLI source `0.14.6`,
-Cordis `4.0.4`, DSH host services `0.2.1-alpha.1`, and provider `0.1.13`:
+Cordis `4.0.4`, DSH host services `0.2.1-alpha.1`, and provider `0.1.14`:
 
 | Check | Result |
 | --- | --- |
@@ -23,19 +22,21 @@ Cordis `4.0.4`, DSH host services `0.2.1-alpha.1`, and provider `0.1.13`:
 | TypeScript server handshake, diagnostics, definition and bounded completion | Passed; fixture file unchanged |
 | Traversal/symlink rejection, stale snapshot, disable/re-enable and teardown | Passed in the host fixture |
 | Explicit user preset with isolated tools and scoped native invocation | Passed in the host fixture and clean tarball consumer |
-| Tree-sitter outline, enclosing/span and combined structure/semantic acceptance | Blocked by the provider worker path |
+| Tree-sitter outline, enclosing/span and combined structure/semantic acceptance | Passed in the strict host test and clean tarball consumer with the unmodified published provider |
 | `standard`, `ptc`, `cordis` and arbitrary user preset catalogs in a full DSH profile | Not accepted by this fixture |
 | Managed launcher registration, update and interactive launch from another project | Not yet exercised for this integration |
 | Ubuntu 26.04 / Arch Linux clean consumer acceptance | Not run |
 | Optional Kiokuko protected bridge and actual OS sandbox | Not run |
 
 The actual CLI/provider tarballs install in a clean consumer and reproduce the
-same semantic/preset/lifecycle successes followed by the structure failure.
+same semantic, preset, lifecycle and structure successes.
 
 The host fixture uses an explicit model-free agent identity and actual services;
 it does not claim that a paid model or a full interactive profile was tested.
-The strict host test remains in the build gate and fails on the provider defect.
-A successful CLI package-surface check does not override that failure.
+The strict host test remains in the build gate and uses the published dependency.
+Its span fixture points inside the Unicode string, after the emoji surrogate
+pair, and requires the returned text to preserve the emoji and combining mark.
+Repository test results do not establish that an external profile has been fixed.
 
 ## Profile and preset composition
 
@@ -43,13 +44,12 @@ Add the provider as a separate plugin to the **same** `dsh-cli` profile, using
 the existing named package installation form:
 
 ```sh
-pnpm dsh plugin --profile dsh-cli add '@askdkc/dsh-lsp-server@0.1.13'
+pnpm dsh plugin --profile dsh-cli add '@askdkc/dsh-lsp-server@0.1.14'
 pnpm dsh --profile dsh-cli
 ```
 
-This is the profile installation path, not a claim that version `0.1.13` passes
-structure acceptance. Use a provider release that passes the strict test before
-publishing a supported combination.
+This is the profile installation path. The strict fixture passes with provider
+`0.1.14`; full interactive profile acceptance still requires the checks below.
 
 The provider's own bundle supplies `lsp`, `lsp-webstack-provider`, `tool-lsp` and
 `tool-lsp-extra`. Do not duplicate those host rows in the CLI bundle. An existing
@@ -194,8 +194,8 @@ pnpm verify:package
 node scripts/with-publish-manifest.mjs npm pack --ignore-scripts
 TARBALL="$PWD/askdkc-dsh-cli-$(node -p "require('./package.json').version").tgz"
 # Obtain the actual provider tarball, preserving its absolute path as LSP_TARBALL.
-npm pack @askdkc/dsh-lsp-server@0.1.13 --ignore-scripts
-LSP_TARBALL="$PWD/askdkc-dsh-lsp-server-0.1.13.tgz"
+npm pack @askdkc/dsh-lsp-server@0.1.14 --ignore-scripts
+LSP_TARBALL="$PWD/askdkc-dsh-lsp-server-0.1.14.tgz"
 pnpm verify:code-intelligence-package "$TARBALL" "$LSP_TARBALL"
 ```
 
@@ -203,11 +203,11 @@ The package verifier installs actual archives into a disposable consumer with
 explicit installed host versions and no checkout overrides. It repeats a frozen
 install and exercises the compiled CLI consumer and published provider bundle.
 It is separate from the package-surface check. Its strict structure acceptance
-is expected to fail while the worker-path defect remains.
+passes with the unmodified published provider `0.1.14`.
 
-Before declaring the plan complete, fix and publish the provider artifact, pass
-the full tarball test, test real preset catalogs and managed launcher update,
-and reproduce the workflow on all three operating systems. Protected Lisp needs
+Before declaring the plan complete, test real preset catalogs and managed
+launcher update, and reproduce the workflow on all three operating systems.
+Protected Lisp needs
 additional actual sandbox, permission-denial, cancellation and lease-release
 evidence. Do not add guessed disable/remove/update subcommands to these steps;
 verify the chosen DSH version's syntax first. The host fixture exercises disable
