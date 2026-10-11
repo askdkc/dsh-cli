@@ -422,6 +422,11 @@ stdout 不是 TTY。请直接在终端中启动，不要把主进程输出管道
 `DSH_CLI_AUTO_REGISTER_CLI=0` 可关闭注册。撤销时删除生成的命令与
 `dsh-cli managed PATH` 区块（Windows 删除用户 PATH 条目）。
 
+从已构建的 Harness 源码 checkout 注册时，生成的命令会保存该 checkout 路径，
+作为 `DSH_CLI_DSH_ROOT` 的默认值。之后可从其他目录启动，无需单独全局安装 DSH
+或重新加载 Shell 配置。Harness 的 `plugin add` 安装成功后会更新已有管理命令中的
+默认路径。环境中非空的 `DSH_CLI_DSH_ROOT` 优先；自定义命令和符号链接会保留。
+
 确认全局 npm bin 目录在 `PATH` 中，并重新打开终端。`install.sh` 会在安装前
 检查这两个命令。
 

@@ -429,6 +429,13 @@ warning. `DSH_CLI_AUTO_REGISTER_CLI=0` disables registration. To undo it,
 remove the generated command and `dsh-cli managed PATH` block (Windows: the
 user PATH entry).
 
+When registering from a built Harness source checkout, the managed command saves
+that checkout's path as its `DSH_CLI_DSH_ROOT` default. It can then start from a
+different directory without a global DSH install or reloading a shell setting.
+Harness `plugin add` refreshes this default in existing managed commands after a
+successful install. A nonempty `DSH_CLI_DSH_ROOT` in your environment takes
+precedence; custom commands and symlinks are preserved.
+
 ### The TUI exits right back to the shell with almost no error (pnpm 9)
 
 In a profile installed by pnpm 9, the transitive dependency

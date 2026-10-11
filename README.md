@@ -63,6 +63,10 @@ pnpm dsh --profile dsh-cli
 
 Replace `~/DIR/TO/deepseek-harness` with your checkout path. The first interactive
 launch registers `dsh-cli`; open a new shell, then run it from your project directory.
+The managed command saves the built Harness checkout path, so a separate global
+DSH installation is unnecessary. Harness `plugin add` refreshes an existing managed
+command during updates; no manual registration is needed. An explicit
+`DSH_CLI_DSH_ROOT` overrides the saved path.
 To update this fork, rebuild and reinstall the tarball. `/update` uses the registry.
 
 Use the named `@askdkc/dsh-cli@file:...` form for local tarball updates. A bare

@@ -148,9 +148,12 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
   }
   try {
     const target = join('profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli', 'bin', 'dsh-cli.js')
+    const harnessDefault = sourceRoot === undefined ? '' : platform === 'win32'
+      ? `if not defined DSH_CLI_DSH_ROOT set "DSH_CLI_DSH_ROOT=${sourceRoot.replace(/%/g, '%%')}"\r\n`
+      : `DEFAULT_DSH_CLI_DSH_ROOT=${quoted(sourceRoot)}\n: "\${DSH_CLI_DSH_ROOT:=$DEFAULT_DSH_CLI_DSH_ROOT}"\nexport DSH_CLI_DSH_ROOT\n`
     const content = platform === 'win32'
-      ? `@echo off\r\nrem dsh-cli managed launcher\r\nsetlocal DisableDelayedExpansion\r\nif not defined DSH_HOME set "DSH_HOME=${dshHome.replace(/%/g, '%%')}"\r\nnode "%DSH_HOME%\\${target.replace(/\//g, '\\')}" %*\r\nexit /b %ERRORLEVEL%\r\n`
-      : `#!/bin/sh\n${marker}\nDEFAULT_DSH_HOME=${quoted(dshHome)}\n: "\${DSH_HOME:=$DEFAULT_DSH_HOME}"\nexport DSH_HOME\nexec node "$DSH_HOME/${target}" "$@"\n`
+      ? `@echo off\r\nrem dsh-cli managed launcher\r\nsetlocal DisableDelayedExpansion\r\nif not defined DSH_HOME set "DSH_HOME=${dshHome.replace(/%/g, '%%')}"\r\n${harnessDefault}node "%DSH_HOME%\\${target.replace(/\//g, '\\')}" %*\r\nexit /b %ERRORLEVEL%\r\n`
+      : `#!/bin/sh\n${marker}\nDEFAULT_DSH_HOME=${quoted(dshHome)}\n: "\${DSH_HOME:=$DEFAULT_DSH_HOME}"\nexport DSH_HOME\n${harnessDefault}exec node "$DSH_HOME/${target}" "$@"\n`
     let launcherContent = content
     if (pathExists(command)) {
       const existing = readFileSync(command, 'utf8')
@@ -162,6 +165,13 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
         const originalDefault = existing.match(defaultLine)?.[0]
         if (originalDefault === undefined) throw new Error(`managed launcher has no DSH_HOME default at ${command}`)
         launcherContent = content.replace(defaultLine, () => originalDefault)
+        // A later registration without a source invocation still needs the saved Harness.
+        if (sourceRoot === undefined) {
+          const savedHarness = existing.match(platform === 'win32'
+            ? /^if not defined DSH_CLI_DSH_ROOT set "DSH_CLI_DSH_ROOT=.*"\r?\n/m
+            : /^DEFAULT_DSH_CLI_DSH_ROOT=.*\n: "\$\{DSH_CLI_DSH_ROOT:=\$DEFAULT_DSH_CLI_DSH_ROOT\}"\nexport DSH_CLI_DSH_ROOT\n/m)?.[0]
+          if (savedHarness !== undefined) launcherContent = launcherContent.replace(platform === 'win32' ? /^node /m : /^exec node /m, line => savedHarness + line)
+        }
       }
     }
     const changed = updateOwnedFile(command, launcherContent, 0o755)

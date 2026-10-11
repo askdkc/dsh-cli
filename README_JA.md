@@ -63,7 +63,11 @@ pnpm dsh --profile dsh-cli
 
 `~/DIR/TO/deepseek-harness` は実際の checkout パスに置き換えてください。
 初回の対話型起動で `dsh-cli` が登録されます。新しいシェルを開けば、
-プロジェクトのディレクトリから起動できます。この fork を更新するときは
+プロジェクトのディレクトリから起動できます。登録されたコマンドにはビルド済み Harness の
+checkout パスも保存されるため、DSH を別途グローバルインストールする必要はありません。
+Harness の `plugin add` は既存の管理コマンドも更新します。更新後の手動登録は不要です。
+`DSH_CLI_DSH_ROOT` を明示すると、保存されたパスより優先されます。
+この fork を更新するときは
 tarball を再ビルドして再インストールしてください。`/update` は registry から更新します。
 
 ローカルの tarball を更新するときは、パッケージ名付きの `@askdkc/dsh-cli@file:...` 形式を使ってください。
