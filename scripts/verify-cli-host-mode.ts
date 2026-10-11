@@ -101,7 +101,7 @@ try {
   check('headless-host: apply resolves without throwing', true)
   check(
     'headless-host: skip reason logged at info level',
-    infoLogs.some((line) => line.includes('skipping the TUI frontend')),
+    infoLogs.some((line) => line.includes('skipping the interactive CLI')),
     infoLogs.join(' | '),
   )
 
