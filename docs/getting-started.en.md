@@ -52,6 +52,15 @@ sh install.sh /path/to/askdkc-dsh-cli-<version>.tgz
 `install.sh` checks for `dsh` and `pnpm` and installs the specified tarball through
 the profile plugin command. It does not copy source files.
 
+## Optional native LSP and structure analysis
+
+The separate `@askdkc/dsh-lsp-server` plugin belongs in the same profile as the
+CLI. `/code status` and `/status` show its capabilities; `/code diagnostics`
+and other manual reads use the foreground session's scoped disk snapshots.
+Model-facing tools depend on the chosen preset's composition.
+See [code-analysis setup](code-intelligence.en.md) for schemas, tarball tests,
+OS-specific acceptance status and the provider `0.1.13` worker-path blocker.
+
 ## Optional Kiokuko Lisp workflow
 
 Install Kiokuko into the **same** profile as dsh-cli:

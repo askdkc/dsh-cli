@@ -56,6 +56,7 @@ export const LOCAL_COMMANDS: LocalCommand[] = [
   // Session / environment
   { name: 'context', description: 'Show loaded context details' },
   { name: 'status', description: 'Show session status' },
+  { name: 'code', description: 'Inspect code structure and language capabilities (read-only)' },
   { name: 'cost', description: 'Show session token usage' },
   { name: 'config', description: 'Show the dsh-cli configuration source' },
   { name: 'reload', description: 'Reload preference files from disk and apply live' },

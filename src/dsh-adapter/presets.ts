@@ -167,9 +167,13 @@ export function filterMinimalPresetTools(assembly: PromptAssembly, presetId: str
  * @param key - The cordis service key.
  * @returns The service instance, or undefined when neither layer provides it.
  */
-export function serviceForAgent<T>(ctx: Context, agent: { ctx: Context }, key: string): T | undefined {
+export function serviceForAgent<T>(ctx: Context, agent: { ctx: Context }, key: string, options?: { hostFallback: 'visible' }): T | undefined {
   const presets = rosterOf(ctx)
   const scoped = presets?.serviceFor?.(agent, key)
   if (scoped !== undefined) return scoped as T
+  // Authority-sensitive consumers may only fall back to a host service that
+  // the requesting Agent's own context can resolve. Missing realm services
+  // never borrow a root-only provider or filesystem capability.
+  if (options?.hostFallback === 'visible') return agent.ctx.get(key) as T | undefined
   return ctx.get(key) as T | undefined
 }

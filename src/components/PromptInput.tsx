@@ -1461,7 +1461,7 @@ export function PromptInput({
    * model stops what it is doing and starts on this message right away.
    */
   const interruptSend = () => {
-    if (isRegisteredLispCommand(valueRef.current)) {
+    if (isRegisteredLispCommand(valueRef.current) || isRegisteredCodeCommand(valueRef.current)) {
       tryRunCommand(valueRef.current)
       return
     }
@@ -1488,6 +1488,10 @@ export function PromptInput({
   const isRegisteredLispCommand = (text: string): boolean =>
     parseCommandName(text)?.name === 'kioku-lisp'
     && channel.commandList.some(command => command.name === 'kioku-lisp' && command.external === true)
+
+  const isRegisteredCodeCommand = (text: string): boolean =>
+    parseCommandName(text)?.name === 'code'
+    && channel.commandList.some(command => command.name === 'code' && command.external !== true)
 
   /**
    * Execute a slash command (built-in, plugin-registered, or hidden) when
@@ -1575,7 +1579,7 @@ export function PromptInput({
         if (pendingCommandRef.current?.token === attempt.token) pendingCommandRef.current = null
       })
     }
-    return handled !== false || isRegisteredLispCommand(text)
+    return handled !== false || isRegisteredLispCommand(text) || isRegisteredCodeCommand(text)
   }
 
   /**
@@ -1621,6 +1625,7 @@ export function PromptInput({
       const parsed = value.startsWith('/') ? parseCommandName(value) : undefined
       if (parsed !== undefined && (
         isRegisteredLispCommand(value)
+        || isRegisteredCodeCommand(value)
         || ((parsed.name === 'btw' || parsed.name === 'skills')
           && channel.commandList.some(c => c.name === parsed.name))
         || isHiddenCommandName(parsed.name)
@@ -2187,7 +2192,7 @@ export function PromptInput({
       }
       const line = (value + input).trim()
       // Complete piped command lines must also remain editable on rejection.
-      if (isRegisteredLispCommand(line)) setInput(line)
+      if (isRegisteredLispCommand(line) || isRegisteredCodeCommand(line)) setInput(line)
       if (line.startsWith('/')) {
         const matches = channel.commandCompletions(line)
         if (matches.length === 1) {

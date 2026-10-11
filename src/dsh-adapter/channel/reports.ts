@@ -16,6 +16,8 @@ import { getHostFacade } from '../plugin-host.js'
 import { pluginsInfoLines } from '../plugins-info.js'
 import type { ChannelOwner } from './owner.js'
 import { toolResultText } from './transcript.js'
+import type { CodeIntelligencePort } from '../../adapter/ports/code-intelligence.js'
+import { codeCapabilityLines } from '../code-intelligence-presenter.js'
 
 /** Local reports and filesystem actions, fenced to the originating binding. */
 export function createReportActions(ctx: Context, deps: {
@@ -29,6 +31,7 @@ export function createReportActions(ctx: Context, deps: {
   sessionTitle(): string
   runtime: AdapterRuntimeOptions
   grantStore(): ReturnType<typeof readGrantStore>
+  codeIntelligence?(): CodeIntelligencePort | undefined
 }) {
   const current = (capture: ReturnType<typeof deps.capture>): boolean => deps.owner.current() && deps.current(capture)
 
@@ -149,6 +152,8 @@ export function createReportActions(ctx: Context, deps: {
       const diagnostics = collectAdapterDiagnostics(deps.runtime, facade.descriptor.snapshot(), getHostGrantStore(pluginHost)?.knownPermissions() ?? [])
       lines.push(`Adapter kernel (P2): mode=${diagnostics.runtime.mode} · contracts=${diagnostics.descriptor.contracts.length} · permissions=${diagnostics.permissions.length}`)
     }
+    const code = deps.codeIntelligence?.()
+    if (code) lines.push(...codeCapabilityLines(code.status))
     return lines
   }
 

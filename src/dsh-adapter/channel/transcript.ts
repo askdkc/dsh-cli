@@ -2,6 +2,8 @@ import { type SessionEvent } from '@deepseek-ai/dsh-session'
 import { toolResultPayload } from '../compat/messages.js'
 import type { ChatRow, ToolResultView, ToolViewPresenter } from './types.js'
 import { markChannelReadDirty } from '../../adapter/channel/read-view.js'
+import { boundedCodeText, codeToolPresentation } from '../code-intelligence-presenter.js'
+import { cleanRenderText } from '../sanitize.js'
 
 export const ARGS_PREVIEW_LIMIT = 160
 
@@ -114,7 +116,7 @@ export function foldBack(rows: ChatRow[], events: readonly SessionEvent[], views
       if (result !== undefined) restoreToolResult(row, result)
       row.tool.callView = views?.call(call.data.name, call.data.arguments)
       row.tool.resultView = result !== undefined && row.tool.status === 'ok'
-        ? views?.result(call.data.name, call.data.arguments, result.data)
+        ? row.tool.resultView ?? views?.result(call.data.name, call.data.arguments, result.data)
         : undefined
       row.folded = false
       markChannelReadDirty(row)
@@ -193,6 +195,8 @@ export function harnessToolResultView(
   name: string,
   data: SessionEvent<'tool/result'>['data'],
 ): ToolResultView | undefined {
+  const code = codeToolPresentation(name, toolResultPayload(data.message).content.map(item => item.type === 'text' ? item.text : '').join('').trim())
+  if (code) return code.view
   const lower = name.toLowerCase()
   const isGoalTool = lower.includes('goal')
   const isTodoTool = lower.includes('todo')
@@ -251,10 +255,15 @@ export function restoreToolResult(row: ChatRow, event: SessionEvent<'tool/result
   if (row.tool === undefined) return
   if (event.data.error !== undefined || toolResultPayload(event.data.message).isError) {
     row.tool.status = 'error'
-    row.tool.errorText = toolErrorText(event)
+    const text = toolErrorText(event)
+    row.tool.errorText = row.tool.name === 'lsp' || row.tool.name === 'lsp_extra' ? boundedCodeText(text) : text
     return
   }
   row.tool.status = 'ok'
   const result = toolResultText(event)
-  row.tool.resultFull = result || undefined
+  const code = codeToolPresentation(row.tool.name, result, row.tool.argsFull)
+  const detail = code?.detail ?? (row.tool.name === 'lsp' || row.tool.name === 'lsp_extra' ? boundedCodeText(result) : result)
+  row.tool.resultFull = detail || undefined
+  row.tool.resultText = code?.preview ?? (detail ? row.tool.name === 'lsp' || row.tool.name === 'lsp_extra' ? cleanRenderText(detail, RESULT_PREVIEW_LIMIT) : preview(detail, RESULT_PREVIEW_LIMIT) : undefined)
+  if (code) row.tool.resultView = code.view
 }

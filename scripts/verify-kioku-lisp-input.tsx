@@ -82,6 +82,18 @@ try {
   for (const action of ['', 'status', 'diagnostics op-id', 'hot', 'cancel', 'recover']) {
     await send('/kioku-lisp' + (action ? ' ' + action : ''))
   }
+  for (const action of ['status', 'cancel', 'diagnostics fixture.ts']) {
+    await send('/code ' + action)
+  }
+  await send('/code cancel', '\x1b[13;5u')
+  await send('/code cancel', '\x1b[13;9u')
+  await draft('/code cancel')
+  stdin.write('\x1b[69;6u')
+  assert.ok(await settled(() => viewportLines(term).some(x => x.includes('Draft editor'))))
+  const codeEditor = commands.length
+  stdin.write('\x1b[13;5u')
+  assert.ok(await settled(() => commands.length === codeEditor + 1))
+  assert.ok(await settled(() => !controller.current!.hasText()))
   await send('/kioku-lisp cancel', '\x1b[13;5u')
   await send('/kioku-lisp cancel', '\x1b[13;9u')
   await draft('/kioku-lisp cancel')
@@ -142,6 +154,8 @@ try {
 
   // Completion selection and pointer use exactly the same guard.
   completionsEnabled = true
+  assert.deepEqual(complete('/code can').map(x => x.commandLine), ['/code cancel'])
+  await send('/code can')
   assert.deepEqual(complete('/kioku-lisp c').map(x => x.commandLine), ['/kioku-lisp cancel'])
   assert.equal(complete('/kioku-lisp diagnostics op-id').length, 0)
   const registeredCommands = channel.commandList

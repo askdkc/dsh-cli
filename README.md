@@ -36,6 +36,8 @@ This is dkc's independently developed fork of [dsh-TUI by chimney](https://githu
 - DSH presets, skills, MCP, goals, subagents, provider authentication, and extensions.
 - Authentication for OpenAI, Claude, OpenCode, OpenRouter, Hermes Agent, and Infron.
 - Virtualized rendering and bounded caches for long sessions.
+- Optional scoped code analysis through the separate LSP provider; see
+  [code-analysis setup and current acceptance limits](docs/code-intelligence.en.md).
 
 ## Quick Start
 

@@ -18,6 +18,8 @@ import { homeDir } from '../utils/paths.js'
 import { execFileNoThrow } from '../utils/execFileNoThrow.js'
 import type { LlmModelInfo, LlmProviderInfo } from '../adapter/ports/channel-view.js'
 import { cleanRenderText, cleanScalarText } from '../dsh-adapter/sanitize.js'
+import { boundedCodeText, codeAnalysisLines, codeCapabilityLines } from '../dsh-adapter/code-intelligence-presenter.js'
+import { CODE_COMMAND_HELP, parseCodeCommand } from '../codeIntelligenceCommands.js'
 import { nextModelQueryBoundary, previousModelQueryBoundary } from './modelSearchInput.js'
 import { readModelRecents, recordModelUse, type ModelRecentsRef } from '../modelRecents.js'
 import { readModelFavorites, toggleModelFavorite } from '../modelFavorites.js'
@@ -2290,8 +2292,30 @@ export function Chat({
         }
         if (pct !== undefined) lines.push(t('cost-context', { pct }))
         if (channel.sessionTitle) lines.push(t('status-title', { title: channel.sessionTitle }))
+        if (channel.codeIntelligence) lines.push(...codeCapabilityLines(channel.codeIntelligence.status))
         setHelpOpen(false)
         channel.pushLocal('/status', lines)
+        return true
+      }
+      case 'code': {
+        setHelpOpen(false)
+        const port = channel.codeIntelligence
+        if (!port) { channel.pushLocal('/code', ['Code analysis: unavailable']); return true }
+        const input = rawInput.trim()
+        if (input === 'cancel') { port.cancel(); channel.notify('Code analysis cancelled'); return true }
+        const request = parseCodeCommand(input)
+        if (input !== 'status' && !request) { channel.pushLocal('/code', [...codeCapabilityLines(port.status), ...CODE_COMMAND_HELP]); return true }
+        const session = channel.sessionId
+        const generation = channel.agentBindingGeneration
+        channel.notify('Code analysis running · /code cancel to stop')
+        void (async () => {
+          const lines = request ? codeAnalysisLines(await port.analyze(request)) : codeCapabilityLines(await port.capabilities())
+          if (channel.sessionId === session && channel.agentBindingGeneration === generation) channel.pushLocal('/code', lines)
+        })().catch(error => {
+          try {
+            if (channel.sessionId === session && channel.agentBindingGeneration === generation) channel.pushLocal('/code', [boundedCodeText(`Code analysis failed: ${String(error)}`, 240)])
+          } catch { /* The renderer's revoked owner has no presentation target. */ }
+        })
         return true
       }
       case 'cost': {

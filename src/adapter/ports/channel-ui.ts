@@ -5,6 +5,7 @@ import type { LocalCommand, CommandCompletion, BalanceResult, FileCandidate, Rec
 import type { TuiRewindMode, SessionTreeData, SessionSummary, PreviewEntry } from './channel-session.js'
 import type { TuiWorkspaceTarget, TuiWorkspaceCommand, TuiWorkspaceCommandResult, TuiWorkspaceEntry } from './channel-workspace.js'
 import type { ProviderSetupHost, OAuthProviderStatus, SettingsHost, TuiSettingsSection } from './channel-settings.js'
+import type { CodeIntelligencePort } from './code-intelligence.js'
 
 /**
  * The public channel surface a screen renders: the full transcript and live
@@ -14,6 +15,8 @@ import type { ProviderSetupHost, OAuthProviderStatus, SettingsHost, TuiSettingsS
  * and bump `version` so subscribed screens re-render.
  */
 export interface ChannelUi {
+  /** Optional, host-bound read-only code analysis; handles stay behind the port. */
+  readonly codeIntelligence: CodeIntelligencePort | undefined
   /** Monotonic version — bump on every mutation so screens can re-render. */
   readonly version: number
   readonly rows: readonly ChatRow[]

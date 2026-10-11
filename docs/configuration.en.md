@@ -28,6 +28,11 @@ only for a genuinely new service.
 
 ## TUI configuration
 
+Optional LSP provider configuration lives in its own profile bundle. Do not
+duplicate its parser/server rows in the CLI patch. Agent preset realms control
+native tool exposure; the CLI's manual `/code` requests resolve only services
+visible to the active agent. See [code-analysis configuration and limitations](code-intelligence.en.md).
+
 `/settings` writes plugin Config fields to the active profile's
 `cordis.patch.yml`. Language and layout preferences update live;
 fullscreen and image previews require `/restart`.

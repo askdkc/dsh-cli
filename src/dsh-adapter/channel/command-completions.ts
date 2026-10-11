@@ -40,6 +40,13 @@ export function createCommandCompletions(deps: {
       if ('effort'.startsWith(head)) model.warmEffortLevels()
     }
     return completeCommands(input, state.commandList, path => {
+      if (path.length === 1 && path[0] === 'code') return [
+        { name: 'status', description: 'Refresh scoped code capabilities' },
+        { name: 'cancel', description: 'Stop the current code analysis' },
+        ...['outline', 'enclosing', 'query', 'span'].map(name => ({ name, description: 'Read a bounded disk structure snapshot' })),
+        ...['definition', 'references', 'implementation', 'hover', 'diagnostics', 'completion'].map(name => ({ name, description: 'Read language-server results; never apply edits' })),
+      ]
+      if (path.length === 2 && path[0] === 'code' && path[1] === 'query') return ['declarations', 'calls', 'imports'].map(name => ({ name, description: 'Registered structure query' }))
       if (path.length === 1 && path[0] === 'kioku-lisp'
         && state.commandList.some(command => command.name === 'kioku-lisp' && command.external === true)) return [
         { name: 'status', description: 'Show Lisp mode and operation status' },

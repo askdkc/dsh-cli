@@ -16,6 +16,7 @@ import { isPeakHour } from '../../deepseekPricing.js'
 import { t } from '../../i18n.js'
 import { logForDebugging } from '../../utils/debug.js'
 import { cleanRenderText } from '../sanitize.js'
+import { boundedCodeText, codeToolPresentation } from '../code-intelligence-presenter.js'
 import { NOTICE_CELLS } from './decisions.js'
 import { markChannelReadDirty } from '../../adapter/channel/read-view.js'
 import { detectInputLanguage } from 'dsh-working-activity/lang'
@@ -151,6 +152,8 @@ export function createChannelProjection(state: ProjectionState, deps: Projection
    *  its result-time contextual diff back from here). */
   const presentResultView = (name: string, rawArgs: string, data: SessionEvent<'tool/result'>['data']): ToolResultView | undefined => {
     try {
+      const code = codeToolPresentation(name, toolResultPayload(data.message).content.map(item => item.type === 'text' ? item.text : '').join('').trim(), rawArgs)
+      if (code) return code.view
       // Harness goal/todo tools first: their raw JSON reads as noise in the
       // transcript — fold recognizable shapes into a summary card before the
       // registry gets a chance to (not) know them.
@@ -781,17 +784,19 @@ export function createChannelProjection(state: ProjectionState, deps: Projection
           if (event.data.error !== undefined || payload.isError) {
             card.tool.status = 'error'
             const errorText = toolErrorText(event)
-            card.tool.errorText = errorText
+            card.tool.errorText = card.tool.name === 'lsp' || card.tool.name === 'lsp_extra' ? boundedCodeText(errorText) : errorText
             state.contextSegments.tools += estimateTokens(errorText)
           } else {
             card.tool.status = 'ok'
             const result = textOf(payload.content)
-            card.tool.resultFull = result || undefined
-            card.tool.resultText = result ? preview(result, RESULT_PREVIEW_LIMIT) : undefined
+            const code = codeToolPresentation(card.tool.name, result, card.tool.argsFull)
+            const detail = code?.detail ?? (card.tool.name === 'lsp' || card.tool.name === 'lsp_extra' ? boundedCodeText(result) : result)
+            card.tool.resultFull = detail || undefined
+            card.tool.resultText = code?.preview ?? (detail ? card.tool.name === 'lsp' || card.tool.name === 'lsp_extra' ? cleanRenderText(detail, RESULT_PREVIEW_LIMIT) : preview(detail, RESULT_PREVIEW_LIMIT) : undefined)
             // The tool's own settled-state view (applied diff, terminal
             // output, read content…) wins over the raw text body. argsFull
             // pairs the args: live cards are never folded, so it is intact.
-            card.tool.resultView = presentResultView(card.tool.name, card.tool.argsFull ?? '', event.data)
+            card.tool.resultView = code?.view ?? presentResultView(card.tool.name, card.tool.argsFull ?? '', event.data)
             state.contextSegments.tools += estimateTokens(result)
             // A job_output result doubles as the job card's output feed:
             // the registry's read() is consuming and reserved for the

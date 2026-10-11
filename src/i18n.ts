@@ -1268,6 +1268,7 @@ const dict = {
   // so `/lang` switches apply on the next repaint.
   // Conversation
   'cmd-desc-new': { zh: '新开会话' },
+  'cmd-desc-code': { zh: '只读检查代码结构与语言能力' },
   'cmd-desc-clear': { zh: '清空当前会话' },
   'cmd-desc-compact': { zh: '压缩会话历史' },
   'cmd-desc-resume': { zh: '恢复历史会话' },

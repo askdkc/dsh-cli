@@ -7,7 +7,7 @@ import type { ChannelState, ComposerImageRef, ComposerSubmission } from './types
 
 export interface InputConvergence { cancelInFlight: boolean; interruptSeq: number }
 export function createInputActions(
-  getState: () => Pick<ChannelState, 'agentId' | 'pending' | 'cancelPending' | 'emit' | 'notify'>,
+  getState: () => Pick<ChannelState, 'agentId' | 'pending' | 'cancelPending' | 'emit' | 'notify' | 'codeIntelligence'>,
   getAgent: () => Agent,
   owner: { assertActive(): void },
   input: InputConvergence,
@@ -88,6 +88,7 @@ export function createInputActions(
       owner.assertActive()
       const state = getState()
       const agent = getAgent()
+      state.codeIntelligence?.cancel()
       // Keep the staged queue: an interrupt aborts the running turn but the
       // queued/steered messages are delivered as the next turn (web parity).
       // Cancellation converges asynchronously; ignore a repeated Esc/Ctrl+C
@@ -103,6 +104,7 @@ export function createInputActions(
       owner.assertActive()
       const state = getState()
       const agent = getAgent()
+      state.codeIntelligence?.cancel()
       const queued = inputs
         .map(input => typeof input === 'string'
           ? { text: input.trim(), images: [] as readonly ComposerImageRef[] }

@@ -114,6 +114,7 @@ export const CHANNEL_UI_EFFECTS = Object.freeze({
 } satisfies Record<MethodKeys<ChannelUi>, HostEffectClass>)
 
 export const CHANNEL_UI_PROPERTIES = [
+  'codeIntelligence',
   'version',
   'rows',
   'status',

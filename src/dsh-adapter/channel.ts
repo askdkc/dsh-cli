@@ -1,6 +1,7 @@
 import { createSessionTreeReader } from './channel/session-tree.js'
 import { createInputDelivery } from './channel/input-delivery.js'
 import { createChannelBinding } from './channel/binding.js'
+import { createChannelCodeIntelligence } from './channel/code-intelligence-host.js'
 import { createCommandCompletions } from './channel/command-completions.js'
 import { createLocalActions } from './channel/local-actions.js'
 import { createDetachedHandleFactory } from './channel/lifetime-resources.js'
@@ -473,6 +474,7 @@ function createChannelWithOwner(
   const actionMethods = createChannelActionMethods(getReadyActions)
 
   const state: ChannelState = {
+    codeIntelligence: undefined,
     ...createInputActions(() => state, () => binding.agent, owner, inputConvergence,
       composer,
       (text, placement, images) => dispatchUserText(text, placement, images),
@@ -638,6 +640,7 @@ function createChannelWithOwner(
     sessionTitle: () => state.sessionTitle,
     runtime: adapterRuntime,
     grantStore: currentGrantStore,
+    codeIntelligence: () => state.codeIntelligence,
   })
   sessionMetadataActions = createSessionMetadataActions(ctx, {
     owner,
@@ -797,7 +800,9 @@ function createChannelWithOwner(
     messageObserver,
     retireAttachment,
   })
-  const bindAgent = bindingEvents.bind
+  const codeIntelligence = createChannelCodeIntelligence(ctx, { owner, binding, displayCwd: () => state.displayCwd, emit: () => state.emit() })
+  state.codeIntelligence = codeIntelligence.port
+  const bindAgent = () => { bindingEvents.bind(); codeIntelligence.rebind() }
 
   const sessionAdoption = createSessionAdoption(state, {
     binding,
@@ -1051,7 +1056,12 @@ function createChannelWithOwner(
   effect?.call(ctx, () => () => {
     // The context owns the complete Channel lifetime, not merely the skill
     // command contribution. Keep emitter teardown in the same finally funnel.
-    state.releaseContributions()
+    try { state.releaseContributions() }
+    catch (error) {
+      void codeIntelligence.shutdown().catch(cleanup => ctx.logger.warn('dsh-cli: code analysis cleanup failed: %o', cleanup))
+      throw error
+    }
+    return codeIntelligence.shutdown()
   }, 'dsh-cli channel lifecycle')
   // Statusline breadcrumb: current git branch of the session cwd (best-effort).
   // Re-run when an agent swap adopts a different persisted cwd (/resume,
