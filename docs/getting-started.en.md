@@ -46,11 +46,11 @@ dsh plugin --profile dsh-cli add @askdkc/dsh-cli
 From a checkout, the repository helper wraps the profile command:
 
 ```sh
-sh install.sh
+sh install.sh /path/to/askdkc-dsh-cli-<version>.tgz
 ```
 
-`install.sh` checks for `dsh` and `pnpm` and then runs the profile plugin
-command. It does not copy source files and does not require a local build.
+`install.sh` checks for `dsh` and `pnpm` and installs the specified tarball through
+the profile plugin command. It does not copy source files.
 
 ## Optional Kiokuko Lisp workflow
 

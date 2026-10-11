@@ -58,11 +58,11 @@ dsh --profile dsh-cli   # 或 dsh-cli
 从仓库检出运行时，也可以执行：
 
 ```sh
-sh install.sh
+sh install.sh /path/to/askdkc-dsh-cli-<version>.tgz
 ```
 
-`install.sh` 只封装 profile 插件命令并检查 `dsh`、`pnpm` 是否可用；它不会
-复制源码，也不需要本地构建。
+`install.sh` 检查 `dsh`、`pnpm`，通过 profile 插件命令安装指定的 tarball；
+它不会复制源码。
 
 ## 可选的 Kiokuko Lisp 工作流
 
