@@ -151,13 +151,20 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
     const content = platform === 'win32'
       ? `@echo off\r\nrem dsh-cli managed launcher\r\nsetlocal DisableDelayedExpansion\r\nif not defined DSH_HOME set "DSH_HOME=${dshHome.replace(/%/g, '%%')}"\r\nnode "%DSH_HOME%\\${target.replace(/\//g, '\\')}" %*\r\nexit /b %ERRORLEVEL%\r\n`
       : `#!/bin/sh\n${marker}\nDEFAULT_DSH_HOME=${quoted(dshHome)}\n: "\${DSH_HOME:=$DEFAULT_DSH_HOME}"\nexport DSH_HOME\nexec node "$DSH_HOME/${target}" "$@"\n`
-    let keepExistingDefault = false
+    let launcherContent = content
     if (pathExists(command)) {
       const existing = readFileSync(command, 'utf8')
-      keepExistingDefault = existing.startsWith(platform === 'win32' ? '@echo off\r\nrem dsh-cli managed launcher\r\n' : `#!/bin/sh\n${marker}\n`)
-        && existing !== content
+      if (existing.startsWith(platform === 'win32' ? '@echo off\r\nrem dsh-cli managed launcher\r\n' : `#!/bin/sh\n${marker}\n`)) {
+        // Retain the first installation's default, not its stale launcher implementation.
+        const defaultLine = platform === 'win32'
+          ? /^if not defined DSH_HOME set "DSH_HOME=.*"$/m
+          : /^DEFAULT_DSH_HOME=.*$/m
+        const originalDefault = existing.match(defaultLine)?.[0]
+        if (originalDefault === undefined) throw new Error(`managed launcher has no DSH_HOME default at ${command}`)
+        launcherContent = content.replace(defaultLine, () => originalDefault)
+      }
     }
-    const changed = keepExistingDefault ? false : updateOwnedFile(command, content, 0o755)
+    const changed = updateOwnedFile(command, launcherContent, 0o755)
     if (platform === 'win32') {
       const userPath = options.windowsUserPath ?? {
         read: () => execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '[Environment]::GetEnvironmentVariable("Path", "User")'], { encoding: 'utf8', timeout: 5000 }).trim(),
@@ -183,9 +190,11 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
       const line = pathLine + sourceLine
       for (const file of files) updateShellFile(file, line)
     }
-    return keepExistingDefault
+    return changed
+      ? `Registered ${command}. Open a new shell to use dsh-cli.`
+      : launcherContent !== content
       ? `Kept ${command} with its original DSH_HOME default. Open a new shell to use dsh-cli; set DSH_HOME explicitly to use another installation.`
-      : changed ? `Registered ${command}. Open a new shell to use dsh-cli.` : `dsh-cli registration is current at ${command}.`
+      : `dsh-cli registration is current at ${command}.`
   } finally {
     closeSync(handle)
     rmSync(lock, { force: true })
