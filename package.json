@@ -1,6 +1,6 @@
 {
   "name": "@askdkc/dsh-cli",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "description": "Interactive terminal interface for DeepSeek Harness agents, sessions and tools.",
   "keywords": [
     "dsh",
