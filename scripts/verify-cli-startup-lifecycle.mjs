@@ -24,7 +24,7 @@ try {
   assert.equal(globalWaits, 0)
   await owner.dispose()
   assert.equal(runtimeFibers().length, 0, 'the entry owns and disposes its runtime child')
-  console.log('TUI startup lifecycle OK (owner settlement, independent Loader work, child cleanup)')
+  console.log('dsh-cli startup lifecycle OK (owner settlement, independent Loader work, child cleanup)')
 } finally {
   await root.fiber.dispose()
   if (stdoutTty === undefined) delete process.stdout.isTTY

@@ -143,7 +143,7 @@ export function ensureCliRegistered(options: CliRegistrationOptions = {}): strin
       rmSync(lock, { force: true })
       handle = openSync(lock, 'wx')
     } else {
-      throw new Error(`registration is already running (${lock}); retry on next TUI start`)
+      throw new Error(`registration is already running (${lock}); retry on next dsh-cli start`)
     }
   }
   try {

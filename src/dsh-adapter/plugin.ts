@@ -16,6 +16,7 @@ import { mountChannelUi } from './channel-ui.js'
 import { bindChannelCommands } from './channel/commands.js'
 import { registerTuiChannel } from '../adapter/channel/host-registry.js'
 import { createChildStderrReporter, installChildStderrGuard } from './childStderr.js'
+import { captureOwnedProcesses, killOwnedProcesses } from './process-cleanup.js'
 import { removeClipboardImageDir } from '../utils/clipboard.js'
 import { logForDebugging } from '../utils/debug.js'
 import { isEnvTruthy } from '../utils/envUtils.js'
@@ -216,7 +217,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     // boot. The launcher marker above keeps explicit `dsh-cli` launches
     // failing loudly instead of silently producing no UI.
     ctx.logger.info(
-      'dsh-cli: non-interactive host detected (stdout is not a TTY); skipping the TUI frontend',
+      'dsh-cli: non-interactive host detected (stdout is not a TTY); skipping the interactive CLI',
     )
     return
   }
@@ -241,9 +242,9 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
     try {
       const result = ensureCliRegistered()
       if (result.startsWith('Registered ') || result.startsWith('Kept ')) ctx.logger.info(`dsh-cli: ${result}`)
-      else if (result.startsWith('Existing ')) ctx.logger.warn(`dsh-cli: ${result} Remove the conflicting command or adjust PATH, then restart the TUI.`)
+      else if (result.startsWith('Existing ')) ctx.logger.warn(`dsh-cli: ${result} Remove the conflicting command or adjust PATH, then restart dsh-cli.`)
     } catch (error) {
-      ctx.logger.warn(`dsh-cli: dsh-cli command registration failed: ${error instanceof Error ? error.message : String(error)}. Resolve the reported path or permission issue, then restart the TUI; set DSH_CLI_AUTO_REGISTER_CLI=0 to disable registration.`)
+      ctx.logger.warn(`dsh-cli: dsh-cli command registration failed: ${error instanceof Error ? error.message : String(error)}. Resolve the reported path or permission issue, then restart dsh-cli; set DSH_CLI_AUTO_REGISTER_CLI=0 to disable registration.`)
     }
   }
 
@@ -2058,7 +2059,6 @@ function writeStream(stream: NodeJS.WriteStream, data: string): Promise<void> {
       resolve()
     }
     const timer = setTimeout(finish, 1000)
-    timer.unref()
     try {
       stream.write(data, () => {
         clearTimeout(timer)
@@ -2162,21 +2162,36 @@ function disposeRootAndExit(ctx: Context, code: number): void {
  * reporting failure on a clean exit would mislead wrapper scripts.
  */
 function disposeRootAndThen(ctx: Context, done: () => void, fallbackCode = 1): void {
+  let owned: ReturnType<typeof captureOwnedProcesses> = []
+  let settled = false
+  const finish = (action: () => void): void => {
+    if (settled) return
+    settled = true
+    clearTimeout(timer)
+    try {
+      killOwnedProcesses(owned)
+    } catch (error) {
+      logRestartEvent('dispose: child termination failed', { message: String(error) })
+      process.stderr.write(`[dsh-cli] Could not terminate remaining child processes: ${String(error)}\n`)
+    }
+    action()
+  }
   const timer = setTimeout(() => {
     // Diagnosis for a stalled disposal: without this line the fallback exit
     // is indistinguishable from a successful handoff in the field.
     logRestartEvent('dispose: timeout, taking fallback exit', { fallbackCode })
-    process.exit(fallbackCode)
+    finish(() => process.exit(fallbackCode))
   }, 5000)
-  timer.unref()
-  void withHostRootCapability(() => ctx.root.fiber.dispose()).then(
-    () => {
-      clearTimeout(timer)
-      done()
-    },
-    () => {
-      clearTimeout(timer)
-      done()
-    },
+  // This timer owns the exit deadline: unref would let an unsettled disposal
+  // abandon the host's top-level await and exit with code 13 before it fires.
+  try {
+    owned = captureOwnedProcesses()
+  } catch (error) {
+    logRestartEvent('dispose: child snapshot failed', { message: String(error) })
+    process.stderr.write(`[dsh-cli] Could not record child processes before shutdown: ${String(error)}\n`)
+  }
+  void Promise.resolve().then(() => withHostRootCapability(() => ctx.root.fiber.dispose())).then(
+    () => finish(done),
+    () => finish(done),
   )
 }
