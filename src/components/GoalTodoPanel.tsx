@@ -75,9 +75,15 @@ function PhaseBadge({
 function TodoGlyph({ status }: { status: TodoPanelItem['status'] }): React.ReactNode {
   switch (status) {
     case 'in_progress':
+    case 'Working':
       return <Text color="suggestion">● </Text>
     case 'completed':
+    case 'Done':
       return <Text dimColor>✓ </Text>
+    case 'Pending':
+      return <Text color="warning">⏸ </Text>
+    case 'Ignore':
+      return <Text dimColor>− </Text>
     default:
       return <Text dimColor>○ </Text>
   }
@@ -95,7 +101,8 @@ function BranchPrefix({ last }: { last: boolean }): React.ReactNode {
 /**
  * Live goal + todo panel above the prompt input. Data rides on the channel:
  * `channel.goal` is folded from `goal/change` context events and
- * `channel.todos` from `todo/write` whole-list snapshots, so every model
+ * `channel.todos` combines legacy `todo/write` snapshots and the optional
+ * Kiokuko host's SQLite task read projection, so every committed
  * update re-renders this panel in real time (no polling). Renders nothing
  * while both slots are empty.
  *
@@ -123,10 +130,9 @@ export function GoalTodoPanel({
 }): React.ReactNode {
   const goal = channel.goal
   const allTodos = channel.todos ?? []
-  const doneCount = allTodos.filter(todo => todo.status === 'completed').length
-  // Completed rows are useful progress while a turn is running, but become
-  // stale footer noise once the agent is idle. Keep unfinished work visible;
-  // the header count carries the done summary either way.
+  const doneCount = allTodos.filter(todo => todo.status === 'completed' || todo.status === 'Done').length
+  // Hide completed native todo rows while idle. Keep the canonical Kiokuko
+  // task visible, including its terminal outcome and evidence.
   const todos = channel.working
     ? allTodos
     : allTodos.filter(todo => todo.status !== 'completed')
@@ -161,7 +167,7 @@ export function GoalTodoPanel({
   const visible = todos.slice(0, MAX_TODOS)
   const hidden = todos.length - visible.length
   // Collapsed preview: the live task when one runs, else the next open row.
-  const preview = allTodos.find(todo => todo.status === 'in_progress')
+  const preview = allTodos.find(todo => todo.status === 'Working' || todo.status === 'in_progress')
     ?? allTodos.find(todo => todo.status !== 'completed')
 
   return (
@@ -214,14 +220,14 @@ export function GoalTodoPanel({
             <Text dimColor>✓ {doneCount}/{allTodos.length}</Text>
             {collapsed && preview !== undefined && (
               <Box flexGrow={1} flexShrink={1} marginLeft={1}>
-                {preview.status === 'in_progress' ? (
+                {preview.status === 'in_progress' || preview.status === 'Working' ? (
                   <Text wrap="truncate">
                     <Text color="suggestion">● </Text>
-                    {preview.content}
+                    {preview.source === 'kiokuko' ? `[${preview.status}] ${preview.content}` : preview.content}
                   </Text>
                 ) : (
                   <Text wrap="truncate" dimColor>
-                    ○ {preview.content}
+                    ○ {preview.source === 'kiokuko' ? `[${preview.status}] ${preview.content}` : preview.content}
                   </Text>
                 )}
               </Box>
@@ -231,6 +237,25 @@ export function GoalTodoPanel({
             <Box flexDirection="column">
               {visible.map((todo, index) => {
                 const last = index === visible.length - 1 && hidden === 0
+                if (todo.source === 'kiokuko') return (
+                  <Box key={todo.taskId} flexDirection="column">
+                    <Box flexDirection="row" height={1}>
+                      <BranchPrefix last={last} />
+                      <TodoGlyph status={todo.status} />
+                      <Text wrap="truncate">[{todo.status}] {todo.content}</Text>
+                    </Box>
+                    <Text dimColor wrap="truncate">  {todo.taskId} · r{todo.revision}</Text>
+                    {todo.runStatus && <Text dimColor wrap="truncate">  Execution: {todo.runStatus}</Text>}
+                    {todo.previousOutcome && <Text dimColor wrap="truncate">  Previous execution: {todo.previousOutcome.status}</Text>}
+                    {todo.reason && <Text wrap="truncate">  {todo.reason}</Text>}
+                    {todo.pendingStop && <Text color="warning" wrap="truncate">  Waiting for stop confirmation ({todo.pendingStop.operation}): {todo.pendingStop.reason}</Text>}
+                    {todo.evidence.slice(0, 2).map((evidence, evidenceIndex) => (
+                      <Text key={evidenceIndex} dimColor wrap="truncate">  evidence: {evidence}</Text>
+                    ))}
+                    {todo.evidence.length > 2 && <Text dimColor>  … {todo.evidence.length - 2} more evidence references</Text>}
+                    <Text dimColor wrap="truncate">  /kioku-task {todo.allowedOps.length ? todo.allowedOps.join(' | ') : 'status'}</Text>
+                  </Box>
+                )
                 return (
                   <Box key={index} flexDirection="row" height={1}>
                     <BranchPrefix last={last} />

@@ -153,4 +153,38 @@ function handle(id: string) {
   assert.equal(next.disposeCount, 0, 'ordinary owner teardown preserves live-handle ownership')
 }
 
-console.log('verify:binding-transaction OK (synchronous adoption/revocation/disposition)')
+// A task handoff retains the exact native source while reserving retirement
+// synchronously. Resume must await both the handoff and the source close.
+{
+  const owner = createChannelOwner()
+  const handoff = deferred<void>()
+  const stopped = deferred<void>()
+  let calls = 0
+  const old = { agent: agent('task-owner'), dispose: () => { calls++; return stopped.promise } }
+  const next = handle('task-target')
+  const binding = createChannelBinding(old.agent, old as never, owner)
+  const capture = binding.capture()
+  await binding.prepare(capture, async () => next as never)
+  let retirement!: Promise<void>
+  binding.adopt(next as never, capture, (previous, disposition) => {
+    disposition('park')
+    retirement = binding.disposeParked(previous.handle!, handoff.promise)
+  })
+  let resumed = false
+  const resume = binding.waitForDisposal('session-task-owner').then(() => { resumed = true })
+  await Promise.resolve()
+  assert.equal(calls, 0, 'old exact native agent must survive through the ownership CAS')
+  assert.equal(resumed, false)
+  assert.equal(binding.disposeParked(old as never), retirement, 'duplicate cleanup shares the reserved retirement')
+  handoff.resolve()
+  await Promise.resolve(); await Promise.resolve()
+  assert.equal(calls, 1)
+  assert.equal(resumed, false, 'resume still waits for native disposal completion')
+  stopped.resolve()
+  await resume
+  assert.equal(calls, 1)
+  assert.equal(resumed, true)
+  owner.dispose()
+}
+
+console.log('verify:binding-transaction OK (synchronous adoption/revocation/disposition and task-handoff retirement)')

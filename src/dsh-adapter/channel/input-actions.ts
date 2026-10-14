@@ -14,6 +14,7 @@ export function createInputActions(
   composer: { includeLegacyImageRefs(text: string, images: readonly ComposerImageRef[]): readonly ComposerImageRef[] },
   dispatchUserText: (text: string, placement: 'steer' | 'followup', images?: readonly ComposerImageRef[]) => void,
   runLocalCommand: (command: string, includeInContext: boolean) => Promise<void>,
+  onCancelled?: () => void,
 ): Pick<ChannelState, 'submit' | 'steer' | 'removePending' | 'cancel' | 'interruptAndDeliver'> {
   return {
     submit(text, images = []) {
@@ -98,6 +99,7 @@ export function createInputActions(
       input.cancelInFlight = true
       state.cancelPending = true
       agent.cancel({ kind: 'user' }, { keepInbox: true })
+      onCancelled?.()
     },
 
     interruptAndDeliver(inputs: readonly (string | ComposerSubmission)[]): number {
@@ -122,6 +124,7 @@ export function createInputActions(
       if (!input.cancelInFlight) {
         input.cancelInFlight = true
         agent.cancel({ kind: 'user' })
+        onCancelled?.()
       }
       state.cancelPending = true
       const token = ++input.interruptSeq

@@ -311,10 +311,31 @@ export interface ChannelGoal {
 
 /** One entry of the latest todo-list snapshot (mirrors dsh-tool-todo's
  *  `TodoItem`; declared locally so the adapter needn't depend on that plugin). */
-export interface TodoPanelItem {
+export type KiokukoTaskState = 'ToDo' | 'Working' | 'Pending' | 'Done' | 'Ignore'
+export type KiokukoRunStatus = 'intake' | 'active' | 'completed' | 'failed' | 'cancelled' | 'interrupted'
+export type KiokukoTaskOperation = 'start' | 'wait' | 'resume' | 'complete' | 'ignore'
+/** Read-only projection of the plugin's SQLite snapshot, never a CLI ledger. */
+export interface KiokukoTaskPanelItem {
+  source: 'kiokuko'
+  content: string
+  status: KiokukoTaskState
+  runStatus?: KiokukoRunStatus
+  previousOutcome?: { readonly status: KiokukoRunStatus }
+  taskId: string
+  runId: string
+  revision: number
+  generation: number
+  reason: string | null
+  evidence: readonly string[]
+  allowedOps: readonly KiokukoTaskOperation[]
+  pendingStop?: { readonly operation: 'wait' | 'ignore'; readonly reason: string }
+}
+export interface LegacyTodoPanelItem {
+  source?: undefined
   content: string
   status: 'pending' | 'in_progress' | 'completed'
 }
+export type TodoPanelItem = LegacyTodoPanelItem | KiokukoTaskPanelItem
 
 /**
  * Snapshot of everything a fresh conversation for the current agent will

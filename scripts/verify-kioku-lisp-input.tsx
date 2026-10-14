@@ -39,7 +39,8 @@ let completionsEnabled = false
 let outcome: () => boolean | Promise<boolean> = () => Promise.resolve(true)
 const channel = {
   mode: { id: 'default', plan: false }, modeIndex: 0, cycleMode() {},
-  commandList: [...LOCAL_COMMANDS, { name: 'kioku-lisp', description: 'Lisp controls', external: true }],
+  commandList: [...LOCAL_COMMANDS, { name: 'kioku-lisp', description: 'Lisp controls', external: true }, { name: 'kioku-task', description: 'Task controls', external: true }],
+  todos: [{ source: 'kiokuko', taskId: 'task-1', revision: 4, allowedOps: ['wait'] }],
   commandCompletions: (input: string) => completionsEnabled ? complete(input) : [], stagedImageGeneration: () => generation, notifications: [], pending: [], working: true,
   notify(text: string) { notifications.push(text) },
   submit(text: string) { model.push(text) }, steer(text: string) { model.push(text) },
@@ -82,6 +83,11 @@ try {
   for (const action of ['', 'status', 'diagnostics op-id', 'hot', 'cancel', 'recover']) {
     await send('/kioku-lisp' + (action ? ' ' + action : ''))
   }
+  for (const action of ['status', 'start', 'wait', 'resume', 'complete', 'ignore', 'unknown']) {
+    await send('/kioku-task ' + action)
+  }
+  await send('/kioku-task wait', '\x1b[13;5u')
+  await send('/kioku-task wait', '\x1b[13;9u')
   for (const action of ['status', 'cancel', 'diagnostics fixture.ts']) {
     await send('/code ' + action)
   }
@@ -158,9 +164,12 @@ try {
   await send('/code can')
   assert.deepEqual(complete('/kioku-lisp c').map(x => x.commandLine), ['/kioku-lisp cancel'])
   assert.equal(complete('/kioku-lisp diagnostics op-id').length, 0)
+  assert.deepEqual(complete('/kioku-task w').map(x => x.commandLine), ['/kioku-task wait'])
+  assert.equal(complete('/kioku-task res').length, 0, 'only host-allowed task operations are suggested')
   const registeredCommands = channel.commandList
   channel.commandList = [...LOCAL_COMMANDS]
   assert.equal(complete('/kioku-lisp c').length, 0, 'absent plugins receive no Lisp subcommands')
+  assert.equal(complete('/kioku-task w').length, 0, 'absent plugins receive no task subcommands')
   channel.commandList = [...LOCAL_COMMANDS, { name: 'kioku-lisp', description: 'Unrelated local command', external: false }]
   assert.equal(complete('/kioku-lisp c').length, 0, 'local names receive no Lisp subcommands')
   channel.commandList = registeredCommands
@@ -183,6 +192,13 @@ try {
 
   // Admission failure keeps the draft, with no model fallback.
   outcome = () => Promise.resolve(false)
+  await draft('/kioku-task wait')
+  const deniedTask = commands.length
+  stdin.write('\r')
+  assert.ok(await settled(() => commands.length === deniedTask + 1))
+  await sleep(150) // 固定窗:探针 denied task commands must never fall through to the model.
+  assert.equal(controller.current!.text(), '/kioku-task wait')
+  assert.deepEqual(model, [])
   await draft('/kioku-lisp cancel')
   const denied = commands.length
   stdin.write('\r')

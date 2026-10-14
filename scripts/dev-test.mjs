@@ -110,6 +110,7 @@ try {
     'profiles',
     'dsh-cli',
     'node_modules',
+    '@askdkc',
     'dsh-cli',
   )
   for (const file of [

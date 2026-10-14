@@ -41,15 +41,16 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
   const closingSessions = new Map<string, Promise<void>>()
 
   /** Close `candidate` exactly once; the result resolves however it ends. */
-  const dispose = (candidate: AgentHandle): Promise<void> => {
+  const dispose = (candidate: AgentHandle, after?: Promise<unknown>): Promise<void> => {
     const started = closing.get(candidate)
     if (started !== undefined) return started
-    // Kicked off SYNCHRONOUSLY: revocation is part of a synchronous transaction
-    // boundary, and a caller that abandons a candidate may check it right away.
-    // Only the waiting is deferred, never the call.
+    // Ordinary revocation calls dispose synchronously. A parked source instead
+    // reserves its retirement now, keeping it live until its handoff settles.
     let close: Promise<void>
     try {
-      close = Promise.resolve(candidate.dispose()).catch(() => undefined)
+      close = after === undefined
+        ? Promise.resolve(candidate.dispose()).catch(() => undefined)
+        : after.catch(() => undefined).then(() => candidate.dispose()).catch(() => undefined)
     } catch {
       close = Promise.resolve()
     }
@@ -266,6 +267,11 @@ export function createChannelBinding(initial: Agent, handle: AgentHandle | undef
     async waitForDisposal(sessionId: string): Promise<void> {
       await closingSessions.get(sessionId)
     },
+
+    /** Close a caller-owned parked handle through the same exactly-once and
+     * resume-drain bookkeeping. A handoff gate keeps both agents alive, but
+     * immediately reserves the old session against a racing live /resume. */
+    disposeParked: dispose,
 
     /** Perform one explicit synchronous prepared-handle adoption transaction. */
     adopt,

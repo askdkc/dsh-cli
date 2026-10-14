@@ -66,6 +66,7 @@ import { channelCommands } from './channel/commands.js'
 import { normalizeInputDecision, normalizeRewindDoneSummary, normalizeRewindPromptDecision, NOTICE_CELLS } from './channel/decisions.js'
 import { createChannelEmitter } from './channel/emitter.js'
 import { createInputActions, type InputConvergence } from './channel/input-actions.js'
+import { createTaskWorkflowProjection } from './channel/task-workflow.js'
 import { createComposerImages } from './channel/composer-images.js'
 import { snapshotLiveSessionEvents } from './compat/liveSession.js'
 import { runForegroundShell, type ForegroundShell } from './compat/shell.js'
@@ -349,7 +350,8 @@ function createChannelWithOwner(
   const composer = createComposerImages(ctx, owner, { generation: () => state.agentBindingGeneration })
   const inputDelivery = createInputDelivery(ctx, owner, binding, () => state,
     (...args) => notify(...args), trackPending, untrackPending, composer,
-    () => currentSelection, (messageId, info) => selectionAttachments.remember(messageId, info))
+    () => currentSelection, (messageId, info) => selectionAttachments.remember(messageId, info),
+    agent => taskWorkflow?.waitForInput(agent) ?? Promise.resolve())
   const { dispatchUserText, deliverUserText, retireAttachment, withDecisionPending, clearStagedImages } = inputDelivery
   /**
    * The `tui/session-switch` decision event (pi's `session_before_switch`),
@@ -472,13 +474,15 @@ function createChannelWithOwner(
     return actionReadiness.getReadyActions()
   }
   const actionMethods = createChannelActionMethods(getReadyActions)
+  let taskWorkflow: ReturnType<typeof createTaskWorkflowProjection> | undefined
 
   const state: ChannelState = {
     codeIntelligence: undefined,
     ...createInputActions(() => state, () => binding.agent, owner, inputConvergence,
       composer,
       (text, placement, images) => dispatchUserText(text, placement, images),
-      (command, includeInContext) => getReadyActions().runLocalCommand(command, includeInContext)),
+      (command, includeInContext) => getReadyActions().runLocalCommand(command, includeInContext),
+      () => taskWorkflow?.cancelled()),
     subscribe: emitter.subscribe,
     emit: emitter.emit,
     emitStream: emitter.emitStream,
@@ -667,6 +671,10 @@ function createChannelWithOwner(
   const refreshLoadedContext = loadedContext.refresh
   const startRuntimeSubscriptions = (): void => {
     owner.own(ctx.on('commands/change', () => { if (owner.current()) modeActions.refreshMode() }))
+    owner.own(ctx.on('commands/change', () => { if (owner.current()) void taskWorkflow?.refresh() }))
+    // Optional plugin event: do not require Kiokuko's package/type augmentation.
+    const onTaskState = ctx.on as (name: string, handler: (event: unknown) => void, options: { global: boolean }) => () => void
+    owner.own(onTaskState.call(ctx, 'kiokuko/task-state', event => taskWorkflow?.changed(event), { global: true }))
     owner.own(settingsSectionsRuntime?.subscribe(() => { if (owner.current()) state.emit() }) ?? (() => undefined))
     const disposeScenes = sceneRuntime?.subscribe(() => {
       if (state.pluginScene === sceneRuntime.active) return
@@ -747,6 +755,8 @@ function createChannelWithOwner(
     rowIds,
     // Compaction is installed below before the channel binds or exposes input.
     settleCompaction: () => settleManualCompaction(),
+    prepareTaskHandoff: () => taskWorkflow?.prepareHandoff() ?? Promise.resolve(undefined),
+    holdTaskInput: target => taskWorkflow?.holdInput(target) ?? (() => undefined),
     resetProjector: () => projector.reset(),
     resetSubagents: subagentProjection.reset,
     resetJobs: resetJobProjection,
@@ -802,7 +812,16 @@ function createChannelWithOwner(
   })
   const codeIntelligence = createChannelCodeIntelligence(ctx, { owner, binding, displayCwd: () => state.displayCwd, emit: () => state.emit() })
   state.codeIntelligence = codeIntelligence.port
-  const bindAgent = () => { bindingEvents.bind(); codeIntelligence.rebind() }
+  taskWorkflow = createTaskWorkflowProjection({
+    discover: () => ctx.get('kiokukoTaskWorkflow' as never),
+    capture: () => binding.capture(),
+    current: capture => owner.current() && binding.isCurrent(capture),
+    rows: () => state.todos,
+    publish: rows => { state.todos = rows; state.emit() },
+    warn: message => notify(message, { color: 'warning', timeoutMs: 6000 }),
+  })
+  owner.own(taskWorkflow.dispose)
+  const bindAgent = () => { bindingEvents.bind(); codeIntelligence.rebind(); taskWorkflow?.rebind() }
 
   const sessionAdoption = createSessionAdoption(state, {
     binding,

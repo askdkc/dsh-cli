@@ -91,6 +91,11 @@ an already-running Laya worker as described in
 [Kiokuko's decision guide](https://github.com/askdkc/kiokuko-dsh/blob/main/docs/typed-decisions.md).
 No runtime or worker is installed automatically.
 
+When the profile enables `kiokuko-dsh`, the CLI waits for that plugin to finish
+starting before accepting its first input. Import or startup failure, or an
+activation that does not finish within 30 seconds, stops CLI startup with a
+diagnostic. An absent or disabled Kiokuko plugin adds no startup wait.
+
 Enter a normal request such as `検索機能を実装して`. When Jev/Laya accepts a
 coding classification, the existing question panel asks whether to use Lisp.
 Choose **Lispモードを使う（通常実行）**, **Lispモードを使わない**, or

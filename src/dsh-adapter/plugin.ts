@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto'
 import React from 'react'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
-import UserQuestionService from '@deepseek-ai/dsh-user-questions'
 import * as toolAskUser from '@deepseek-ai/dsh-tool-ask-user'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
@@ -33,6 +32,7 @@ import { migratePresetPref, readPresetPref } from '../presetPrefs.js'
 import { readEffortPref } from '../effortPrefs.js'
 import { composePreset, filterMinimalPresetTools, resolvePersistedPreset, resolvePersistedRoute, runningPresetOf } from './presets.js'
 import { registerBundledPresets } from './bundled-presets.js'
+import { awaitConfiguredKiokukoStartup, ensureCliUserQuestions } from './startup-addons.js'
 import { registerTuiSessionEventTypes, snapshotLiveSessionEvents } from './compat/index.js'
 import { clearResumeTarget, resumeCommand, resumeTargetFromArgv, writeResumeTarget } from '../sessionHistory.js'
 import { readHomePrefs } from '../homePrefs.js'
@@ -294,12 +294,13 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // DSH user-interaction seam: the model's ask_user_question tool parks on
   // the userQuestions service until a UI answerer responds. Mount the
   // service when the composition doesn't (the official dsh-base
-  // user-interaction config row does; a bare plugin mount creates it on
-  // this context), then expose the model-facing tool before resolving the
+  // user-interaction config row does; a bare plugin mount creates an owned
+  // child provider), then expose the model-facing tool before resolving the
   // agent so per-step assembly includes ask_user_question. The answerer needs
   // the channel owner and registers immediately after channel creation. Optional-service access goes through `ctx.get`, not the
   // inject proxy.
-  const userQuestions = ctx.get('userQuestions') ?? new UserQuestionService(ctx)
+  const userQuestions = await ensureCliUserQuestions(ctx)
+  if (!await awaitConfiguredKiokukoStartup(ctx)) return
   ctx.plugin(toolAskUser)
   // The host-level tool mount above is intentional for the TUI and for user
   // presets, but the official Minimal preset is a strict two-tool trajectory

@@ -57,5 +57,9 @@ export function todoPanelItems(data: unknown): TodoPanelItem[] | undefined {
     return typeof candidate.content === 'string' &&
       (candidate.status === 'pending' || candidate.status === 'in_progress' || candidate.status === 'completed')
   })
-  return valid ? todos as TodoPanelItem[] : undefined
+  // A JSONL todo event cannot impersonate the host's authoritative task row.
+  return valid ? todos.map(item => {
+    const { content, status } = item as { content: string; status: 'pending' | 'in_progress' | 'completed' }
+    return { content, status }
+  }) : undefined
 }

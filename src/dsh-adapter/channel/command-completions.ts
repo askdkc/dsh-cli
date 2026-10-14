@@ -47,6 +47,15 @@ export function createCommandCompletions(deps: {
         ...['definition', 'references', 'implementation', 'hover', 'diagnostics', 'completion'].map(name => ({ name, description: 'Read language-server results; never apply edits' })),
       ]
       if (path.length === 2 && path[0] === 'code' && path[1] === 'query') return ['declarations', 'calls', 'imports'].map(name => ({ name, description: 'Registered structure query' }))
+      if (path.length === 1 && path[0] === 'kioku-task'
+        && state.commandList.some(command => command.name === 'kioku-task' && command.external === true)) {
+        const task = state.todos.find(todo => todo.source === 'kiokuko')
+        return [
+          { name: 'status', description: 'Read the current task from Kiokuko' },
+          { name: 'create', description: 'Create a task in Kiokuko' },
+          ...(task?.source === 'kiokuko' ? task.allowedOps.map(name => ({ name, description: `Request ${name} for ${task.taskId} at revision ${task.revision}` })) : []),
+        ]
+      }
       if (path.length === 1 && path[0] === 'kioku-lisp'
         && state.commandList.some(command => command.name === 'kioku-lisp' && command.external === true)) return [
         { name: 'status', description: 'Show Lisp mode and operation status' },

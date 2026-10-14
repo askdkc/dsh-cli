@@ -50,7 +50,11 @@ export function projectChannelState(channel: Channel): HostChannelStateSnapshot 
     ...(channel.lastUsage === undefined ? {} : { lastUsage: asNumberRecord(channel.lastUsage) }),
     ...(channel.activityFrames === undefined ? {} : { activityFrames: channel.activityFrames }),
     ...(channel.goal === undefined ? {} : { goal: asRecord(channel.goal) }),
-    todos: Object.freeze(channel.todos.map(todo => Object.freeze({ ...todo }))),
+    todos: Object.freeze(channel.todos.map(todo => Object.freeze(todo.source === 'kiokuko'
+      ? { ...todo, evidence: Object.freeze([...todo.evidence]), allowedOps: Object.freeze([...todo.allowedOps]),
+          ...(todo.previousOutcome ? { previousOutcome: Object.freeze({ ...todo.previousOutcome }) } : {}),
+          ...(todo.pendingStop ? { pendingStop: Object.freeze({ ...todo.pendingStop }) } : {}) }
+      : { ...todo }))),
     ...(channel.loadedContext === undefined ? {} : { loadedContext: asRecord(channel.loadedContext) }),
     pending: Object.freeze(channel.pending.map(pending => Object.freeze({ ...pending }))),
     ...(channel.pluginScene === undefined ? {} : { pluginScene: asRecord(channel.pluginScene) }),

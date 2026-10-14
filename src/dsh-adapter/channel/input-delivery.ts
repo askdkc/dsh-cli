@@ -52,6 +52,7 @@ export function createInputDelivery(
  composer: ComposerImages,
  selection: () => ChannelSelection | undefined,
  rememberSelection: (messageId: string, info: SelectionAttachment) => void,
+ waitForInput?: (agent: Agent) => Promise<void>,
 ) {
   /**
    * `@` file mentions (issue #15): expansion reads files asynchronously, so
@@ -290,6 +291,13 @@ export function createInputDelivery(
     }
     // A follower can wait behind an older slow decision while /new replaces
     // the session. Do not even expose that stale text to plugins.
+    if (dropIfStale()) return
+    try {
+      await waitForInput?.(origin.agent)
+    } catch (error) {
+      if (!dropIfStale()) notify(error instanceof Error ? error.message : String(error), { color: 'error' })
+      return
+    }
     if (dropIfStale()) return
     const decision = await withDecisionPending('tui/input', dispatchTuiDecision(ctx, 'tui/input', {
       text,

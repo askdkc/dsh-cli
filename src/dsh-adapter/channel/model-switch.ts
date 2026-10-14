@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { AgentHandle, CreateAgentOptions } from '@deepseek-ai/dsh-agent'
+import type { Agent, AgentHandle, CreateAgentOptions } from '@deepseek-ai/dsh-agent'
 import { randomUUID } from 'node:crypto'
 import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
 import { t } from '../../i18n.js'
@@ -23,10 +23,12 @@ export function createModelSwitchAction(
   ctx: Context,
   state: SwitchState,
   deps: {
-    owner: Pick<ChannelOwner, 'current'>
-    binding: Pick<Binding, 'agent' | 'capture' | 'prepare' | 'isCurrent' | 'abandon' | 'adopt'>
+    owner: Pick<ChannelOwner, 'current' | 'own'>
+    binding: Pick<Binding, 'agent' | 'capture' | 'prepare' | 'isCurrent' | 'abandon' | 'adopt' | 'disposeParked'>
     rowIds: { value: number }
     settleCompaction(): Promise<void>
+    prepareTaskHandoff?(): Promise<((target: Agent) => Promise<void>) | undefined>
+    holdTaskInput?(target: Agent): (error?: unknown) => void
     resetProjector(): void
     resetSubagents(): void
     resetJobs(): void
@@ -47,9 +49,11 @@ export function createModelSwitchAction(
     const agents = ctx.get('agents') as { create(options: CreateAgentOptions): Promise<AgentHandle> } | undefined
     if (agents === undefined) { deps.notify(t('model-switch-unavailable'), { color: 'error' }); return false }
     let seed: readonly SessionEvent[]
+    let taskHandoff: ((target: Agent) => Promise<void>) | undefined
     try {
       // A compaction checkpoint may not settle after the model fork snapshot.
       await deps.settleCompaction()
+      taskHandoff = await deps.prepareTaskHandoff?.()
       // No boundary = the whole source log (continue the conversation). Slice
       // the SOURCE snapshot: sessions.fork() registers a real child, and its
       // snapshot length is not the inherited cut.
@@ -78,8 +82,19 @@ export function createModelSwitchAction(
     catch (error) { deps.notify(t('model-switch-attach-failed', { err: error instanceof Error ? error.message : String(error) }), { color: 'warning', timeoutMs: 8000 }) }
     if (!deps.binding.isCurrent(adoption) || !deps.owner.current()) { await deps.binding.abandon(handle); reservation.abandon(); return false }
     let committed = false
+    const releaseInput = taskHandoff ? deps.holdTaskInput?.(handle.agent) : undefined
+    let handoffError: unknown = new Error('Model switch did not complete')
+    let closingPrevious: Promise<void> | undefined
+    let releaseHandoff: (() => void) | undefined
+    const handoffFinished = taskHandoff ? new Promise<void>(resolve => { releaseHandoff = deps.owner.own(resolve) }) : undefined
     try {
-      const result = deps.binding.adopt<boolean>(handle, adoption, (_previous, disposePrevious) => {
+      const result = deps.binding.adopt<boolean>(handle, adoption, (previous, disposePrevious) => {
+        // Reserve retirement before emitting or invoking callbacks: a /resume
+        // observer must not reacquire this source while its handoff is pending.
+        if (taskHandoff && previous.handle) {
+          disposePrevious('park')
+          closingPrevious = deps.binding.disposeParked(previous.handle, handoffFinished)
+        } else disposePrevious('dispose')
         resetSessionProjection(state, deps.rowIds, deps.resetProjector, deps.resetSubagents, deps.resetJobs)
         state.status = handle.agent.status
         state.agentId = handle.agent.id
@@ -105,13 +120,26 @@ export function createModelSwitchAction(
         void deps.refreshSkillCommands()
         touchSession(childId)
         state.emit()
-        disposePrevious('dispose')
         if (!writeModelPref(provider, model)) deps.notify(t('model-pref-write-failed'), { color: 'warning' })
         return true
       })
       committed = true
+      if (taskHandoff) {
+        try { await taskHandoff(handle.agent); handoffError = undefined }
+        catch (error) {
+          handoffError = error
+          if (deps.owner.current() && deps.binding.agent === handle.agent) {
+            deps.notify(`Model changed, but Kiokuko task ownership was not transferred: ${error instanceof Error ? error.message : String(error)}`, { color: 'warning', timeoutMs: 8000 })
+          }
+        }
+      }
       return result
     } finally {
+      releaseInput?.(handoffError)
+      releaseHandoff?.()
+      if (closingPrevious) await closingPrevious.catch(error => {
+        if (deps.owner.current()) deps.notify(`Previous model session did not close: ${String(error)}`, { color: 'warning' })
+      })
       if (committed) reservation.settle()
       else reservation.abandon()
     }

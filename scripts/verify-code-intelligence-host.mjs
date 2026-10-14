@@ -1,6 +1,7 @@
 /** Real public plugin bundle, services, registry and server; no model API.
  * --consumer-root also runs against files installed from the CLI tarball. */
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
 import { mkdtemp, writeFile, readFile, symlink, rm, realpath } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
@@ -27,6 +28,13 @@ ctx.logger.error = (...args) => console.error(...args)
 ctx.baseUrl = pathToFileURL(join(root, 'cordis.patch.yml')).href
 const lifetimes = []
 try {
+  // Own checkout identity rather than inheriting a developer/runner's .git
+  // above TMPDIR. An unborn repository is sufficient; no author or commit.
+  const gitConfig = join(workspace, 'fixture.gitconfig')
+  await writeFile(gitConfig, '')
+  execFileSync('git', ['-c', 'init.templateDir=', '-c', 'init.defaultBranch=fixture', 'init', '--quiet', workspace], {
+    env: { ...process.env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: gitConfig },
+  })
   await writeFile(join(workspace, 'fixture.ts'), text)
   await writeFile(join(workspace, 'tsconfig.json'), '{"compilerOptions":{"strict":true},"include":["*.ts"]}')
   await writeFile(join(outside, 'outside.ts'), 'export const secret = 1')

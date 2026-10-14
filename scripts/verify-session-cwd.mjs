@@ -31,8 +31,17 @@ function check(name, ok, extra = '') {
 }
 
 // --- resolveSessionCwd -----------------------------------------------------
-const fixture = mkdtempSync(join(tmpdir(), 'dsh-cli-cwd-'))
+const fixtureRoot = mkdtempSync(join(tmpdir(), 'dsh-cli-cwd-'))
+const fixture = join(fixtureRoot, 'home')
+const initialHome = process.env.HOME
+const initialUserProfile = process.env.USERPROFILE
 try {
+  // Own the search boundary as well as the worktrees. A developer or hosted
+  // runner may have a .git above TMPDIR; that must not affect this fixture.
+  mkdirSync(fixture)
+  mkdirSync(join(fixtureRoot, '.git'))
+  process.env.HOME = fixture
+  process.env.USERPROFILE = fixture
   // Plain clone layout: repo/.git is a directory, launch from repo/sub/dir.
   const repo = join(fixture, 'repo')
   mkdirSync(join(repo, '.git'), { recursive: true })
@@ -58,7 +67,11 @@ try {
   )
   check('outside any worktree the launch directory survives', resolveSessionCwd(undefined, plain) === plain)
 } finally {
-  rmSync(fixture, { recursive: true, force: true })
+  if (initialHome === undefined) delete process.env.HOME
+  else process.env.HOME = initialHome
+  if (initialUserProfile === undefined) delete process.env.USERPROFILE
+  else process.env.USERPROFILE = initialUserProfile
+  rmSync(fixtureRoot, { recursive: true, force: true })
 }
 
 // --- sessionCwdMatches (/resume filter) -------------------------------------

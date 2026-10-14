@@ -96,6 +96,25 @@ const baseChannel = {
 }
 
 async function run() {
+  // Authoritative task states remain distinguishable and visible while idle,
+  // including Done/Ignore, with the identity/revision and host-permitted actions.
+  for (const status of ['ToDo', 'Working', 'Pending', 'Done', 'Ignore']) {
+    const { stdout, stderr, stdin } = makeStreams()
+    const channel = { ...baseChannel, todos: [{ source: 'kiokuko', content: 'Canonical task', status,
+      taskId: 'task-123', runId: 'task-123', revision: 7, generation: 1,
+      ...(status === 'Pending' ? { runStatus: 'failed', previousOutcome: { status: 'interrupted' } } : {}),
+      reason: 'Host-confirmed reason', evidence: ['receipt:verified'], allowedOps: ['resume'] }] }
+    const instance = await render(React.createElement(GoalTodoPanel, { channel }),
+      { stdout, stderr, stdin, exitOnCtrlC: false, patchConsole: false })
+    const deadline = Date.now() + 2000
+    while (!toPlain(stdout.frames.join('')).includes('/kioku-task resume') && Date.now() < deadline) await sleep(20)
+    const frame = toPlain(stdout.frames.join(''))
+    check(`canonical ${status} is visible while idle`, frame.includes(`[${status}] Canonical task`))
+    check(`${status} shows identity/revision`, frame.includes('task-123 · r7'))
+    check(`${status} shows host reason/evidence/actions`, frame.includes('Host-confirmed reason') && frame.includes('receipt:verified') && frame.includes('/kioku-task resume'))
+    if (status === 'Pending') check('failed and interrupted execution outcomes remain distinct', frame.includes('Execution: failed') && frame.includes('Previous execution: interrupted'))
+    instance.unmount()
+  }
   // 1. Empty channel -> nothing rendered.
   {
     const { stdout, stderr, stdin } = makeStreams()

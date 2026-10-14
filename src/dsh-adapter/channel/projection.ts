@@ -947,7 +947,9 @@ export function createChannelProjection(state: ProjectionState, deps: Projection
         // Match by name so the TUI remains loadable without that plugin.
         if ((event as { type: string }).type === 'todo/write') {
           const todos = todoPanelItems((event as unknown as { data?: unknown }).data)
-          if (todos !== undefined) state.todos = todos
+          // Native todo events own only their legacy rows. The Kiokuko task
+          // row is read from its host service after a committed SQLite change.
+          if (todos !== undefined) state.todos = [...state.todos.filter(todo => todo.source === 'kiokuko'), ...todos]
           break
         }
         // Logged preset switch (blank sessions only, issue #8): a transcript
