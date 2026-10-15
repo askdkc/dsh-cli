@@ -708,6 +708,8 @@ const GROUPS = {
 // 问卷折叠：真实 Chat + stores 验证审批/对话框优先、整屏中断层恢复、
 // abort 后 FIFO 请求身份隔离，以及改键和草稿保持（inline/fullscreen）。
     ["verify-question-fold", ['node', '--import', 'tsx/esm', 'scripts/verify-question-fold.tsx']],
+// Large generic question details must scroll without hiding the decision controls.
+    ["verify-question-detail-scroll", ['node', '--import', 'tsx/esm', 'scripts/verify-question-detail-scroll.tsx']],
 // 长问卷列表回归：24 行终端中的 36 个两行 provider 选项必须围绕
 // focusIndex 窗口化，初始和深度导航后焦点 label/单选标记始终可见。
     ["verify-askpanel-long-list", ['node', '--import', 'tsx/esm', 'scripts/verify-askpanel-long-list.tsx']],

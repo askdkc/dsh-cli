@@ -27,7 +27,8 @@
 
 import React from 'react'
 import { t } from '../../i18n.js'
-import { Box, Text, useInput, useTerminalSize } from '../../ui.js'
+import { Box, Text, useInput, ScrollBox, type ScrollBoxHandle, useTerminalSize } from '../../ui.js'
+import wrapText from '../../ink/wrap-text.js'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { Divider } from '../design-system/Divider.js'
 import { POINTER } from '../../terminal-utils/figures.js'
@@ -111,6 +112,8 @@ export type AskUserQuestionPanelProps = {
    *  multi-select submit row) render only then — inline hosts have no
    *  pointer, so an unclickable row would just eat a line. */
   readonly fullscreen?: boolean
+  /** Tell the containing screen when detail navigation belongs to this panel. */
+  readonly onDetailScrollChange?: (scrollable: boolean) => void
 }
 
 export function AskUserQuestionPanel({
@@ -127,6 +130,7 @@ export function AskUserQuestionPanel({
   onExpand,
   onToggleFold,
   fullscreen = false,
+  onDetailScrollChange,
 }: AskUserQuestionPanelProps): React.ReactNode {
   // Plan-mode's exit_plan_mode ask carries a presentation intent: render
   // the plan decision card instead of the generic questionnaire. The
@@ -142,7 +146,7 @@ export function AskUserQuestionPanel({
   const options = question.options ?? []
   const multiSelect = question.multiSelect === true
   const hideCustomInput = question.hideCustomInput === true && options.length > 0
-  const { rows: terminalRows } = useTerminalSize()
+  const { rows: terminalRows, columns: terminalColumns } = useTerminalSize()
   /** Rows: the real options plus the inline input row at the tail. */
   const rowCount = options.length + (hideCustomInput ? 0 : 1)
   // A saved draft wins over the wizard's default selection (returning to a
@@ -193,24 +197,7 @@ export function AskUserQuestionPanel({
   const [error, setError] = React.useState<string | null>(null)
 
   const inputFocused = !hideCustomInput && focusIndex === options.length
-  // Chat chrome + panel scaffolding consume twelve rows before the option
-  // list: status line, outer/divider/question/list/hint spacing and content.
-  // Optional header/detail/input/error rows are charged explicitly. Long
-  // lists then use fixed one/two-line rows so listWindow's budget is exact;
-  // short questionnaires retain their existing wrapped presentation.
-  const detailRows = question.detail === undefined ? 0 : question.detail.split('\n').length + 1
-  const reservedRows = 12
-    + (question.header === undefined ? 0 : 1)
-    + detailRows
-    + (hideCustomInput ? 0 : 1)
-    + (error === null ? 0 : 2)
-  const optionBudget = Math.max(terminalRows - reservedRows, 2)
-  const optionHeights = options.map(option => option.description === undefined ? 1 : 2)
-  const windowedOptions = optionHeights.reduce((sum, height) => sum + height, 0) > optionBudget
-  const optionFocus = Math.min(focusIndex, Math.max(options.length - 1, 0))
-  const optionWindow = windowedOptions
-    ? listWindow(optionHeights, optionFocus, optionBudget)
-    : { start: 0, end: options.length }
+  const detailScrollRef = React.useRef<ScrollBoxHandle | null>(null)
 
   // Park the native terminal cursor on the custom-answer caret: terminal
   // emulators render IME preedit (pinyin) at the physical cursor, so without
@@ -383,6 +370,20 @@ export function AskUserQuestionPanel({
         onExpand?.()
         event.stopImmediatePropagation()
       }
+      return
+    }
+    // Detail scroll never changes the selected answer. Home/End retain
+    // their ordinary caret meaning while the custom answer is focused.
+    if (detailOverflow && (key.wheelUp || key.wheelDown || key.pageUp || key.pageDown
+      || (!inputFocused && (key.home || key.end)))) {
+      const scroll = detailScrollRef.current
+      if (key.home) scroll?.scrollTo(0)
+      else if (key.end) scroll?.scrollToBottom()
+      else {
+        const page = Math.max(1, (scroll?.getViewportHeight() ?? detailViewportRows) - 1)
+        scroll?.scrollBy(key.wheelUp ? -3 : key.wheelDown ? 3 : key.pageUp ? -page : page)
+      }
+      event.stopImmediatePropagation()
       return
     }
     if (key.ctrl && input === 'c') {
@@ -683,6 +684,7 @@ export function AskUserQuestionPanel({
         ...(multiSelect && checked.size > 0 ? [t('question-hint-selected', { n: checked.size })] : []),
         t('question-fold-hint', { combo: foldCombo }),
       ]
+
     : [
         t('question-hint-select'),
         ...(multiSelect ? [t('question-hint-multi')] : []),
@@ -693,6 +695,55 @@ export function AskUserQuestionPanel({
         ...(multiSelect && checked.size > 0 ? [t('question-hint-selected', { n: checked.size })] : []),
         t('question-fold-hint', { combo: foldCombo }),
       ]
+
+  // Keep the decision rows outside the scrollable detail. Count wrapped
+  // display rows, not newlines: a single long JSON string can fill a screen.
+  // PageMargin already subtracts its inset; allow the panel's padding and
+  // the interrupt lane's additional two columns when measuring text.
+  const contentWidth = Math.max(1, terminalColumns - 6)
+  const textRows = (text: string, width = contentWidth): number =>
+    Math.max(1, wrapText(text, width, 'wrap').split('\n').length)
+  const optionHeights = options.map(option => option.description === undefined ? 1 : 2)
+  const naturalOptionRows = options.reduce((sum, option) => sum
+    + textRows(option.label, Math.max(1, contentWidth - 3))
+    + (option.description === undefined ? 0 : textRows(option.description, Math.max(1, contentWidth - 3))), 0)
+  const hint = hintParts.join(' · ')
+  const customRows = hideCustomInput ? 0 : textRows(
+    `${t('question-custom-tab')}${attached === null ? '' : t('question-attached-label', { label: attached })}：${customText || t('question-direct-input')} `,
+    Math.max(1, contentWidth - 3),
+  )
+  // Outer margin, divider, question/list/footer gaps, and the host status row.
+  const fixedRows = 6 + textRows(question.question)
+    + (question.header === undefined ? 0 : textRows(`◈ ${question.header}`))
+    + customRows + textRows(hint)
+    + (error === null ? 0 : 1 + textRows(error))
+    + (multiSelect && fullscreen && (checked.size > 0 || customText !== '') ? 2 : 0)
+  const hasDetail = question.detail !== undefined
+  // A long list shares the remaining space with at least one detail row
+  // and its navigation hint. Ordinary questions keep the existing budget.
+  const optionBudget = hasDetail
+    ? Math.max(2, terminalRows - fixedRows - 4)
+    : Math.max(terminalRows - 12 - (question.header === undefined ? 0 : 1)
+      - (hideCustomInput ? 0 : 1) - (error === null ? 0 : 2), 2)
+  const windowedOptions = (hasDetail ? naturalOptionRows : optionHeights.reduce((sum, height) => sum + height, 0)) > optionBudget
+  const optionFocus = Math.min(focusIndex, Math.max(options.length - 1, 0))
+  const optionWindow = windowedOptions
+    ? listWindow(optionHeights, optionFocus, optionBudget)
+    : { start: 0, end: options.length }
+  const displayedOptionRows = windowedOptions
+    ? optionHeights.slice(optionWindow.start, optionWindow.end).reduce((sum, height) => sum + height, 0)
+    : naturalOptionRows
+  const focusGap = !windowedOptions || inputFocused ? 1 : 0
+  const naturalDetailRows = hasDetail ? textRows(question.detail!) : 0
+  const detailBudget = Math.max(1, terminalRows - fixedRows - displayedOptionRows - focusGap - 1)
+  const detailOverflow = naturalDetailRows > detailBudget
+  const detailViewportRows = Math.min(naturalDetailRows, Math.max(1, detailBudget - (detailOverflow ? 1 : 0)))
+  React.useEffect(() => {
+    onDetailScrollChange?.(!collapsed && detailOverflow)
+  }, [collapsed, detailOverflow, onDetailScrollChange])
+  const detailLines = question.detail?.split('\n').map((line, index) => (
+    <Text key={index} dimColor italic wrap="wrap">{line}</Text>
+  ))
 
   // Folded: render only the minimized bar. This branch sits AFTER every
   // hook (and after the intent early-return), so folding never reorders
@@ -722,12 +773,13 @@ export function AskUserQuestionPanel({
           {question.question}
         </Text>
         {question.detail !== undefined && (
-          <Box flexDirection="column" marginTop={1}>
-            {question.detail.split('\n').map((line, index) => (
-              <Text key={index} dimColor italic wrap="wrap">
-                {line}
-              </Text>
-            ))}
+          <Box flexDirection="column" marginTop={1} flexShrink={0}>
+            {detailOverflow ? (
+              <ScrollBox ref={detailScrollRef} flexDirection="column" height={detailViewportRows} flexShrink={0}>
+                <Box flexDirection="column" flexShrink={0}>{detailLines}</Box>
+              </ScrollBox>
+            ) : detailLines}
+            {detailOverflow && <Text dimColor wrap="truncate">{t(inputFocused ? 'question-detail-page-hint' : 'question-detail-scroll-hint')}</Text>}
           </Box>
         )}
       </Box>
@@ -738,7 +790,7 @@ export function AskUserQuestionPanel({
         </Box>
       )}
       <Box marginTop={1}>
-        <Text dimColor>{hintParts.join(' · ')}</Text>
+        <Text dimColor>{hint}</Text>
       </Box>
     </Box>
   )

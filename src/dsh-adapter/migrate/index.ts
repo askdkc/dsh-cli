@@ -14,7 +14,7 @@
  * @module dsh-cli/migrate
  */
 import { Context } from '@deepseek-ai/cordis'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as jsonlPersistencePlugin from '@deepseek-ai/dsh-session-persistence-jsonl'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
@@ -26,6 +26,11 @@ import { zcodeAdapter } from './adapters/zcode.js'
 import { sessionize } from './sessionize.js'
 import type { MigrationAdapter, MigrationSession } from './types.js'
 import { migrationUuid } from './uuid.js'
+
+// Earlier hosts export a plugin class; newer hosts expose the Cordis plugin namespace.
+const JsonlSessionPersistence = 'default' in jsonlPersistencePlugin
+  ? jsonlPersistencePlugin.default
+  : jsonlPersistencePlugin
 
 export const MIGRATION_ADAPTERS: readonly MigrationAdapter[] = [
   claudeCodeAdapter,

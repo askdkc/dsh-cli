@@ -696,6 +696,16 @@ export function Chat({
    *  successor without ever publishing an idle (null) snapshot. */
   const [minimizedQuestionKey, setMinimizedQuestionKey] = React.useState<string | null>(null)
   const questionMinimized = questionSnapshot !== null && minimizedQuestionKey === questionSnapshot.key
+  const [questionDetailScroll, setQuestionDetailScroll] = React.useState<{ key: string; active: boolean } | null>(null)
+  const questionKey = questionSnapshot?.key
+  const onQuestionDetailScrollChange = React.useCallback((active: boolean) => {
+    if (questionKey === undefined) return
+    setQuestionDetailScroll(previous => previous?.key === questionKey && previous.active === active
+      ? previous : { key: questionKey, active })
+  }, [questionKey])
+  const questionOwnsDetailNavigation = !questionMinimized
+    && questionKey !== undefined && questionDetailScroll?.key === questionKey && questionDetailScroll.active
+    && approvalSnapshot === null && dialogSnapshot === null
   /** Fold state for the GoalTodoPanel todo section (ctrl/cmd+q or click). */
   const [todoCollapsed, setTodoCollapsed] = React.useState(false)
   const [thinkingVisible, setThinkingVisible] = React.useState(true)
@@ -3140,6 +3150,9 @@ export function Chat({
         overlay.kind !== 'none' &&
         (overlay.kind !== 'workspace-picker' || workspaceTargets.length > 0)
       if (overlayModal) return
+      // Position-routed wheel over the transcript was already handled there.
+      // An expanded, overflowing detail owns fallback wheel on its controls.
+      if (questionOwnsDetailNavigation) return
       handle?.scrollBy(key.wheelUp ? -3 : 3)
       event.stopImmediatePropagation()
       return
@@ -3161,18 +3174,16 @@ export function Chat({
     // tree, settings, scenes, dashboards) already claimed the keyboard — those
     // surfaces page their own lists with these keys.
     //
-    // The question/approval/dialog panels deliberately do NOT yield: like the
-    // wheel branch above (whose comment spells this out), those panels mount
-    // BELOW the transcript — replacing the prompt, not covering it — so the
-    // transcript above them stays visible and scrollable while a decision is
-    // pending. The panels bind ↑/↓/Space/Tab/Enter/Esc and never these keys,
-    // so paging cannot steal anything from them.
+    // Ordinary question/approval/dialog panels leave paging to the visible
+    // transcript above them. An expanded question with overflowing detail
+    // owns these keys instead, so every part of the pending review is readable.
     if ((key.pageUp || key.pageDown) && fullscreen) {
       if (helpOpen) return
       const overlayModal =
         overlay.kind !== 'none' &&
         (overlay.kind !== 'workspace-picker' || workspaceTargets.length > 0)
       if (overlayModal) return
+      if (questionOwnsDetailNavigation) return
       // One less than the viewport keeps a row of context so a page never
       // reads as a blank jump; a not-yet-measured handle falls back to a
       // fixed page rather than paging by 0 (a dead key). The final page
@@ -4011,6 +4022,7 @@ export function Chat({
       onToggleFold={() => setMinimizedQuestionKey(previous =>
         previous === questionSnapshot.key ? null : questionSnapshot.key)}
       fullscreen={fullscreen}
+      onDetailScrollChange={onQuestionDetailScrollChange}
     />
   ) : null
   const interruptPanel = approvalPanelNode ?? questionPanelNode

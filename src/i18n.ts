@@ -1059,6 +1059,8 @@ const dict = {
   'question-header-progress': { zh: ' 📋 提问 · 第 {{position}}/{{total}} 题{{remaining}} ', en: ' 📋 Question {{position}}/{{total}} {{remaining}} ' },
   'question-remaining-more': { zh: ' · 还剩 {{n}} 题', en: ' · {{n}} left' },
   'question-hint-type': { zh: '输入回答', en: 'Type answer' },
+  'question-detail-page-hint': { zh: 'PgUp/PgDn 滚动详情', en: 'PgUp/PgDn scroll details' },
+  'question-detail-scroll-hint': { zh: 'PgUp/PgDn 滚动详情 · Home/End 首尾', en: 'PgUp/PgDn scroll details · Home/End start/end' },
   'question-hint-paste': { zh: 'Ctrl+V 粘贴', en: 'Ctrl+V paste' },
   'question-hint-enter': { zh: 'Enter 提交', en: 'Enter submit' },
   'question-hint-back': { zh: '↑ 返回选项', en: '↑ back to options' },
