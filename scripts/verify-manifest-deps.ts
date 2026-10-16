@@ -55,18 +55,22 @@ for (const section of ['dependencies', 'optionalDependencies'] as const) {
   }
 }
 
+// Dev-only native fixtures must follow the same channel policy as framework peers.
+for (const [name, range] of Object.entries(manifest.devDependencies ?? {})) {
+  if (name !== '@deepseek-ai/dsh' && !name.startsWith('@deepseek-ai/dsh-')) continue
+  if (typeof range !== 'string'
+    || (range !== '*' && (validRange(range) !== null || !/^[a-z][a-z0-9-]*$/u.test(range)))) {
+    failures.push(`${name} devDependency must use * or a release channel, not a release pin`)
+  }
+}
+
 const peers: string[] = Object.keys(manifest.peerDependencies ?? {}).filter((name) => FRAMEWORK.test(name))
 for (const name of peers) {
   const peerRange = manifest.peerDependencies[name]
   const devRange = manifest.devDependencies?.[name]
   if (devRange === undefined) {
     failures.push(`${name} is a peerDependency without a matching devDependency (local type-check would break)`)
-  } else if (name.startsWith('@deepseek-ai/dsh-') || name === '@deepseek-ai/dsh') {
-    if (typeof devRange !== 'string'
-      || (devRange !== '*' && (validRange(devRange) !== null || !/^[a-z][a-z0-9-]*$/u.test(devRange)))) {
-      failures.push(`${name} devDependency must use * or a release channel, not a release pin`)
-    }
-  } else if (devRange !== peerRange) {
+  } else if (!name.startsWith('@deepseek-ai/dsh-') && name !== '@deepseek-ai/dsh' && devRange !== peerRange) {
     failures.push(`${name} range mismatch: peer=${peerRange} vs dev=${devRange}`)
   }
   if (manifest.peerDependenciesMeta?.[name]?.optional !== true) {

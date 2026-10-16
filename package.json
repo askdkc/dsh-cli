@@ -507,8 +507,8 @@
     "@deepseek-ai/dsh-authorization": "alpha",
     "@deepseek-ai/dsh-credentials": "alpha",
     "@askdkc/dsh-lsp-server": "0.1.14",
-    "@deepseek-ai/dsh-subprocess-local": "0.2.1-alpha.1",
-    "@deepseek-ai/dsh-http-proxy": "0.2.1-alpha.1"
+    "@deepseek-ai/dsh-subprocess-local": "alpha",
+    "@deepseek-ai/dsh-http-proxy": "alpha"
   },
   "dsh": {
     "bundle": {

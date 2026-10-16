@@ -218,7 +218,7 @@ importers:
         specifier: alpha
         version: 0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)
       '@deepseek-ai/dsh-http-proxy':
-        specifier: 0.2.1-alpha.1
+        specifier: alpha
         version: 0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)
       '@deepseek-ai/dsh-launch-environment':
         specifier: alpha
@@ -290,7 +290,7 @@ importers:
         specifier: alpha
         version: 0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-http-proxy@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))
       '@deepseek-ai/dsh-subprocess-local':
-        specifier: 0.2.1-alpha.1
+        specifier: alpha
         version: 0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-subprocess@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)(@deepseek-ai/dsh-http-proxy@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4)))(@deepseek-ai/dsh-timeout@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.4))
       '@deepseek-ai/dsh-system-prompt':
         specifier: alpha

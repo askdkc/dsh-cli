@@ -33,6 +33,7 @@ root.tools.register({ name: 'fenced_eval', description: 'Fixture', parameters: {
 root.tools.register({ name: 'native_write', description: 'Fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { effects++; return 1 } } as never)
 const execute = (name = 'fenced_eval', nativeAgent = agent) => root.tools.execute({ name, callId: crypto.randomUUID(), arguments: {}, agent: nativeAgent, signal: new AbortController().signal } as never)
 let lease: any, retainedContext: any
+let ownerCommand: (() => void) | undefined
 let allow = true, ready = true
 let rewrite = false
 let stepGate: Promise<void> | undefined
@@ -52,11 +53,23 @@ const ownerPlugin = { name: 'fence-owner', apply(ctx: any) {
     return ready
   } })
   lease.protect(session.id)
+  ownerCommand = () => lease.protect(session.id)
 } }
 
 try {
   const owner = root.plugin(ownerPlugin)
   await owner
+  // A registered command runs in the dispatcher's async activation, while
+  // its opaque lease remains bound to the original plugin activation.
+  let commandInvoked = false
+  const dispatch = root.plugin({ name: 'native-command-dispatcher', apply() {
+    assert.ok(ownerCommand)
+    ownerCommand()
+    commandInvoked = true
+  } })
+  await dispatch
+  assert.equal(commandInvoked, true, 'live owner command must work through another activation')
+  await dispatch.dispose()
   // Restoring saved modes must not omit protection after an arbitrary cap.
   for (let index = 0; index < 5000; index++) lease.protect(`restored-${index}`)
   for (let index = 0; index < 5000; index++) lease.release(`restored-${index}`)

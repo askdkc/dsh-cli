@@ -162,7 +162,9 @@ export class ExecutionFenceRuntime extends Service {
     const revoke = () => { if (state.attachment === attachment) delete state.attachment }
     if (!bindCallerEffect(caller, revoke)) throw new Error('dsh-cli: execution fence activation is inactive')
     const assertOwner = () => {
-      requirePluginCaller(caller, 'executionFences lease', this)
+      // This opaque lease already pins the authenticated owner at attach.
+      // Command/tool callbacks may run in a different dispatch activation;
+      // keep checking the pinned lifetime instead of reauthenticating that pipeline.
       if (state.attachment !== attachment || !current()) throw new Error('dsh-cli: execution fence activation is stale')
     }
     return Object.freeze({
