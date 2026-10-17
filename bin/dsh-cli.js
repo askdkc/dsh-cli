@@ -1152,52 +1152,38 @@ const bootstrapProfile = () => {
   }
 }
 
-/** Installed version of the profile copy, or undefined when it is absent/unreadable. */
-const profileVersion = () => {
-  try {
-    return JSON.parse(readFileSync(installedPkgPath, 'utf8')).version
-  } catch {
-    return undefined
-  }
-}
-
-/**
- * Guard the launcher/profile version boundary. The two copies ship in the same
- * npm package but are installed independently (`npm i -g` vs `dsh plugin add`),
- * so one of them being upgraded alone is a normal state. It must be caught
- * here: dsh composes the launcher's patch surface with the profile's packages,
- * and a skew fails deep inside the dsh loader
- * (`ERR_PACKAGE_PATH_NOT_EXPORTED` on a subpath the older copy does not
- * export) instead of with a message the user can act on. Runs on the
- * delegation path as well as the in-profile path, because the delegated child
- * is itself the profile copy and can no longer see the outer launcher.
- * @param installedVersion - The profile copy's version.
- */
-const checkProfileAlignment = installedVersion => {
-  if (installedVersion === undefined || ownVersion === undefined || installedVersion === ownVersion) return
-  const majorMinor = v => v.split('-')[0].split('.').slice(0, 2).map(Number)
-  const [installedMajor, installedMinor] = majorMinor(installedVersion)
-  const [ownMajor, ownMinor] = majorMinor(ownVersion)
-  if (installedMajor < ownMajor || (installedMajor === ownMajor && installedMinor < ownMinor)) {
-    console.error(
-      `[dsh-cli] cannot start: the profile runs v${installedVersion} but this launcher is v${ownVersion}.\n` +
-        `  dsh plugin --profile ${PROFILE} add ${PACKAGE}@${ownVersion}`,
-    )
+/** Resolve the entries consumed by this launcher's actual bundle patch.
+ * A profile's release label cannot establish whether these APIs exist.
+ * Resolve in the profile directory so the outer launcher cannot satisfy a
+ * missing profile export with its own package copy. No plugin is imported. */
+const checkProfileCompatibility = () => {
+  const required = new Set([PACKAGE])
+  let patch
+  try { patch = readFileSync(join(ownDir, 'cordis.patch.yml'), 'utf8') }
+  catch {
+    console.error('[dsh-cli] cannot start: launcher bundle patch is unreadable')
     process.exit(1)
   }
-  if (isVersionNewer(installedVersion, ownVersion)) {
-    console.error(
-      `[dsh-cli] note: the profile is already v${installedVersion}; this launcher copy is v${ownVersion}.\n` +
-        `  npm install -g --legacy-peer-deps ${PACKAGE}@${installedVersion}\n` +
-        `(--legacy-peer-deps avoids an npm 12 peer-resolution crash, see issue #459)`,
-    )
-  } else {
-    // profile 更旧但同 minor（patch 级错位）：允许启动，指引用 add 把
-    // profile 对齐到启动器版本（精确版本，@latest 可能越过对齐点）。
-    console.error(
-      `[dsh-cli] note: the profile is running v${installedVersion} but this launcher is v${ownVersion}.\n` +
-        `  dsh plugin --profile ${PROFILE} add ${PACKAGE}@${ownVersion}`,
-    )
+  for (const match of patch.matchAll(/^\s*name:\s*['"]?(@askdkc\/dsh-cli(?:\/[\w-]+)?)['"]?\s*(?:#.*)?$/gmu)) required.add(match[1])
+  const probe = spawnSync(process.execPath, ['--input-type=module', '--eval', `
+    import { accessSync, constants } from 'node:fs'
+    import { fileURLToPath } from 'node:url'
+    const missing = []
+    for (const entry of JSON.parse(process.argv[1])) {
+      try { accessSync(fileURLToPath(import.meta.resolve(entry)), constants.R_OK) }
+      catch { missing.push(entry) }
+    }
+    console.log(JSON.stringify(missing))
+    process.exitCode = missing.length ? 1 : 0
+  `, JSON.stringify([...required])], {
+    cwd: profileDir, encoding: 'utf8', timeout: 10_000,
+  })
+  let missing
+  try { missing = JSON.parse(probe.stdout) } catch { missing = ['Node package resolver'] }
+  if (probe.error || probe.status !== 0 || !Array.isArray(missing) || missing.length) {
+    console.error(`[dsh-cli] cannot start: profile missing required entry APIs: ${Array.isArray(missing) ? missing.join(', ') : 'Node package resolver'}.`)
+    console.error(`  Rebuild or install a ${PACKAGE} profile providing these entries.`)
+    process.exit(1)
   }
 }
 
@@ -1286,10 +1272,8 @@ if (subcommand === 'migrate') {
 // 的沙箱用它直接驱动全量路径；现场排查委托链时同样可用）。
 if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_CLI_NO_DELEGATE !== '1') {
   if (!profileReady()) bootstrapProfile()
-  // Refuse to delegate into a profile from an older release line: the profile
-  // copy would launch `dsh --profile dsh-cli` against a composition built from
-  // this launcher's patch surface and fail inside the loader.
-  checkProfileAlignment(profileVersion())
+  // Refuse only when this patch cannot resolve its required profile entries.
+  checkProfileCompatibility()
   // 委托 profile 内副本执行全部启动逻辑。外层代际通过
   // DSH_CLI_LAUNCHER_VERSION 交代（/update 的对齐诊断沿用该契约）。
   try {
@@ -1331,11 +1315,8 @@ if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_CLI_NO_
       installedVersion = undefined
     }
   }
-  // 版本错位诊断与瘦壳委托路径共用同一实现（见 checkProfileAlignment）。
-  // `!runningInsideProfile` 只在 DSH_CLI_NO_DELEGATE=1 的调试口下成立，因此
-  // 该判定不能只留在这里——委派出去的子进程就是 profile 副本，看不到外层
-  // 启动器版本。
-  if (!runningInsideProfile) checkProfileAlignment(installedVersion)
+  // The profile copy validates its own patch too, including direct invocations.
+  checkProfileCompatibility()
 
   // --resume / 工作区目标拦截（launcher 契约，见 src/sessionHistory.ts）。
   const setResumeEnv = sessionId => {

@@ -7,6 +7,7 @@
  * @module dsh-cli
  */
 import type { Context } from '@deepseek-ai/cordis'
+import { assertCordisLifecycle } from './contract.js'
 import Schema from '@deepseek-ai/schemastery'
 import type { SessionModeSpec } from '../sessionModes.js'
 import { DEFAULT_STATUS_BAR, normalizePageMargin, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../cliDisplayPrefs.js'
@@ -238,6 +239,7 @@ export const Config: Schema<Config, RuntimeConfig<Config>> = editableConfig<Conf
  * @returns a promise settling when the Loader entry has scheduled its runtime.
  */
 export async function apply(ctx: Context, config: RuntimeConfig<Config>): Promise<void> {
+  assertCordisLifecycle(ctx)
   const { apply: tuiApply, handleStartupError } = await import('./plugin.js')
   let disposed = false
   ctx.effect(() => () => { disposed = true })

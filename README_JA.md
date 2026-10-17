@@ -40,7 +40,7 @@
 
 ## クイックスタート
 
-[Node.js](https://nodejs.org/en) `^22.19 || >=24`、pnpm 11、依存関係をインストール済みの
+[Node.js](https://nodejs.org/en) `>=22.19.0`、pnpm 11、依存関係をインストール済みの
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) ソース checkout、
 `DEEPSEEK_API_KEY` が必要です。基本的にDSH最新版サポートを目指します。
 互換性はインストール済みパッケージと上流の既定ブランチで検証し、対応版のリストは設けません。詳細は [ADAPTER.md](ADAPTER.md) を参照してください。

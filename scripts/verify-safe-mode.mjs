@@ -289,11 +289,15 @@ const cleanManifest = {
 // --- fallback 触发矩阵（非 TTY：spawnSync 默认管道，stdin 非 TTY）--------------
 {
   const stub = makeStub()
-  // profile 已装且与启动器同版：版本核对不产生额外输出，stderr 断言干净。
+  // Give fallback a usable profile: the launcher checks actual patch entries
+  // before starting dsh, independently of the profile's release label.
   const profHome = join(tmp, 'fb-home')
   const pkgDir = join(profHome, 'profiles', 'dsh-cli', 'node_modules', '@askdkc', 'dsh-cli')
   mkdirSync(pkgDir, { recursive: true })
-  writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: PACKAGE, version: ownVersion }))
+  const exports = Object.fromEntries(Object.keys(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).exports)
+    .map(key => [key, './fixture-entry.js']))
+  writeFileSync(join(pkgDir, 'package.json'), JSON.stringify({ name: PACKAGE, version: ownVersion, exports }))
+  writeFileSync(join(pkgDir, 'fixture-entry.js'), 'export function apply() {}\n')
   const runFb = (env = {}) => run([], { PATH: stub.dir, DSH_STUB_STATE: stub.state, DSH_HOME: profHome, DSH_CLI_NO_DELEGATE: '1', ...env })
   {
     const r = runFb()

@@ -13,7 +13,7 @@
  *
  * Both paths fail → silent degradation (AC-4): no error, no retry,
  * connected=false, every other TUI feature unaffected. The client is Node's
- * native WebSocket global (engines ^22.19 || >=24, D5) — zero dependencies
+ * native WebSocket global (engines >=22.19.0, D5) — zero dependencies
  * and no auto-reconnect (degrade-on-drop is the design).
  *
  * Protocol constants here are a cross-repo contract (the extension's server

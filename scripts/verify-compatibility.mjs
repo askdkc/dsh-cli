@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
 const cases = [
+ ['runtime-floor', ['scripts/compatibility/runtime-floor.mjs']],
  ['upstream', ['scripts/compatibility/upstream.mjs']],
  ['logo', ['scripts/compatibility/logo.mjs'], { NODE_ENV: 'production' }],
  ['locks', ['scripts/compatibility/locks.mjs']],

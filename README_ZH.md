@@ -40,7 +40,7 @@
 
 ## 快速开始
 
-需要 [Node.js](https://nodejs.org/zh-cn) `^22.19 || >=24`、pnpm 11、
+需要 [Node.js](https://nodejs.org/zh-cn) `>=22.19.0`、pnpm 11、
 已安装依赖的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
 源码检出，以及 `DEEPSEEK_API_KEY`。目标是支持最新版本的 DSH。
 兼容性通过已安装包和上游默认分支验证，不维护发布版本白名单；详见 [ADAPTER.md](ADAPTER.md)。

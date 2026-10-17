@@ -28,8 +28,7 @@ import { Writable, PassThrough } from 'node:stream'
 import React from 'react'
 import xtermHeadless from '@xterm/headless'
 const { Terminal: XTerm } = xtermHeadless
-import { render } from '../lib/types/ui.js'
-import { Chat } from '../lib/types/screens/Chat.js'
+import { registerHooks } from 'node:module'
 import { setLang } from '../lib/types/i18n.js'
 import {
   actionMatches,
@@ -44,6 +43,24 @@ import {
   setKeymapOverrides,
 } from '../lib/types/utils/keymap.js'
 import { settle, settled, sleep, viewportLines } from './lib/term-test.mjs'
+
+// Intercept the application's clipboard module before importing the live UI.
+// Keep its real formatting helpers; no test keypress may read the host clipboard.
+const clipboardUrl = new URL('../lib/types/utils/clipboard.js', import.meta.url).href
+const fixtureText = 'KEYMAP_FIXTURE_PASTE'
+const fixtureSource = `export * from ${JSON.stringify(clipboardUrl + '?keymap-formatters')};
+  let count = 0, content = { kind: 'text', text: ${JSON.stringify(fixtureText)} };
+  export const fixtureReadCount = () => count;
+  export const setFixtureClipboard = value => { content = value };
+  export async function readClipboard() { count++; return content; }`
+const fixtureUrl = 'data:text/javascript,' + encodeURIComponent(fixtureSource)
+const clipboardHook = registerHooks({ resolve(specifier, context, nextResolve) {
+  const resolved = nextResolve(specifier, context)
+  return resolved.url === clipboardUrl ? { url: fixtureUrl, shortCircuit: true } : resolved
+} })
+const { fixtureReadCount, setFixtureClipboard } = await import(clipboardUrl)
+const { render } = await import('../lib/types/ui.js')
+const { Chat } = await import('../lib/types/screens/Chat.js')
 
 let failed = 0
 function check(name, ok, extra = '') {
@@ -120,13 +137,8 @@ check('conflict: another action cannot borrow the fixed ctrl+u', draftComboConfl
 resetKeymapOverrides()
 
 // ---- live Chat: Alt+V triggers the paste branch ---------------------------
-// The host clipboard is whatever it happens to be, so the deterministic
-// proof is indirect but airtight: with meta held, the typing branch can
-// never insert a character (PromptInput excludes modified keys), so ANY
-// prompt change or clipboard notification after the keypress can only come
-// from the paste branch consuming it. $VISUAL/$EDITOR are cleared so the
-// editor check resolves via the unavailable-notify path instead of
-// spawning a real editor that would hold the output pipes open.
+// Synthetic clipboard contents prove routing through the real paste consumer.
+// Clear editor configuration so the editor check cannot launch a real editor.
 delete process.env.VISUAL
 delete process.env.EDITOR
 const term = new XTerm({ cols: 110, rows: 34, scrollback: 100, allowProposedApi: true })
@@ -254,30 +266,28 @@ check('plain v types', await settled(() => promptText() === 'v'), JSON.stringify
 stdin.write('\x03')
 check('ctrl+c clears the prompt', await settled(() => promptText() === ''), JSON.stringify(promptText()))
 
-// Alt+V arrives as ESC v. Whatever the clipboard holds, the paste branch
-// must consume the key: a prompt change or a clipboard notification are
-// the only possible outcomes (typing 'v' with meta held is impossible).
-const beforeAltV = promptText()
+// Both bindings must invoke the reader exactly once and insert its exact text.
 notifications.length = 0
 stdin.write('\x1bv')
-check(
-  'alt+v reaches the clipboard paste branch',
-  await settled(() => promptText() !== beforeAltV || clipboardNotice()),
-  JSON.stringify({ before: beforeAltV, after: promptText(), notices: notifications.map(n => n.text) }),
-)
-check('alt+v does not type a bare v on an empty clipboard', clipboardNotice() || promptText() !== 'v')
-
-// Ctrl+V (0x16) goes through the same branch.
+check('alt+v reaches the clipboard paste branch',
+  await settled(() => promptText() === fixtureText && fixtureReadCount() === 1),
+  JSON.stringify({ prompt: promptText(), reads: fixtureReadCount() }))
 stdin.write('\x03')
 await settle(() => promptText() === '')
-const beforeCtrlV = promptText()
 notifications.length = 0
 stdin.write('\x16')
-check(
-  'ctrl+v reaches the clipboard paste branch',
-  await settled(() => promptText() !== beforeCtrlV || clipboardNotice()),
-  JSON.stringify({ before: beforeCtrlV, after: promptText(), notices: notifications.map(n => n.text) }),
-)
+check('ctrl+v reaches the clipboard paste branch',
+  await settled(() => promptText() === fixtureText && fixtureReadCount() === 2),
+  JSON.stringify({ prompt: promptText(), reads: fixtureReadCount() }))
+
+setFixtureClipboard(null)
+stdin.write('\x03')
+await settle(() => promptText() === '')
+notifications.length = 0
+stdin.write('\x1bv')
+check('empty clipboard reaches the paste consumer',
+  await settled(() => fixtureReadCount() === 3 && clipboardNotice()))
+check('alt+v does not type a bare v on an empty clipboard', promptText() === '')
 
 // Remap the editor action to alt+g and verify the external-editor branch
 // takes the key: with $VISUAL/$EDITOR unset the outcome is the
@@ -294,5 +304,6 @@ check('default ctrl+g no longer matches after remap', !actionMatches('editor', '
 resetKeymapOverrides()
 
 instance.unmount()
+clipboardHook.deregister()
 console.log(failed === 0 ? '\nall keymap checks passed' : `\n${failed} keymap check(s) failed`)
 process.exit(failed === 0 ? 0 : 1)

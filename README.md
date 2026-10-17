@@ -41,7 +41,7 @@ This is dkc's independently developed fork of [dsh-TUI by chimney](https://githu
 
 ## Quick Start
 
-Requires [Node.js](https://nodejs.org/en) `^22.19 || >=24`, pnpm 11, a
+Requires [Node.js](https://nodejs.org/en) `>=22.19.0`, pnpm 11, a
 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) source
 checkout with dependencies installed, and `DEEPSEEK_API_KEY`. We aim to support
 current DSH APIs. Compatibility is checked against installed packages and the

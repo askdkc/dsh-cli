@@ -12,10 +12,12 @@ UI 层(`screens/`、`components/`、`ink/`、`hooks/`、`utils/`、`terminal-uti
 
 ## 上游契约
 
-- DSH peer 范围为 `*`；dev 和 standalone host 跟随可移动的 `alpha` 发布通道，不维护版本白名单。
+- 宿主 peer 范围为 `*`；Cordis/Schemastery 开发依赖跟随 `latest`，DSH dev 和 standalone host 跟随可移动的 `alpha` 发布通道，不维护版本白名单。
   pnpm 的 frozen-lockfile 检查不允许 `*` 对应 prerelease，所以获取依赖使用 dist-tag。
   兼容性由实际 API、类型和 patch 所有权验证。
-- `verify:contract` 检查 blessed list 中的开发依赖是否存在；Cordis/Schemastery 保留各自的 major 契约。
+- `verify:contract` 检查 blessed list 中的开发依赖是否存在；Cordis/Schemastery 不比较 major；实际 lifecycle、Schema API 和类型检查决定可用性。
+- Node 保留既有最低运行环境 `22.19.0`，不因后续 major/奇偶标签排除运行环境；实际启动与 API 检验仍然必需。
+- launcher/profile 通过 Node 从 profile 解析实际 bundle patch 的入口与文件，不用产品版号差异决定兼容性。
 - 新旧 DSH 版本号本身不触发启动警告或降级提示。缺失 API 仍由 adapter 和集成测试报告。
 
 ## Patch Surface

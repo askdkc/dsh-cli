@@ -24,7 +24,7 @@ importers:
         specifier: 4.0.21
         version: 4.0.21
       '@deepseek-ai/cordis':
-        specifier: ^4.0.1
+        specifier: latest
         version: 4.0.1
       '@deepseek-ai/dsh-attachment':
         specifier: alpha
@@ -51,7 +51,7 @@ importers:
         specifier: alpha
         version: 0.2.1-alpha.1(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-llm@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.1))(@deepseek-ai/dsh-typert-protocol@0.2.1-alpha.1(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/schemastery':
-        specifier: ^3.18.1
+        specifier: latest
         version: 3.18.1
       '@types/node':
         specifier: ^22.0.0

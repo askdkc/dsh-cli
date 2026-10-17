@@ -106,7 +106,7 @@
     "presets"
   ],
   "engines": {
-    "node": "^22.19 || >=24"
+    "node": ">=22.19.0"
   },
   "scripts": {
     "clean": "node scripts/clean-lib.mjs",
@@ -246,7 +246,7 @@
     "verify:task-workflow": "node scripts/verify-task-workflow.mjs && node scripts/verify-task-model-switch.mjs && node scripts/verify-channel-task-workflow.mjs"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-agent": "*",
     "@deepseek-ai/dsh-agent-instructions": "*",
     "@deepseek-ai/dsh-agent-preset-registry": "*",
@@ -274,7 +274,7 @@
     "@deepseek-ai/dsh-user-questions": "*",
     "@deepseek-ai/dsh-web-app": "*",
     "@deepseek-ai/dsh-workspace": "*",
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/schemastery": "*"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-web-app": {
@@ -419,7 +419,7 @@
     "dsh-working-activity"
   ],
   "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/cordis": "latest",
     "@deepseek-ai/cordis-plugin-group": "^1.0.4",
     "@deepseek-ai/cordis-plugin-include": "^1.0.9",
     "@deepseek-ai/cordis-plugin-loader": "^1.0.5",
@@ -487,7 +487,7 @@
     "@deepseek-ai/dsh-web-app": "alpha",
     "@deepseek-ai/dsh-workflow-ptc": "alpha",
     "@deepseek-ai/dsh-workspace": "alpha",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/schemastery": "latest",
     "@types/lodash-es": "^4.17.0",
     "@types/node": "^26.4.0",
     "@types/react": "^19.0.0",

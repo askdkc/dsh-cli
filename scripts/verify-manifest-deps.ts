@@ -9,7 +9,7 @@
  *      `@deepseek-ai/*` package (an optional install would still land a real
  *      copy in the profile whenever pnpm can resolve it);
  *   2. every `@deepseek-ai/*` peerDependency is also a devDependency (local
- *      type-check), at a matching framework range or a moving DSH release channel;
+ *      type-check), at a matching host release channel;
  *   3. every `@deepseek-ai/*` peerDependency is optional, so npm consumers do
  *      not auto-install a second framework tree beside the dsh host;
  *   4. the `@deepseek-ai/*` peer set equals UPSTREAM_BLESSED_PACKAGES, so an
@@ -19,13 +19,17 @@
  * Run via `node --import tsx/esm scripts/verify-manifest-deps.ts`.
  */
 import { readFileSync } from 'node:fs'
-import { validRange } from 'semver'
+import { minVersion, subset, validRange } from 'semver'
 
 const { UPSTREAM_BLESSED_PACKAGES } = await import('../src/dsh-adapter/contract.js')
 
 const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 const FRAMEWORK = /^@deepseek-ai\//
 const failures: string[] = []
+const runtimeFloor = minVersion(manifest.engines.node)
+if (!runtimeFloor || !subset(`>=${runtimeFloor.version}`, manifest.engines.node)) {
+  failures.push('Node engines must retain the runtime floor without excluding newer major releases')
+}
 
 // DSH checks every harness peer before loading a bundle. Optional peers still
 // participate, and bundled plugins need the same runtime compatibility.
@@ -40,7 +44,7 @@ for (const path of ['../package.json', '../dsh-auth/package.json', '../vendor/ds
     if (FRAMEWORK.test(name) && plugin.peerDependenciesMeta?.[name]?.optional !== true) {
       failures.push(`${plugin.name}: ${name} must be optional to avoid installing a second host`)
     }
-    if ((name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
+    if ((name === '@deepseek-ai/cordis' || name === '@deepseek-ai/schemastery' || name === '@deepseek-ai/dsh' || name.startsWith('@deepseek-ai/dsh-'))
       && range !== '*') {
       failures.push(`${plugin.name}: ${name} peer range ${range} must accept DSH releases (*)`)
     }
@@ -57,7 +61,7 @@ for (const section of ['dependencies', 'optionalDependencies'] as const) {
 
 // Dev-only native fixtures must follow the same channel policy as framework peers.
 for (const [name, range] of Object.entries(manifest.devDependencies ?? {})) {
-  if (name !== '@deepseek-ai/dsh' && !name.startsWith('@deepseek-ai/dsh-')) continue
+  if (!['@deepseek-ai/cordis', '@deepseek-ai/schemastery', '@deepseek-ai/dsh'].includes(name) && !name.startsWith('@deepseek-ai/dsh-')) continue
   if (typeof range !== 'string'
     || (range !== '*' && (validRange(range) !== null || !/^[a-z][a-z0-9-]*$/u.test(range)))) {
     failures.push(`${name} devDependency must use * or a release channel, not a release pin`)
@@ -70,7 +74,7 @@ for (const name of peers) {
   const devRange = manifest.devDependencies?.[name]
   if (devRange === undefined) {
     failures.push(`${name} is a peerDependency without a matching devDependency (local type-check would break)`)
-  } else if (!name.startsWith('@deepseek-ai/dsh-') && name !== '@deepseek-ai/dsh' && devRange !== peerRange) {
+  } else if (!['@deepseek-ai/cordis', '@deepseek-ai/schemastery', '@deepseek-ai/dsh'].includes(name) && !name.startsWith('@deepseek-ai/dsh-') && devRange !== peerRange) {
     failures.push(`${name} range mismatch: peer=${peerRange} vs dev=${devRange}`)
   }
   if (manifest.peerDependenciesMeta?.[name]?.optional !== true) {
@@ -91,4 +95,4 @@ if (failures.length > 0) {
   for (const failure of failures) console.error(`  - ${failure}`)
   process.exit(1)
 }
-console.log(`manifest deps OK (${peers.length} optional framework peers, all mirrored in dev; framework ranges and DSH channels, blessed list in sync)`)
+console.log(`manifest deps OK (${peers.length} optional framework peers, all mirrored in dev; host release channels, blessed list in sync)`)

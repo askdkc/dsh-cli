@@ -83,7 +83,7 @@ Write-Host '   官网：https://github.com/askdkc/dsh-cli#readme' -ForegroundCol
 Write-Host '============================================' -ForegroundColor Cyan
 
 # 1. Node.js
-Step '检查 Node.js（需要 ^22.19 或 >=24）'
+Step '检查 Node.js（需要 >=22.19.0）'
 $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) {
   Warn '未检测到 Node.js，尝试用 winget 自动安装 LTS 版…'
@@ -101,8 +101,8 @@ if (-not $node) {
 }
 $nv = Get-NodeVersion
 $nvText = if ($null -ne $nv) { $nv.ToString() } else { '未知' }
-if (-not $nv -or ($nv -lt [version]'22.19' -and $nv.Major -lt 24)) {
-  Fail "Node.js 版本过低（当前 $nvText），请升级到 22.19+ 或 24+（winget upgrade OpenJS.NodeJS.LTS）后重跑"
+if (-not $nv -or $nv -lt [version]'22.19') {
+  Fail "Node.js 版本过低（当前 $nvText），请升级到 22.19.0+（winget upgrade OpenJS.NodeJS.LTS）后重跑"
 }
 OK "Node.js $($nv.ToString())"
 
@@ -197,12 +197,12 @@ need_node() {
   v=$(node --version | tr -d 'v' | cut -d- -f1)
   major=$(echo "$v" | cut -d. -f1)
   minor=$(echo "$v" | cut -d. -f2)
-  if [ "$major" -ge 24 ]; then
+  if [ "$major" -gt 22 ]; then
     ok "Node.js $v"
   elif [ "$major" -eq 22 ] && [ "$minor" -ge 19 ]; then
     ok "Node.js $v"
   else
-    fail "Node.js 版本过低（$v），需要 ^22.19 或 >=24。请升级后重跑：sh install.sh"
+    fail "Node.js 版本过低（$v），需要 >=22.19.0。请升级后重跑：sh install.sh"
   fi
 }
 
@@ -290,7 +290,7 @@ const README_TXT = `dsh-CLI 一键安装整合包（dsh-cli-setup）
       npm install -g @deepseek-ai/dsh @askdkc/dsh-cli
 
 安装过程中会做什么
-  1. 检查 Node.js（^22.19 或 >=24），没有则自动安装（Windows 用 winget）；
+  1. 检查 Node.js（>=22.19.0），没有则自动安装（Windows 用 winget）；
   2. 安装 pnpm；
   3. 全局安装 @deepseek-ai/dsh 与 dsh-cli；
   4. 校验 dsh-cli 命令可用；

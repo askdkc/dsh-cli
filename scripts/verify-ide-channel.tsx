@@ -52,6 +52,7 @@ type WsFixture = {
   port: number
   helloPromise: Promise<{ token: string }>
   close: () => void
+  pushSelection: (isEmpty: boolean) => void
 }
 
 /** 解析一帧客户端帧（RFC6455：客户端帧必带掩码）；数据不足返回 null。 */
@@ -110,7 +111,7 @@ function encodeTextFrame(text: string): Buffer {
 function startWsFixture(
   token: string,
   workspaceFolders: string[] = ['/fixture-ws'],
-  options: { clearSelectionAfterMs?: number | null } = {},
+  options: { clearSelectionAfterMs?: number | null; selectionPath?: string; selectionOnHello?: boolean } = {},
 ): Promise<WsFixture> {
   return new Promise(resolveFixture => {
     let socketRef: Socket | null = null
@@ -124,7 +125,7 @@ function startWsFixture(
       socket.write(encodeTextFrame(JSON.stringify({
         method: 'selection_changed',
         params: {
-          path: 'src/a.ts',
+          path: options.selectionPath ?? 'src/a.ts',
           startLine: 2,
           endLine: 4,
           isEmpty,
@@ -183,7 +184,7 @@ function startWsFixture(
           // 握手完成后推一条非空选区，稍后再推一条空选区（验证清空路径）。
           // clearSelectionAfterMs: null = 永不推空（该夹具的选区在 stop 前恒有
           // 值，供「stop 清空缓存」这类断言做无时间窗的前置条件）。
-          sendSelection(false)
+          if (options.selectionOnHello !== false) sendSelection(false)
           const clearAfter = options.clearSelectionAfterMs === undefined ? 50 : options.clearSelectionAfterMs
           if (clearAfter !== null) {
             void sleep(clearAfter).then(() => sendSelection(true)) // 固定窗:pacing 空选区第二条推送的间隔，无状态锚点可 settle
@@ -197,6 +198,7 @@ function startWsFixture(
       resolveFixture({
         port,
         helloPromise,
+        pushSelection: sendSelection,
         close: () => {
           socketRef?.destroy()
           server.close()
@@ -541,7 +543,7 @@ async function main(): Promise<void> {
     // 会话 cwd 从 /repo/a 切到 /repo/b：旧连接（fixture A）必须被丢弃，
     // 重新按新 cwd 发现并连上 fixture B —— 而不是保留 A 的旧链路。
     const fixtureA = await startWsFixture('tok-a', ['/repo/a'])
-    const fixtureB = await startWsFixture('tok-b', ['/repo/b'], { clearSelectionAfterMs: null })
+    const fixtureB = await startWsFixture('tok-b', ['/repo/b'], { clearSelectionAfterMs: null, selectionPath: 'src/b.ts', selectionOnHello: false })
     const rebindDir = join(tmpRoot, 'rebind')
     mkdirSync(rebindDir, { recursive: true })
     writeFileSync(join(rebindDir, `${fixtureA.port}.lock`),
@@ -549,12 +551,13 @@ async function main(): Promise<void> {
     writeFileSync(join(rebindDir, `${fixtureB.port}.lock`),
       JSON.stringify({ port: fixtureB.port, token: 'tok-b', workspaceFolders: ['/repo/b'], pid: process.pid }))
     const rebindCh = new mod.IdeChannel()
+    // Observe B specifically: A must never fulfill the rebind barrier.
     // 非空选区的到达观察走 listener（消息处理里同步触发），配 fixtureB 的
     // clearSelectionAfterMs: null，前置条件与采样时机无关：不会因为 20ms 轮询
     // 落不进夹具那条 50ms 空推送前的窗口而在慢机上假红（终审轮 7）。
     const sawSelection = new Promise<void>(resolve => {
       const off = rebindCh.onSelection(snapshot => {
-        if (snapshot.isEmpty) return
+        if (snapshot.isEmpty || snapshot.path !== 'src/b.ts') return
         off()
         resolve()
       })
@@ -573,8 +576,11 @@ async function main(): Promise<void> {
     // channel.selection / .workspaceFolders 的调用方在停止后不得再拿到上一个
     // 窗口的快照——degradeToDisconnected 早已清，stop 曾漏清（rebind 的注释
     // 却已承诺「clearing the live selection」）。
-    await sawSelection
-    const selectionBeforeStop = rebindCh.selection !== undefined
+    fixtureB.pushSelection(false)
+    let selectionTimer: ReturnType<typeof setTimeout> | undefined
+    const receivedB = await Promise.race([sawSelection.then(() => true), new Promise<boolean>(resolve => { selectionTimer = setTimeout(() => resolve(false), 1000) })])
+    clearTimeout(selectionTimer)
+    const selectionBeforeStop = receivedB && rebindCh.selection?.path === 'src/b.ts'
     const foldersBeforeStop = rebindCh.workspaceFolders !== undefined
     rebindCh.stop()
     check('stop：停止前确有缓存选区与 ACK 目录（前置条件成立）',

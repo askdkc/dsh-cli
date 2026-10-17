@@ -10,10 +10,8 @@
  *     识别后带 -w 恰好重试一次；无签名失败不盲重试
  *   - no-op 假成功（add 成功但判定文件缺失）：fail loud 给出删 profile
  *     重建的恢复路径，而不是继续启动后 opaque 崩溃
- *   - profile 已装版本与启动器不一致时打印提示；前向错位（profile 更新）
- *     不阻塞启动（0.7.2 起 TUI 降级可用），反向错位（profile 更旧，issue
- *     #183）拒绝启动并给出对齐命令——dsh CLI 会从启动器拷贝读 bundle
- *     patch 套到 profile 旧包上，启动必然 opaque 崩溃
+ *   - 不按 launcher/profile 的 major/minor 或未知标签拒绝启动；
+ *     通过真正的 Node resolver 拒绝缺失的 patch API/入口文件。
  *   - profile 子进程非零退出时保留退出码与直跑诊断命令
  *   - 面向用户的消息双语：DSH_CLI_LANG=zh 输出中文，否则默认英文
  *   - shellQuote 单元（win32 的 shell:true 路径 CI 跑不到 Windows，只能靠
@@ -84,7 +82,16 @@ function setProfileVersion(version) {
   const dir = join(home, PKG_DIR)
   mkdirSync(dir, { recursive: true })
   if (version === undefined) rmSync(join(dir, 'package.json'), { force: true })
-  else writeFileSync(join(dir, 'package.json'), JSON.stringify({ version }))
+  else writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: PACKAGE, version,
+    exports: Object.fromEntries(Object.keys(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).exports)
+      .map(key => [key, './fixture-entry.js'])) }))
+  writeFileSync(join(dir, 'fixture-entry.js'), 'export function apply() {}\n')
+  // Bootstrap stubs intentionally produce legacy manifests without exports.
+  // Their real legacy entry files remain resolvable through Node's resolver.
+  writeFileSync(join(dir, 'index.js'), 'export function apply() {}\n')
+  for (const key of Object.keys(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).exports)) {
+    if (key.startsWith('./') && !key.includes('/', 2) && key !== './package.json') writeFileSync(join(dir, key.slice(2)), 'export function apply() {}\n')
+  }
 }
 
 function resetStubLog() {
@@ -182,63 +189,30 @@ check('nonzero exit: stderr gives the direct command', r.stderr.includes('dsh --
 r = runBin([], { DSH_STUB_EXIT: '42', DSH_CLI_LANG: 'zh' })
 check('nonzero exit: Chinese message names the status', r.stderr.includes('退出码 42'))
 
-// --- 3. 前向错位（profile 更新）：必须指向「更新全局 Launcher」------------
-// 0.8.3 起修复方向按版本方向区分：profile 比 Launcher 新时再让用户跑
-// /update 会得到 "Already up to date" 循环——必须给精确的全局升级命令。
-const [ownMajor, ownMinor] = ownVersion.split('-')[0].split('.').map(Number)
-const newerProfile = `${ownMajor}.${ownMinor + 1}.0`
-setProfileVersion(newerProfile)
+// --- 3. Version labels never substitute for the profile's actual entry surface.
+for (const version of ['0.0.0', '99.0.0-beta.1', 'opaque-compatible']) {
+  setProfileVersion(version)
+  resetStubLog()
+  r = runBin([])
+  check(`compatible profile ${version}: starts despite its release label`,
+    r.status === 0 && stubCalls().at(-1) === '<--profile><dsh-cli>')
+}
+setProfileVersion(ownVersion)
+const missingEntryManifest = JSON.parse(readFileSync(join(home, PKG_DIR, 'package.json'), 'utf8'))
+delete missingEntryManifest.exports['./oauth']
+writeFileSync(join(home, PKG_DIR, 'package.json'), JSON.stringify(missingEntryManifest))
 resetStubLog()
 r = runBin([])
-check('forward skew: hint names both versions', r.stderr.includes(`v${newerProfile}`) && r.stderr.includes(`v${ownVersion}`))
-check(
-  'forward skew: tells user to align the global launcher',
-  r.stderr.includes(`npm install -g --legacy-peer-deps ${PACKAGE}@${newerProfile}`),
-)
-check(
-  'forward skew: never tells user to update the profile again',
-  !r.stderr.includes('/update') && !r.stderr.includes(`plugin --profile ${PROFILE}`),
-)
-check('forward skew: still launches', stubCalls().at(-1) === '<--profile><dsh-cli>' && r.status === 0)
-
-// --- 3.5 反向错位（profile 更旧，issue #183）：拒绝启动并给出对齐命令 --------
-// dsh CLI 的 bundle patch 取自启动器拷贝、插件模块取自 profile 拷贝；启动器
-// 次版本更新时 patch 可能引用旧包没有的子路径导出，启动必然 opaque 崩溃——
-// 启动器必须先于 dsh 拦截。
-setProfileVersion('0.0.0')
+check('same-version profile: missing required export refuses startup',
+  r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')))
+check('missing export diagnostic names the actual API', r.stderr.includes('@askdkc/dsh-cli/oauth'))
+setProfileVersion(ownVersion)
+rmSync(join(home, PKG_DIR, 'fixture-entry.js'))
 resetStubLog()
 r = runBin([])
-check('reverse skew: refuses to launch', r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')))
-check('reverse skew: names both versions', r.stderr.includes('v0.0.0') && r.stderr.includes(`v${ownVersion}`))
-check('reverse skew: prints the align command', r.stderr.includes(`add @askdkc/dsh-cli@${ownVersion}`))
-r = runBin([], { DSH_CLI_LANG: 'en' })
-check('reverse skew: English message', r.stderr.includes('cannot start'))
-
-// --- 3.6 同 minor 反向 patch-skew（0.8.2 Launcher / 0.8.1 Profile）---------
-// 非致命：允许启动，但应把 profile 对齐到启动器。构造"同 core、较旧"的
-// semver：稳定发布 x.y.z 用 x.y.z-0（prerelease 一定更旧且 major/minor
-// 相同）；ownVersion 自身是 prerelease（x.y.z-beta.1）时把末段数字减一
-// （beta.1 → beta.0）。末段已是 0 时不存在更旧的同 core prerelease，
-// 该组断言退化为恒真（skip）。
-const olderSameMinorProfile = ownVersion.includes('-')
-  ? ownVersion.replace(/\.(\d+)$/, (_, n) => (Number(n) > 0 ? `.${Number(n) - 1}` : `.${n}`))
-  : `${ownVersion}-0`
-const patchSkewOlderExists = olderSameMinorProfile !== ownVersion
-setProfileVersion(olderSameMinorProfile)
-resetStubLog()
-r = runBin([])
-check(
-  'patch skew: older profile still launches',
-  stubCalls().at(-1) === '<--profile><dsh-cli>' && r.status === 0,
-)
-check(
-  'patch skew: tells user to align the profile to the launcher',
-  !patchSkewOlderExists || r.stderr.includes(`dsh plugin --profile ${PROFILE} add ${PACKAGE}@${ownVersion}`),
-)
-check(
-  'patch skew: does not tell user to update the global launcher',
-  !patchSkewOlderExists || !r.stderr.includes('npm install -g'),
-)
+check('same-version profile: missing export target refuses startup',
+  r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')))
+setProfileVersion(ownVersion)
 
 // --- 3.7 Launcher→runtime 契约：子进程必须收到 DSH_CLI_LAUNCHER_VERSION ---
 // 让 /update 能诊断「全局 Launcher 是否落后于刚装的 profile」。先做源码
@@ -268,21 +242,22 @@ r = runBin(['foo', 'a b'], {}, { delegating: true })
 check('shim: delegates argv through to the profile copy', stubCalls().at(-1) === '<--profile><dsh-cli><foo><a b>')
 check('shim: silent + exit 0 when aligned', r.status === 0 && r.stderr.trim() === '')
 
-// 反向错位（profile 更旧，issue #183）必须在「瘦壳委托」路径上拦住：上面 3.5
-// 走的是 DSH_CLI_NO_DELEGATE=1 的完整逻辑路径，而真实用户命中的是这条委托
-// 路径（完整的 profile bin 已预放，委托本身可行）。不拦的话 dsh 会拿启动器
-// 拷贝的 bundle patch 配 profile 旧包，patch 引用旧包没有的子路径导出（例如
-// ./oauth）时以 ERR_PACKAGE_PATH_NOT_EXPORTED 崩溃。
+// The real delegation path accepts an unknown release with the same entry APIs.
 setProfileVersion('0.0.0')
 placeProfileBin()
 resetStubLog()
 r = runBin([], {}, { delegating: true })
-check(
-  'shim reverse skew: refuses to delegate',
-  r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')),
-)
-check('shim reverse skew: names both versions', r.stderr.includes('v0.0.0') && r.stderr.includes(`v${ownVersion}`))
-check('shim reverse skew: prints the align command', r.stderr.includes(`add @askdkc/dsh-cli@${ownVersion}`))
+check('shim: compatible older profile delegates successfully',
+  r.status === 0 && stubCalls().at(-1) === '<--profile><dsh-cli>')
+setProfileVersion(ownVersion)
+placeProfileBin()
+const brokenProfile = JSON.parse(readFileSync(join(home, PKG_DIR, 'package.json'), 'utf8'))
+delete brokenProfile.exports['./oauth']
+writeFileSync(join(home, PKG_DIR, 'package.json'), JSON.stringify(brokenProfile))
+resetStubLog()
+r = runBin([], {}, { delegating: true })
+check('shim: known version missing an entry refuses delegation',
+  r.status === 1 && !stubCalls().some(c => c.includes('<--profile>')))
 
 setProfileVersion(undefined)
 placeProfileBin() // add stub 只创建 package.json——bin 是预放好的“已安装”产物

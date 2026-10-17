@@ -2,12 +2,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-/** Frameworks have independent, breaking major versions. */
-export const UPSTREAM_FRAMEWORK_MAJORS: Record<string, number> = {
-  '@deepseek-ai/cordis': 4,
-  '@deepseek-ai/schemastery': 3,
-}
-
 /** Official packages the adapter consumes at runtime or as types. */
 export const UPSTREAM_BLESSED_PACKAGES = [
   '@deepseek-ai/cordis',
@@ -63,7 +57,7 @@ export function installedUpstreamVersions(): Record<string, string | undefined> 
     if (path !== undefined) {
       try {
         const manifest = JSON.parse(readFileSync(path, 'utf8')) as { version?: unknown }
-        version = typeof manifest.version === 'string' ? manifest.version : undefined
+        version = typeof manifest.version === 'string' ? manifest.version : 'unknown'
       } catch {
         version = undefined
       }
@@ -87,12 +81,17 @@ export function upstreamDependencyIssues(
   const issues: UpstreamDependencyIssue[] = []
   for (const name of UPSTREAM_BLESSED_PACKAGES) {
     const installed = installedVersions[name]
-    const major = UPSTREAM_FRAMEWORK_MAJORS[name]
-    if (typeof installed !== 'string' || installed.trim() === '') {
-      issues.push({ package: name, installed, reason: 'package manifest or version is missing' })
-    } else if (major !== undefined && !installed.startsWith(`${major}.`)) {
-      issues.push({ package: name, installed, reason: `requires framework major ${major}` })
+    if (installed === undefined) {
+      issues.push({ package: name, installed, reason: 'package manifest is missing' })
     }
   }
   return issues
+}
+
+/** The frontend owns effects and starts a child after its owner settles. */
+export function assertCordisLifecycle(value: unknown): void {
+  const ctx = value as { effect?: unknown; plugin?: unknown; fiber?: { await?: unknown } } | null
+  if (!ctx || typeof ctx.effect !== 'function' || typeof ctx.plugin !== 'function' || typeof ctx.fiber?.await !== 'function') {
+    throw new Error('dsh-cli requires Cordis effect, plugin and fiber.await APIs')
+  }
 }

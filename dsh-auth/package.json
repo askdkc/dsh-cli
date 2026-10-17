@@ -39,7 +39,7 @@
     }
   },
   "engines": {
-    "node": "^22.19 || >=24"
+    "node": ">=22.19.0"
   },
   "scripts": {
     "build": "npm run clean && tsc -p tsconfig.json && node scripts/bundle-opencode.mjs",
@@ -49,13 +49,13 @@
     "verify": "npm run build && npm run smoke && node --test scripts/verify-opencode.mjs && node --loader ./scripts/reject-pi-loader.mjs scripts/verify-opencode-isolated.mjs"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-attachment": "*",
     "@deepseek-ai/dsh-commands": "*",
     "@deepseek-ai/dsh-llm": "*",
     "@deepseek-ai/dsh-llm-pi-ai": "*",
     "@deepseek-ai/dsh-user-questions": "*",
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/schemastery": "*"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-attachment": {
@@ -81,13 +81,13 @@
     }
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/cordis": "latest",
     "@deepseek-ai/dsh-attachment": "alpha",
     "@deepseek-ai/dsh-commands": "alpha",
     "@deepseek-ai/dsh-llm": "alpha",
     "@deepseek-ai/dsh-llm-pi-ai": "alpha",
     "@deepseek-ai/dsh-user-questions": "alpha",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/schemastery": "latest",
     "@types/node": "^22.0.0",
     "typescript": "^6.0.3",
     "@ai-sdk/anthropic": "4.0.71",
