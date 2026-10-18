@@ -11,6 +11,9 @@ import { pathToFileURL } from 'node:url'
 const root = resolve(process.argv[2] ?? new URL('..', import.meta.url).pathname)
 const require = createRequire(join(root, 'package.json'))
 const module = name => import(pathToFileURL(require.resolve(name)).href)
+// Use the error class from the provider's actual dependency graph, including consumers.
+const providerRequire = createRequire(require.resolve('@askdkc/dsh-lsp-server/package.json'))
+const { LspError } = await import(pathToFileURL(providerRequire.resolve('@deepseek-ai/dsh-lsp')).href)
 const { Context } = await module('@deepseek-ai/cordis')
 const { default: Loader } = await module('@deepseek-ai/cordis-plugin-loader')
 const { default: AgentPresetRegistry } = await module('@deepseek-ai/dsh-agent-preset-registry')
@@ -24,7 +27,11 @@ const workspace = await realpath(await mkdtemp(join(tmpdir(), 'dsh-code-consumer
 const outside = await realpath(await mkdtemp(join(tmpdir(), 'dsh-code-outside-')))
 const text = 'export function 日本語(value: string) { return value + "🙂é" }\r\nconst answer: number = "wrong";\r\n日本語("ok");\r\n'
 const ctx = new Context()
-ctx.logger.error = (...args) => console.error(...args)
+const unexpectedPluginErrors = []
+ctx.logger.error = (...args) => {
+  unexpectedPluginErrors.push(args)
+  console.error(...args)
+}
 ctx.baseUrl = pathToFileURL(join(root, 'cordis.patch.yml')).href
 const lifetimes = []
 try {
@@ -121,12 +128,43 @@ try {
   assert.notEqual(ctx.get('codeIntelligence'), service, 're-enable creates a new provider generation')
   assert.equal((await channel.port.capabilities()).status, 'ok')
   const providerRow = bundle.find(row => row.id === 'lsp-webstack-provider')
-  await ctx.loader.root.update([...rows, { ...providerRow, id: 'duplicate-code-provider' }])
-  await ctx.loader.await()
-  assert.equal((await channel.port.capabilities()).reason, 'duplicate_provider')
+  const activeProvider = ctx.get('codeIntelligence')
+  const reportError = ctx.logger.error
+  const conflictLogs = []
+  // Cordis logs the same failed startup through its effect and plugin lifetimes.
+  // Capture only this deliberate rejection; normal lifecycle errors remain fatal.
+  ctx.logger.error = (...args) => conflictLogs.push(args)
+  try {
+    await ctx.loader.root.update([...rows, { ...providerRow, id: 'duplicate-code-provider' }])
+    await ctx.loader.await()
+    const duplicate = [...ctx.loader.entries()].find(entry => entry.options.id === 'duplicate-code-provider')
+    assert.ok(duplicate?.fiber, 'the duplicate provider must reach the real plugin lifecycle')
+    let conflict
+    await assert.rejects(duplicate.fiber.await(), error => {
+      assert.ok(error instanceof LspError, 'duplicate registration must throw the actual LspError type')
+      assert.equal(error.name, 'LspError')
+      assert.equal(error.code, 'LSP_CONFLICT')
+      assert.equal(error.message, 'an LSP provider with id "webstack" is already registered')
+      conflict = error
+      return true
+    })
+    assert.equal(conflictLogs.length, 2, 'one startup rejection has exactly two framework notifications')
+    for (const args of conflictLogs) {
+      assert.equal(args.length, 1)
+      assert.equal(args[0], conflict, 'only the rejected duplicate startup may be logged in this scope')
+    }
+    assert.equal((await channel.port.capabilities()).reason, 'duplicate_provider')
+    assert.equal(ctx.get('codeIntelligence'), activeProvider, 'duplicate rejection preserves the healthy provider')
+  } catch (error) {
+    for (const args of conflictLogs) console.error(...args)
+    throw error
+  } finally {
+    ctx.logger.error = reportError
+  }
   await ctx.loader.root.update(rows)
   await ctx.loader.await()
   assert.equal((await channel.port.capabilities()).status, 'ok')
+  assert.equal(ctx.get('codeIntelligence'), activeProvider, 'removing the duplicate does not restart the healthy provider')
   await ctx.plugin(SessionProjectionRegistry)
   await ctx.plugin(AgentPresetRegistry, { default: 'fixture-lsp' })
   await ctx.get('agentPresets').register({ id: 'fixture-lsp', plugins: [{
@@ -162,4 +200,5 @@ try {
   await ctx.fiber.dispose()
   await rm(workspace, { recursive: true, force: true })
   await rm(outside, { recursive: true, force: true })
+  assert.deepEqual(unexpectedPluginErrors, [], 'unexpected framework errors must fail host verification')
 }

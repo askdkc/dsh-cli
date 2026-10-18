@@ -25,12 +25,17 @@ import { join } from 'node:path'
 const home = mkdtempSync(join(tmpdir(), 'dsh-cli-verify-home-'))
 let status = 1
 try {
+  const env = { ...process.env, HOME: home, USERPROFILE: home }
+  // pnpm injects this setting into lifecycle environments; npm does not support it.
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === 'npm_config_manage_package_manager_versions') delete env[key]
+  }
   const r = spawnSync('npm run verify:build:inner', {
     stdio: 'inherit',
     shell: true,
     // HOME on POSIX, USERPROFILE on Windows: DATA_DIR resolves from
     // `os.homedir()`, so both have to move together.
-    env: { ...process.env, HOME: home, USERPROFILE: home },
+    env,
   })
   status = r.status ?? 1
 } finally {
