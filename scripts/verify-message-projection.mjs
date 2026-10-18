@@ -123,5 +123,47 @@ try {
     assert.match(todos.content[1].text, /Verify/)
     assert.equal(toolErrorText({ data: { message: result(api, 'e', 'explanation', true) } }), 'explanation')
   }
+  // Kiokuko structured memory is passed unchanged through the real channel.
+  // Body characters and relation metadata have independent upstream budgets.
+  for (const mode of ['live', 'replay']) for (const status of [
+    'complete', 'omitted_budget', 'omitted_edge_cap', 'omitted_unknown_type', 'omitted_legacy',
+  ]) {
+    const items = [{ workspace: 'project:memory', entryId: 'a', text: '😀'.repeat(12000) },
+      { workspace: 'project:memory', entryId: 'b', text: '界'.repeat(4000) }]
+    const relationDelivery = { scope: 'provided_items', status, edges: status === 'complete'
+      ? ['supports', 'contradicts', 'derived_from', 'related_to'].map(type => ({
+        from: { workspace: items[0].workspace, entryId: 'a' },
+        to: { workspace: items[1].workspace, entryId: 'b' }, type,
+      })) : [], selectionOmissions: ['body_budget', 'item_limit', 'final_filter'] }
+    const payload = { items, relationDelivery }
+    const text = JSON.stringify(payload)
+    const events = [
+      { seq: 0, time: 1, type: 'tool/call', data: { callId: 'memory', name: 'memory_recall', arguments: '{}' } },
+      { seq: 1, time: 2, type: 'tool/result', data: { message: result('v4', 'memory', text) } },
+    ]
+    const untouched = structuredClone(events)
+    const log = mode === 'replay' ? [...events] : []
+    const handlers = new Map(), presented = []
+    const ctx = { on(name, handler) { handlers.set(name, handler); return () => handlers.delete(name) },
+      get(name) { return name === 'tools' ? { get: () => ({ presentResult(_args, value) {
+        presented.push(value); return { card: 'generic', content: value.content }
+      } }) } : undefined }, logger: { warn() {} } }
+    const agent = { id: 'memory-agent', status: 'idle', ctx: { on: () => () => {} },
+      session: { id: 'memory-session', get seq() { return log.length }, snapshotEvents: () => log } }
+    const channel = createChannel(ctx, agent, { cwd: home, model: 'test', provider: 'test', activity: false })
+    try {
+      if (mode === 'live') for (const event of events) {
+        log.push(event); handlers.get('session/event')(agent.session, event)
+      }
+      assert.deepEqual(events, untouched, `${mode}/${status}: native events retain full memory`)
+      assert.equal(presented.length, 1)
+      assert.equal(presented[0].content[0].text, text)
+      assert.deepEqual(JSON.parse(channel.rows.find(row => row.kind === 'tool').tool.resultFull), payload)
+      const exported = channel.exportSession()
+      assert.ok(exported)
+      const markdown = readFileSync(exported, 'utf8')
+      assert.ok(markdown.includes(text), `${mode}/${status}: export preserves both body and metadata`)
+    } finally { channel.releaseContributions() }
+  }
   console.log('PASS: V4 messages in live/replay/folded projections, export, subagents and compact checkpoints')
 } finally { rmSync(home, { recursive: true, force: true }) }
