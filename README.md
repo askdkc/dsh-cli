@@ -38,6 +38,9 @@ This is dkc's independently developed fork of [dsh-TUI by chimney](https://githu
 - Virtualized rendering and bounded caches for long sessions.
 - Optional scoped code analysis through the separate LSP provider; see
   [code-analysis setup and current acceptance limits](docs/code-intelligence.en.md).
+- Optional Common Lisp mode through the separate `kiokuko-dsh` plugin, which
+  must be installed in the same profile; see
+  [Kiokuko Lisp setup](#optional-kiokuko-lisp-mode).
 
 ## Quick Start
 
@@ -77,6 +80,42 @@ whose archive has been deleted. `TARBALL` holds the archive's absolute path; pas
 it to the install command instead of executing it.
 
 For PATH setup and install issues, see [Getting started](docs/getting-started.en.md).
+
+## Optional Kiokuko Lisp mode
+
+Lisp mode is provided by the separate
+[`kiokuko-dsh`](https://github.com/askdkc/kiokuko-dsh) plugin. dsh-cli supplies
+the terminal prompt and `/kioku-lisp` command handling, but the plugin must be
+installed in the same DSH profile:
+
+```sh
+cd ~/DIR/TO/deepseek-harness
+pnpm dsh plugin --profile dsh-cli add kiokuko-dsh
+```
+
+Enable Lisp in the profile's `cordis.patch.yml` (by default
+`~/.dsh/profiles/dsh-cli/cordis.patch.yml`), then restart `dsh-cli`:
+
+```yaml
+- id: kiokuko-dsh
+  config:
+    enabled: true
+    lisp:
+      enabled: true
+      sbclPath: sbcl
+```
+
+A working SBCL is required; Linux also needs Bubblewrap with user, PID, and
+network namespaces. Profiles are isolated, so adding the plugin to another
+profile, such as `web`, does not enable Lisp mode in `dsh-cli`. Without the
+plugin, `/kioku-lisp` is unavailable and no Lisp-mode choice appears. With the
+plugin enabled, startup waits for it, and activation that exceeds 30 seconds
+stops startup with a diagnostic.
+
+After restart, `/kioku-lisp status` reports whether Lisp is available. A coding
+request can then offer the Lisp choice, or `/kioku-lisp enable` turns it on for
+the session. See [Getting started](docs/getting-started.en.md#optional-kiokuko-lisp-workflow)
+for consent, managed operations, and command timing.
 
 ## Use
 
