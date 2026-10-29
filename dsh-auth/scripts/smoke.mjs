@@ -16,6 +16,7 @@ import { spawn } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
+import { isDeepStrictEqual } from 'node:util'
 
 const { CredentialFile, OAUTH_PROVIDER_IDS, AUTH_PROVIDER_IDS, Config: AuthConfig, canonicalProvider, QuestionBridge, createDshAuthApi, openerFor, apply } =
   await import('../lib/index.js')
@@ -193,8 +194,10 @@ try {
   const sol = overridden.piProvider.getModels().find(model => model.id === 'gpt-5.6-sol')
   ok(sol?.contextWindow === 1000000, 'modelOverrides contextWindow lands on the target model')
   ok(sol?.maxTokens === solBase?.maxTokens, 'untouched fields keep the installed catalog value')
-  const untouched = overridden.piProvider.getModels().find(model => model.id === 'gpt-5.5')
-  ok(untouched?.contextWindow === solBase?.contextWindow, 'models without an override stay on the catalog value')
+  const untouchedModels = profile.piProvider.getModels().filter(model => model.id !== 'gpt-5.6-sol')
+  ok(untouchedModels.length > 0 && untouchedModels.every(base =>
+    isDeepStrictEqual(overridden.piProvider.getModels().find(model => model.id === base.id), base)),
+  'models without an override retain their own complete catalog entry')
   ok(overridden.piProvider.getModels().length === profile.piProvider.getModels().length, 'the model list keeps every catalog entry')
   ok(overridden.piProvider.auth.oauth !== undefined, 'the provider keeps its OAuth flow object under overrides')
   ok(profile.piProvider.getModels().find(model => model.id === 'gpt-5.6-sol')?.contextWindow === solBase?.contextWindow,

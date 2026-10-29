@@ -953,6 +953,29 @@ export function Chat({
   }, [agentViewReturnId, channel, repaintTranscript])
   /** The startup summary gives way to transcript rows after the first local command or message. */
   const loadedContextVisible = channel.rows.length === 0 && channel.loadedContext !== undefined
+  /** Open one exact Session through the same ownership path as the session browser. */
+  const openSession = async (sessionId: string): Promise<boolean> => {
+    const origin = channel.agentBindingGeneration
+    try {
+      const result = await channel.resumeTo(sessionId)
+      if (!result.ok) {
+        if (channel.agentBindingGeneration !== origin) return false
+        const text = resumeFailureText(result)
+        if (text !== undefined) channel.notify(text, { color: 'error', timeoutMs: 8000 })
+        return false
+      }
+      if (channel.agentId !== sessionId) return false
+      channel.notify(t('resume-resumed'))
+      suppressLogoIntroRef.current = true
+      setAgentViewReturnId(undefined)
+      setSupervisorOpen(false)
+      repaintTranscript()
+      return true
+    } catch (error) {
+      if (channel.agentBindingGeneration === origin) channel.notify(cleanCommandError(error), { color: 'error' })
+      return false
+    }
+  }
   /** Startup context panel: collapsed by default, toggled with Ctrl+P. */
   const [loadedContextOpen, setLoadedContextOpen] = React.useState(false)
   const toggleLoadedContext = React.useCallback(() => {
@@ -1591,6 +1614,9 @@ export function Chat({
         return false
       }
       const cleaned = cleanRenderText(outcome.text, COMMAND_RESULT_CELLS)
+      if (outcome.text.includes('\n')) {
+        channel.pushLocal(`/${name}`, outcome.text.split(/\r?\n/u).map(line => cleanRenderText(line, 240)))
+      }
       if (cleaned !== '') {
         channel.notify(cleaned, outcome.kind === 'error' ? { color: 'error' } : undefined)
       }
@@ -2180,6 +2206,11 @@ export function Chat({
         return true
       }
       case 'resume':
+        if (rawInput.trim()) {
+          setHelpOpen(false)
+          return openSession(rawInput.trim())
+        }
+        // A bare /resume opens the shared session browser below.
       /**
        * `/resume`, `/home` and `/agentview` are one screen.
        *
@@ -4097,20 +4128,7 @@ export function Chat({
         onClose={closeHome}
         approval={approvalSnapshot}
         onApprove={outcome => approvals.decide(outcome)}
-        onOpenSession={async (sessionId) => {
-          const result = await channel.resumeTo(sessionId)
-          if (!result.ok) {
-            const text = resumeFailureText(result)
-            if (text !== undefined) channel.notify(text, { color: 'error', timeoutMs: 8000 })
-            return false
-          }
-          channel.notify(t('resume-resumed'))
-          suppressLogoIntroRef.current = true
-          setAgentViewReturnId(undefined)
-          setSupervisorOpen(false)
-          repaintTranscript()
-          return true
-        }}
+        onOpenSession={openSession}
         onNewSession={async (target) => {
           const ok = await channel.switchWorkspace(target)
           if (ok) {
