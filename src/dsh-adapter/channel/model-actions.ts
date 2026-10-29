@@ -4,6 +4,7 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { CommandCompletionNode } from '../../commands.js'
 import { nearestLowerEffort, readEffortPref, resolveEffortDefault, writeEffortPref } from '../../effortPrefs.js'
 import { snapshotLiveSessionEvents } from '../compat/liveSession.js'
+import { agentModel } from '../compat/agent-model.js'
 import { getLang, t, tOr, type Lang } from '../../i18n.js'
 import { migratePresetPref, writePresetPref } from '../../presetPrefs.js'
 import { rosterOf, type AgentPresetInfo } from '../preset-resolution.js'
@@ -101,7 +102,7 @@ export function createModelActions(
     // without a stored preference. Do not make a separate competing refresh
     // operation that could invalidate the selected preference completion.
     if (preferredEffort === undefined) {
-      state.reasoningEffort = capture.binding.agent.model?.current()?.reasoningEffort ?? resolved.defaultEffort
+      state.reasoningEffort = agentModel(capture.binding.agent).current()?.reasoningEffort ?? resolved.defaultEffort
       state.emit()
       return
     }
@@ -122,7 +123,7 @@ export function createModelActions(
         state.reasoningEffort = shipped
         state.emit()
       }
-      capture.binding.agent.model.select({ provider: capture.provider, model: capture.model })
+      agentModel(capture.binding.agent).select({ provider: capture.provider, model: capture.model })
       return
     }
     // Notice deduplication must not skip recording the preference for a newly bound session.
@@ -133,7 +134,7 @@ export function createModelActions(
     }
     if (applied === preferredEffort) lastEffortFallbackNotice = undefined
     state.reasoningEffort = applied
-    capture.binding.agent.model.select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(applied) })
+    agentModel(capture.binding.agent).select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(applied) })
     state.emit()
   }
   const refreshEffortLevels = (): void => {
@@ -150,7 +151,7 @@ export function createModelActions(
   }
   const applyEffort = (effort: { id: string; name: string }, capture: EffortCapture): void => {
     if (!effortCurrent(capture)) return
-    capture.binding.agent.model.select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(effort.id) })
+    agentModel(capture.binding.agent).select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(effort.id) })
     preferredEffort = effort.id
     state.reasoningEffort = effort.id
     writeEffortPref(effort.id)

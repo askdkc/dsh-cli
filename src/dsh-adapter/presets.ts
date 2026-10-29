@@ -26,6 +26,13 @@ import {
 
 const ASK_USER_TOOL = 'ask_user_question'
 
+type ConditionalToolRegistration = {
+  register(
+    definition: unknown,
+    options: { when(input: { agent: Agent }): boolean },
+  ): () => void
+}
+
 /** Keep questionnaire availability in the step's admitted tool set. */
 export function registerPresetQuestionToolAdmission(ctx: Context): () => void {
   const installed = new WeakSet<Agent>()
@@ -34,9 +41,34 @@ export function registerPresetQuestionToolAdmission(ctx: Context): () => void {
     const tools = agent.ctx.get('tools')
     const definition = tools?.get(ASK_USER_TOOL, agent)
     if (tools === undefined || definition === undefined) return
-    const dispose = tools.register(definition, { when: ({ agent: target }) => runningPresetOf(target.session) !== 'minimal' })
     installed.add(agent)
-    ctx.effect(() => dispose)
+    if (tools.register.length >= 2) {
+      const dispose = (tools as unknown as ConditionalToolRegistration).register(
+        definition,
+        { when: ({ agent: target }) => runningPresetOf(target.session) !== 'minimal' },
+      )
+      agent.ctx.effect(() => dispose)
+      return
+    }
+
+    // Before conditional registrations, per-agent restrictions owned both the
+    // visible schema and executable lookup. Keep the restriction in sync with
+    // the session log so preset changes remain immediate and reversible.
+    let liftRestriction: (() => void) | undefined
+    const syncRestriction = (): void => {
+      const minimal = runningPresetOf(agent.session) === 'minimal'
+      if (minimal === (liftRestriction !== undefined)) return
+      liftRestriction?.()
+      liftRestriction = minimal ? tools.restrict({ deny: [ASK_USER_TOOL] }) : undefined
+    }
+    syncRestriction()
+    const disposeSession = agent.ctx.on('session/event', (session) => {
+      if (session === agent.session) syncRestriction()
+    })
+    agent.ctx.effect(() => () => {
+      disposeSession()
+      liftRestriction?.()
+    })
   }
   const dispose = ctx.on('agent/created', ({ agent }) => { install(agent) })
   for (const agent of ctx.get('agents')?.list() ?? []) install(agent)

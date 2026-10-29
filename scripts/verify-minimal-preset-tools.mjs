@@ -36,15 +36,24 @@ try {
   registerPresetQuestionToolAdmission(questionRuntime)
   questionRuntime.emit('agent/created', { agent })
   for (const preset of ['minimal', 'standard', 'ptc', 'cordis', 'liangshen', 'minimal']) {
-    agent.session.events.push({ type: 'agent-preset/selected', data: { agentPreset: preset } })
-    const admitted = await questionRuntime.tools.resolve({ agent,
-      modelSelection: { provider: 'fixture', model: 'fixture' }, signal: new AbortController().signal })
-    try {
-      const schemas = questionRuntime.tools.schemas(agent, admitted)
+    const event = { type: 'agent-preset/selected', data: { agentPreset: preset } }
+    agent.session.events.push(event)
+    questionRuntime.emit('session/event', agent.session, event)
+    if (typeof questionRuntime.tools.resolve === 'function') {
+      const admitted = await questionRuntime.tools.resolve({ agent,
+        modelSelection: { provider: 'fixture', model: 'fixture' }, signal: new AbortController().signal })
+      try {
+        const schemas = questionRuntime.tools.schemas(agent, admitted)
+        assert.equal(schemas.some(tool => tool.name === 'ask_user_question'), preset !== 'minimal')
+        assert.equal(questionRuntime.tools.executable('ask_user_question', agent, admitted) !== undefined, preset !== 'minimal',
+          'the same admission controls schemas and dispatch, including preset changes')
+      } finally { admitted.dispose() }
+    } else {
+      const schemas = questionRuntime.tools.schemas(agent)
       assert.equal(schemas.some(tool => tool.name === 'ask_user_question'), preset !== 'minimal')
-      assert.equal(questionRuntime.tools.executable('ask_user_question', agent, admitted) !== undefined, preset !== 'minimal',
-        'the same admission controls schemas and dispatch, including preset changes')
-    } finally { admitted.dispose() }
+      assert.equal(questionRuntime.tools.get('ask_user_question', agent) !== undefined, preset !== 'minimal',
+        'the legacy restriction controls schemas and executable lookup, including preset changes')
+    }
   }
 } finally { await questionRuntime.fiber.dispose() }
 
@@ -144,6 +153,7 @@ const directChannel = createChannel({
 }, {
   id: 'preset-current-agent',
   status: 'idle',
+  options: { provider: 'deepseek', model: 'deepseek-chat' },
   session: {
     id: 'preset-current-session',
     seq: 1,
@@ -196,6 +206,7 @@ const displayChannel = createChannel({
 }, {
   id: 'preset-display-agent',
   status: 'idle',
+  options: { provider: 'deepseek', model: 'deepseek-chat' },
   session: { id: 'preset-display-session', seq: 1, events: [] , snapshotEvents() { return this.events }},
   ctx: { on() { return () => {} } },
   followup() {},
@@ -256,6 +267,7 @@ async function loadedContextWith(tools, complete = true) {
   const agent = {
     id: 'a1',
     status: 'idle',
+    options: { provider: 'deepseek', model: 'deepseek-chat' },
     session: { id: 's1', seq: 0, events: [] , snapshotEvents() { return this.events }},
     ctx: { on: () => () => {} },
     followup() {},

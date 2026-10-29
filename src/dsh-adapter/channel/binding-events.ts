@@ -5,6 +5,7 @@ import type { ChannelBinding } from './binding.js'
 import type { ChannelOwner } from './owner.js'
 import { type createChannelProjection } from './projection.js'
 import type { ChannelState } from './types.js'
+import { agentModel } from '../compat/agent-model.js'
 
 /**
  * The binding event router is the sole subscriber for a foreground Agent.
@@ -54,9 +55,9 @@ export function createBindingEvents(ctx: Context, deps: {
       deps.inputConvergence.cancelInFlight = false
       deps.inputConvergence.interruptSeq += 1
       deps.seedActivity?.(deps.binding.agent.session)
-      const model = deps.binding.agent.model
-      const selected = model?.current()
-      if (model && deps.state.provider !== '' && deps.state.model !== '' &&
+      const model = agentModel(deps.binding.agent)
+      const selected = model.current()
+      if (deps.state.provider !== '' && deps.state.model !== '' &&
         (selected?.provider !== deps.state.provider || selected.model !== deps.state.model)) {
         model.select({ provider: deps.state.provider, model: deps.state.model })
       }

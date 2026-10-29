@@ -7,6 +7,7 @@
  */
 import assert from 'node:assert/strict'
 import { createModelActions } from '../src/dsh-adapter/channel/model-actions.js'
+import { agentModel } from '../src/dsh-adapter/compat/agent-model.js'
 import { createWorkspaceActions } from '../src/dsh-adapter/channel/workspace-actions.js'
 
 type Deferred<T> = { promise: Promise<T>; resolve(value: T): void; reject(error: unknown): void }
@@ -17,6 +18,14 @@ const deferred = <T>(): Deferred<T> => {
   return { promise, resolve, reject }
 }
 const tick = (): Promise<void> => new Promise(resolve => setImmediate(resolve))
+
+const legacyOptions = { provider: 'legacy-provider', model: 'legacy-model', reasoningEffort: 'low' as const }
+const legacyModel = agentModel({ options: legacyOptions } as never)
+assert.deepEqual(legacyModel.current(), legacyOptions)
+legacyModel.select({ provider: 'next-provider', model: 'next-model', reasoningEffort: 'high' as never })
+assert.deepEqual(legacyOptions, { provider: 'next-provider', model: 'next-model', reasoningEffort: 'high' })
+const nativeModel = { current: () => undefined, select: () => undefined }
+assert.equal(agentModel({ model: nativeModel } as never), nativeModel, 'native model selection stays authoritative')
 
 const oldAgent = { ctx: { tag: 'old' }, session: { events: [], append: () => { throw new Error('old fact should not be appended') } , snapshotEvents() { return this.events }} }
 const newFacts: unknown[] = []

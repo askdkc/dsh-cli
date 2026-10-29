@@ -69,6 +69,7 @@ import { createInputActions, type InputConvergence } from './channel/input-actio
 import { createTaskWorkflowProjection } from './channel/task-workflow.js'
 import { createComposerImages } from './channel/composer-images.js'
 import { snapshotLiveSessionEvents } from './compat/liveSession.js'
+import { agentModel } from './compat/agent-model.js'
 import { runForegroundShell, type ForegroundShell } from './compat/shell.js'
 import { createPermissionModeRoster } from './channel/mode-roster.js'
 import { createPermissionModeActions } from './channel/mode-permission-actions.js'
@@ -1030,9 +1031,11 @@ function createChannelWithOwner(
   // Route-less children need a selection before their first step. Complete
   // child choices are authoritative, including choices supplied by Kiokuko.
   const disposeInheritedChildRoute = ctx.on('agent/created', ({ agent }) => {
-    if (!owner.current() || agent === binding.agent || !agent.model || agent.model.current()) return
-    const inherited = binding.agent.model?.current() ?? { provider: state.provider, model: state.model }
-    if (inherited.provider && inherited.model) agent.model.select(inherited)
+    if (!owner.current() || agent === binding.agent) return
+    const childModel = agentModel(agent)
+    if (childModel.current() !== undefined) return
+    const inherited = agentModel(binding.agent).current() ?? { provider: state.provider, model: state.model }
+    if (inherited.provider && inherited.model) childModel.select(inherited)
   })
   owner.own(disposeInheritedChildRoute)
   try {
