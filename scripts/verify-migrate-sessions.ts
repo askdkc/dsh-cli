@@ -9,7 +9,7 @@ import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { Context } from '@deepseek-ai/cordis'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SqliteSessionPersistence, { Context as LegacyContext, SessionStore, Session as LegacySession } from '../vendor/sqlite-island/index.js'
 import { settled } from './lib/term-test.mjs'
 

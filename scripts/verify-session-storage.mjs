@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { zstdCompressSync } from 'node:zlib'
 import { Context } from '@deepseek-ai/cordis'
 import SessionStore, { SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session'
-import Jsonl from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as Jsonl from '@deepseek-ai/dsh-session-persistence-jsonl'
 import { settled } from './lib/term-test.mjs'
 
 const root = mkdtempSync(join(tmpdir(), 'dsh-current-storage-'))

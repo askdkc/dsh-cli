@@ -39,27 +39,27 @@ try {
     check('verify-patch-surface.ts', true)
     check('verify-web-coexistence.mjs', true)
   }
-  // New upstream bundles removed Ralph from both base and Web. The legacy
-  // disable remains necessary for installed bundles, but has no source target.
+  // Simulate a future source bundle removing Goal from both base and Web.
+  // Its disable still exists in the installed baseline but has no source target.
   const retiredPatch = parseDocument(installedPatch, { logLevel: 'silent' })
-  retiredPatch.contents.items = retiredPatch.contents.items.filter(row => row.get('id') !== 'tool-ralph')
-  const withoutRalph = retiredPatch.toString()
-  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph)
+  retiredPatch.contents.items = retiredPatch.contents.items.filter(row => row.get('id') !== 'tool-goal')
+  const withoutGoal = retiredPatch.toString()
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutGoal)
   check('verify-patch-surface.ts', true)
   check('verify-web-coexistence.mjs', true)
   // A still-declared host row is not retired, even when Web stops disabling it.
   for (const row of [
-    { id: 'tool-ralph', name: 'test-ralph' },
-    { id: 'host-tools', group: true, config: [{ id: 'tool-ralph', name: 'test-ralph' }] },
+    { id: 'tool-goal', name: 'test-goal' },
+    { id: 'host-tools', group: true, config: [{ id: 'tool-goal', name: 'test-goal' }] },
   ]) {
     writeFileSync(join(base, 'cordis.patch.yml'), stringify([{ insert: [row] }]))
     check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)
   }
   writeFileSync(join(base, 'cordis.patch.yml'), '[]\n')
   // Being declared by Web also prevents the legacy override exemption.
-  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph + stringify([{ insert: [{ id: 'tool-ralph', name: 'test-ralph' }] }]))
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutGoal + stringify([{ insert: [{ id: 'tool-goal', name: 'test-goal' }] }]))
   check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)
-  writeFileSync(join(web, 'cordis.patch.yml'), withoutRalph)
+  writeFileSync(join(web, 'cordis.patch.yml'), withoutGoal)
   const originalTuiPatch = readFileSync(join(root, 'cordis.patch.yml'), 'utf8')
   writeFileSync(join(tui, 'cordis.patch.yml'), `${originalTuiPatch}\n- id: unexpected-tui-disable\n  disabled: true\n`)
   check('verify-patch-surface.ts', false, /disablesBeyondWebApp/)

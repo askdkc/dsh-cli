@@ -17,6 +17,8 @@ const { LspError } = await import(pathToFileURL(providerRequire.resolve('@deepse
 const { Context } = await module('@deepseek-ai/cordis')
 const { default: Loader } = await module('@deepseek-ai/cordis-plugin-loader')
 const { default: AgentPresetRegistry } = await module('@deepseek-ai/dsh-agent-preset-registry')
+const { default: SessionStore } = await module('@deepseek-ai/dsh-session')
+const { default: AgentRegistry } = await module('@deepseek-ai/dsh-agent')
 const { default: SessionProjectionRegistry } = await module('@deepseek-ai/dsh-session-projection')
 const { createScope } = await module('@deepseek-ai/dsh-scope')
 const { parse } = await module('yaml')
@@ -54,6 +56,7 @@ try {
     { id: 'fs', name: '@deepseek-ai/dsh-fs-local', config: { cwd: workspace } },
     { id: 'subprocess', name: '@deepseek-ai/dsh-subprocess-local' },
     { id: 'tools', name: '@deepseek-ai/dsh-tools' },
+    { id: 'tool-executor-native', name: '@deepseek-ai/dsh-tool-executor-native' },
     { id: 'system-prompt', name: '@deepseek-ai/dsh-system-prompt' },
   ]
   const rows = [...host, ...bundle.map(row => row.id === 'lsp-webstack-provider' ? { ...row, config: { ...row.config, servers: { phpantom: { enabled: false }, tailwind: { enabled: false } } } } : row)]
@@ -96,13 +99,13 @@ try {
   assert.ok(completion.results[0].data.items.some(item => item.label === '日本語'))
   assert.equal(await readFile(join(workspace, 'fixture.ts'), 'utf8'), text, 'completion applies no edits')
   console.log('real V1 semantics OK (diagnostics, definition, completion, unchanged fixture)')
-  const status = await ctx.get('tools').execute({ callId: 'native-status', name: 'lsp_extra', arguments: { operation: 'status' }, agent, signal: new AbortController().signal })
+  const status = (await ctx.get('tools').execute({ calls: [{ type: 'tool-call', id: 'native-status', name: 'lsp_extra', arguments: JSON.stringify({ operation: 'status' }) }], agent, signal: new AbortController().signal })).results[0].result
   assert.equal(status.isError, false, JSON.stringify(status))
-  const nativeOpen = await ctx.get('tools').execute({ callId: 'native-open', name: 'lsp_extra', arguments: { operation: 'snapshot', action: 'open', file_path: 'fixture.ts' }, agent, signal: new AbortController().signal })
+  const nativeOpen = (await ctx.get('tools').execute({ calls: [{ type: 'tool-call', id: 'native-open', name: 'lsp_extra', arguments: JSON.stringify({ operation: 'snapshot', action: 'open', file_path: 'fixture.ts' }) }], agent, signal: new AbortController().signal })).results[0].result
   assert.equal(nativeOpen.isError, false, JSON.stringify(nativeOpen))
   const handle = nativeOpen.value.handle
   assert.equal(typeof handle, 'string')
-  const nativeRelease = await ctx.get('tools').execute({ callId: 'native-release', name: 'lsp_extra', arguments: { operation: 'snapshot', action: 'release', handle }, agent, signal: new AbortController().signal })
+  const nativeRelease = (await ctx.get('tools').execute({ calls: [{ type: 'tool-call', id: 'native-release', name: 'lsp_extra', arguments: JSON.stringify({ operation: 'snapshot', action: 'release', handle }) }], agent, signal: new AbortController().signal })).results[0].result
   assert.equal(nativeRelease.isError, false)
   // External edit -> stale pinned snapshot; fresh request sees the replacement.
   const service = ctx.get('codeIntelligence')
@@ -165,12 +168,14 @@ try {
   await ctx.loader.await()
   assert.equal((await channel.port.capabilities()).status, 'ok')
   assert.equal(ctx.get('codeIntelligence'), activeProvider, 'removing the duplicate does not restart the healthy provider')
+  await ctx.plugin(SessionStore)
   await ctx.plugin(SessionProjectionRegistry)
+  await ctx.plugin(AgentRegistry)
   await ctx.plugin(AgentPresetRegistry, { default: 'fixture-lsp' })
   await ctx.get('agentPresets').register({ id: 'fixture-lsp', plugins: [{
     id: 'code-tools', name: '@deepseek-ai/cordis-plugin-group',
     isolate: { tools: true, systemPrompt: true },
-    config: [host.find(row => row.id === 'system-prompt'), host.find(row => row.id === 'tools'), ...bundle.filter(row => row.id === 'tool-lsp' || row.id === 'tool-lsp-extra')],
+    config: [host.find(row => row.id === 'system-prompt'), host.find(row => row.id === 'tools'), host.find(row => row.id === 'tool-executor-native'), ...bundle.filter(row => row.id === 'tool-lsp' || row.id === 'tool-lsp-extra')],
   }] })
   const scopedAgent = { id: 'scoped-agent', ctx, session: { id: 'scoped-session', header: { cwd: workspace }, events: [], snapshotEvents() { return this.events } } }
   const scope = createScope(ctx, scopedAgent)
@@ -181,7 +186,7 @@ try {
   const scopedTools = serviceForAgent(ctx, scopedAgent, 'tools')
   assert.notEqual(scopedTools, ctx.get('tools'))
   assert.deepEqual(scopedTools.schemas(scopedAgent).map(tool => tool.name).sort(), ['lsp', 'lsp_extra'])
-  const scopedStatus = await scopedTools.execute({ callId: 'scoped-status', name: 'lsp_extra', arguments: { operation: 'status' }, agent: scopedAgent, signal: new AbortController().signal })
+  const scopedStatus = (await scopedTools.execute({ calls: [{ type: 'tool-call', id: 'scoped-status', name: 'lsp_extra', arguments: JSON.stringify({ operation: 'status' }) }], agent: scopedAgent, signal: new AbortController().signal })).results[0].result
   assert.equal(scopedStatus.isError, false, JSON.stringify(scopedStatus))
   console.log('explicit user preset OK (isolated tools, scoped native invocation)')
   console.log('real host lifecycle OK (bundle, native registry, scope, stale snapshot, duplicate rejection, disable/re-enable)')

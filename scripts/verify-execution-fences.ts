@@ -8,6 +8,7 @@ process.env.HOME = home
 process.env.USERPROFILE = home
 const { Context } = await import('@deepseek-ai/cordis')
 const { ToolRuntime } = await import('@deepseek-ai/dsh-tools')
+const NativeToolExecutor = await import('@deepseek-ai/dsh-tool-executor-native')
 const { createScope } = await import('@deepseek-ai/dsh-scope')
 const host = await import('../src/dsh-adapter/plugin-host.js')
 const { ExecutionFenceRuntime } = await import('../src/dsh-adapter/execution-fences.js')
@@ -17,6 +18,7 @@ root.provide('systemPrompt', { tools: () => () => {} })
 root.provide('agents', { get: (id: string) => agents.get(id) })
 root.provide('sessions', { get: (id: string) => sessions.get(id) })
 await root.plugin(ToolRuntime)
+await root.plugin(NativeToolExecutor)
 const hostFiber = root.plugin(host)
 await hostFiber
 const session = { id: 'session', header: { cwd: home } }
@@ -31,7 +33,7 @@ let effects = 0
 const output = { schema: {}, render: (_: unknown, value: unknown) => [{ type: 'text', text: String(value) }] }
 root.tools.register({ name: 'fenced_eval', description: 'Fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { effects++; return 42 } } as never)
 root.tools.register({ name: 'native_write', description: 'Fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { effects++; return 1 } } as never)
-const execute = (name = 'fenced_eval', nativeAgent = agent) => root.tools.execute({ name, callId: crypto.randomUUID(), arguments: {}, agent: nativeAgent, signal: new AbortController().signal } as never)
+const execute = (name = 'fenced_eval', nativeAgent = agent) => root.tools.execute({ calls: [{ type: 'tool-call', id: crypto.randomUUID(), name, arguments: '{}' }], agent: nativeAgent, signal: new AbortController().signal } as never)
 let lease: any, retainedContext: any
 let ownerCommand: (() => void) | undefined
 let allow = true, ready = true

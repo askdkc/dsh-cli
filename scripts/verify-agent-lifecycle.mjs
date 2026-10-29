@@ -14,9 +14,10 @@ import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import LlmRuntime, { LlmAdapter } from '@deepseek-ai/dsh-llm'
 import SessionStore from '@deepseek-ai/dsh-session'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
+import ToolRuntime, { defineTool } from '@deepseek-ai/dsh-tools'
+import * as NativeToolExecutor from '@deepseek-ai/dsh-tool-executor-native'
 import { settled } from './lib/term-test.mjs'
 
 const root = mkdtempSync(join(tmpdir(), 'dsh-cli-lifecycle-'))
@@ -37,10 +38,15 @@ function* text(text) {
 }
 
 class ScriptedAdapter extends LlmAdapter {
-  async resolveModel(provider, model) { return { provider, id: model, name: model } }
+  async resolveModel(provider, model) {
+    return { provider, id: model, name: model, reasoning: {
+      efforts: [{ id: 'low', name: 'Low' }, { id: 'max', name: 'Max' }], defaultEffort: 'low',
+    } }
+  }
   async *stream(options) {
     requests++
     if (requests === 1) {
+      assert.equal(options.reasoningEffort, 'max', 'configured effort reaches the real prepared request')
       yield { type: 'block-start', index: 0, blockType: 'text' }
       yield { type: 'text-delta', index: 0, text: 'first reply' }
       await firstStream.promise
@@ -72,21 +78,24 @@ try {
   for (const plugin of [LlmRuntime, SessionStore, SessionProjectionRegistry, SystemPrompt, ToolRuntime, AgentRegistry]) {
     await ctx.plugin(plugin)
   }
+  await ctx.plugin(NativeToolExecutor)
   await ctx.plugin(JsonlSessionPersistence, { root: join(root, 'sessions') })
   await ctx.plugin(AgentLoop, { agents: [] })
   ctx.llm.registerAdapter(['scripted'], new ScriptedAdapter())
-  ctx.tools.register(defineContentToolFixture({
+  ctx.tools.register(defineTool({
     name: 'echo', description: 'local regression fixture', parameters: {},
-    async execute() { toolRuns++; return [{ type: 'text', text: 'tool output' }] },
+    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+    async execute() { toolRuns++; return 'tool output' },
   }))
   const handle = await ctx.agents.create({
     sessionId: 'lifecycle-983', cwd: root, agentOptions: { provider: 'scripted', model: 'scripted' },
   })
   channel = createChannel(ctx, handle.agent, {
-    handle, cwd: root, provider: 'scripted', model: 'scripted', activity: false,
+    handle, cwd: root, provider: 'scripted', model: 'scripted', effort: 'max', activity: false,
   })
   channel.submit('first prompt')
-  assert.ok(await settled(() => channel.rows.some(row => row.text === 'first reply')), 'stream reaches the channel before completion')
+  assert.ok(await settled(() => channel.rows.some(row => row.text === 'first reply')),
+    `stream reaches the channel before completion: ${JSON.stringify(channel.rows)}`)
   assert.equal(channel.working, true)
   firstStream.resolve()
   assert.ok(await settled(() => !channel.working && channel.pending.length === 0))
@@ -145,6 +154,15 @@ try {
     assert.ok(restored, 'attach registers the restored Agent')
     assert.notEqual(restored, retiring.agent, 'attach resumes a fresh Agent after close')
     assert.equal(switching.agentId, String(restored.session.id), 'the restored Agent is attached to the channel')
+    const pending = await ctx.agents.create({ sessionId: 'pending-selection', cwd: root,
+      agentOptions: { provider: 'scripted', model: 'old' } })
+    pending.agent.model.select({ provider: 'scripted', model: 'next', reasoningEffort: 'low' })
+    await pending.dispose()
+    const pendingResume = await switching.resumeTo('pending-selection')
+    assert.equal(pendingResume.ok, true, JSON.stringify(pendingResume))
+    assert.equal(switching.model, 'next', 'resume keeps a model selected before the first request')
+    assert.ok(await settled(() => switching.effortLevels !== undefined))
+    assert.equal(ctx.agents.get('pending-selection').model.current().reasoningEffort, 'low', 'unconfigured resume preserves the pending effort')
   } finally {
     close.resolve()
     switching.releaseContributions()

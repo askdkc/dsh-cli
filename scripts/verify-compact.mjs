@@ -18,6 +18,8 @@ import { render } from '../lib/types/ui.js'
 import { MessageList } from '../lib/types/components/MessageList.js'
 import { Writable, PassThrough } from 'node:stream'
 import { settled, sleep } from './lib/term-test.mjs'
+import { setLang } from '../lib/types/i18n.js'
+setLang('zh')
 
 let failed = 0
 function check(name, ok, extra = '') {

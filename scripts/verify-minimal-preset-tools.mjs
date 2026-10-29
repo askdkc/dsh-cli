@@ -5,33 +5,48 @@ import assert from 'node:assert/strict'
 import { createChannel } from '../lib/types/dsh-adapter/channel.js'
 import {
   composePreset,
-  filterMinimalPresetTools,
+  registerPresetQuestionToolAdmission,
   resolvePersistedPreset,
   runningPresetOf,
 } from '../lib/types/dsh-adapter/presets.js'
 import { settled } from './lib/term-test.mjs'
 import { setLang } from '../lib/types/i18n.js'
 
+const { Context } = await import('@deepseek-ai/cordis')
+const { default: ToolRuntime, defineTool } = await import('@deepseek-ai/dsh-tools')
+const { default: SystemPrompt } = await import('@deepseek-ai/dsh-system-prompt')
+const { createScope } = await import('@deepseek-ai/dsh-scope')
 const bash = { name: 'bash' }
 const editor = { name: 'str_replace_editor' }
-const ask = { name: 'ask_user_question' }
-const assembly = {
-  sections: [],
-  contexts: [],
-  tools: [bash, editor, ask],
-  variables: {},
-}
-
-const minimal = filterMinimalPresetTools(assembly, 'minimal')
-assert.deepEqual(minimal.tools.map(tool => tool.name), ['bash', 'str_replace_editor'])
-assert.notEqual(minimal, assembly)
-
-for (const preset of ['standard', 'ptc', 'cordis', 'liangshen', undefined]) {
-  assert.equal(filterMinimalPresetTools(assembly, preset), assembly)
-}
-
-const alreadyTwoTools = { ...assembly, tools: [bash, editor] }
-assert.equal(filterMinimalPresetTools(alreadyTwoTools, 'minimal'), alreadyTwoTools)
+const questionRuntime = new Context()
+try {
+  await questionRuntime.plugin(SystemPrompt)
+  await questionRuntime.plugin(ToolRuntime)
+  questionRuntime.tools.register(defineTool({
+    name: 'ask_user_question', description: 'question fixture', parameters: {},
+    output: { schema: { type: 'string' }, render: (_args, value) => [{ type: 'text', text: value }] },
+    async execute() { return 'answer' },
+  }))
+  let scope
+  const agent = { id: 'question-admission', get ctx() { return scope.ctx },
+    session: { header: { agentPreset: 'minimal' }, events: [], snapshotEvents() { return this.events } },
+  }
+  scope = createScope(questionRuntime, agent)
+  questionRuntime.provide('agents', { list: () => [agent] })
+  registerPresetQuestionToolAdmission(questionRuntime)
+  questionRuntime.emit('agent/created', { agent })
+  for (const preset of ['minimal', 'standard', 'ptc', 'cordis', 'liangshen', 'minimal']) {
+    agent.session.events.push({ type: 'agent-preset/selected', data: { agentPreset: preset } })
+    const admitted = await questionRuntime.tools.resolve({ agent,
+      modelSelection: { provider: 'fixture', model: 'fixture' }, signal: new AbortController().signal })
+    try {
+      const schemas = questionRuntime.tools.schemas(agent, admitted)
+      assert.equal(schemas.some(tool => tool.name === 'ask_user_question'), preset !== 'minimal')
+      assert.equal(questionRuntime.tools.executable('ask_user_question', agent, admitted) !== undefined, preset !== 'minimal',
+        'the same admission controls schemas and dispatch, including preset changes')
+    } finally { admitted.dispose() }
+  }
+} finally { await questionRuntime.fiber.dispose() }
 
 const headerSession = {
   header: { agentPreset: 'ptc' },

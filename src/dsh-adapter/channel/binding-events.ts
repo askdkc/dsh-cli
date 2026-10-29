@@ -1,4 +1,4 @@
-import type { AssistantStreamFrame, ModelSelectionRef } from '@deepseek-ai/dsh-agent'
+import type { AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
 import type { Context } from '@deepseek-ai/cordis'
 import type { InputConvergence } from './input-actions.js'
 import type { ChannelBinding } from './binding.js'
@@ -24,8 +24,7 @@ export function createBindingEvents(ctx: Context, deps: {
    *  nothing itself and forwards no events. */
   seedActivity?(session: unknown): void
   inputConvergence: InputConvergence
-  selection: ModelSelectionRef
-  modelActions: { applyPreferredEffort(): Promise<void>; selection: ModelSelectionRef }
+  modelActions: { applyPreferredEffort(): Promise<void> }
   modeActions: { refreshMode(): void; onSessionEvent(session: unknown, event: unknown): void }
   projector: ReturnType<typeof createChannelProjection>
   subagents: { onSessionEvent(session: unknown, event: unknown): boolean; onStreamFrame?(agent: unknown, frame: AssistantStreamFrame): boolean; onParentEvent?(event: unknown): void; onStart(info: { id: string; runId?: string; provider: string; local?: boolean }): void; onEnd(info: { id: string; runId?: string; stopReason: string; lastAssistantMessage?: unknown[] }): void }
@@ -48,18 +47,23 @@ export function createBindingEvents(ctx: Context, deps: {
     deps.projector.updateSpinnerMode()
   }
 
+  let ready: Promise<void> = Promise.resolve()
   const bind = (): void => {
     try {
       deps.state.agentBindingGeneration = deps.binding.bind()
       deps.inputConvergence.cancelInFlight = false
       deps.inputConvergence.interruptSeq += 1
       deps.seedActivity?.(deps.binding.agent.session)
-      deps.modelActions.selection.current = undefined
-      deps.modelActions.selection.assembled = undefined
-      if (deps.binding.agent.options?.model === undefined && deps.state.provider !== '' && deps.state.model !== '') {
-        deps.modelActions.selection.current = { provider: deps.state.provider, model: deps.state.model }
+      const model = deps.binding.agent.model
+      const selected = model?.current()
+      if (model && deps.state.provider !== '' && deps.state.model !== '' &&
+        (selected?.provider !== deps.state.provider || selected.model !== deps.state.model)) {
+        model.select({ provider: deps.state.provider, model: deps.state.model })
       }
-      void deps.modelActions.applyPreferredEffort()
+      ready = deps.modelActions.applyPreferredEffort()
+      // Keep a rejected initialization observable to input delivery without an
+      // unhandled rejection while the user has not submitted anything yet.
+      void ready.catch(error => ctx.logger.warn(`dsh-cli: model selection failed: ${String(error)}`))
       deps.modeActions.refreshMode()
       const capture = deps.binding.capture()
       const session = capture.agent.session
@@ -70,40 +74,6 @@ export function createBindingEvents(ctx: Context, deps: {
       }
       const on = (...args: Parameters<typeof ctx.on>): ReturnType<typeof ctx.on> => register(ctx.on(...args))
 
-      // Keep the upstream assembly/request pairing, but own each listener as
-      // soon as it is installed. The upstream combined disposer is too late
-      // if request registration throws, and its post-await assembly write is
-      // unsafe after a rebind (including A→B→A ABA).
-      const disposeAssembly = capture.agent.ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
-        const selected = deps.selection.current
-        const assembled = await next()
-        if (!current()) return assembled
-        deps.selection.assembled = selected
-        if (selected === undefined) return assembled
-        return {
-          ...assembled,
-          variables: {
-            ...assembled.variables,
-            provider: selected.provider,
-            model: selected.model,
-          },
-        }
-      })
-      register(disposeAssembly)
-      const disposeRequest = capture.agent.ctx.on('agent/request', async (_payload, next) => {
-        const resolved = await next()
-        if (!current()) return resolved
-        const selected = deps.selection.assembled
-        if (selected === undefined) return resolved
-        const { reasoningEffort: _inheritedEffort, ...withoutInheritedEffort } = resolved
-        return {
-          ...withoutInheritedEffort,
-          provider: selected.provider,
-          model: selected.model,
-          ...(selected.reasoningEffort === undefined ? {} : { reasoningEffort: selected.reasoningEffort }),
-        }
-      })
-      register(disposeRequest)
       on('agent/status', ({ agent: subject, status }) => {
         if (!current() || subject !== capture.agent) return
         deps.state.status = status
@@ -171,5 +141,5 @@ export function createBindingEvents(ctx: Context, deps: {
       throw error
     }
   }
-  return { bind }
+  return { bind, ready: () => ready }
 }

@@ -307,16 +307,16 @@ const subagentRows = (channel: { rows: Array<{ kind: string }> }) => channel.row
   const provide = (ctx as unknown as { provide(name: string, value: unknown): void }).provide.bind(ctx)
   const initial = makeAgent('agent-g', 'sess-g')
   const created = makeAgent('agent-g2', 'sess-g2')
-  // The agent-side setup begins before channel event listeners; make that
-  // registration fail and assert the enclosing synchronous adoption revokes.
-  created.ctx = { on: () => { throw new Error('new-agent subscription boom') } }
+  // Model selection is read synchronously during binding, before subscriptions.
+  // A failure here must revoke the newly adopted handle as well.
+  Object.assign(created, { model: { current() { throw new Error('new-agent selection boom') }, select() {} } })
   let disposed = 0
   provide('agents', { create: () => Promise.resolve(makeHandle(created, () => { disposed += 1 })) })
   const channel = createChannel(ctx as never, initial as never, {
     model: 'm0', cwd: '/tmp/demo', provider: 'p0', activity: false,
   })
   let rejected = false
-  try { await channel.newSession() } catch (error) { rejected = error instanceof Error && /subscription boom/u.test(error.message) }
+  try { await channel.newSession() } catch (error) { rejected = error instanceof Error && /selection boom/u.test(error.message) }
   await sleep(0) // 固定窗:pacing 让 post-commit 回滚的微任务跑完，无可观测锚点
   check('7a. /new post-commit subscription throw propagates', rejected)
   check('7b. /new post-commit subscription throw tears down new live handle', disposed === 1, String(disposed))

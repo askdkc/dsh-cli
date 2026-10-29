@@ -26,7 +26,7 @@ try {
   assert.doesNotMatch(normal.stderr, /LspError:|LSP_CONFLICT/u, 'expected duplicate rejection must not leak a stack')
   assert.match(normal.stdout, /real structure OK/u, 'run the complete real host verification')
   const mutations = [
-    ['unexpected-outside', "  const status = await ctx.get('tools').execute", "  ctx.logger.error(new Error('INJECTED_OUTSIDE'))\n  const status = await ctx.get('tools').execute", /INJECTED_OUTSIDE/u],
+    ['unexpected-outside', "  const status = (await ctx.get('tools').execute", "  ctx.logger.error(new Error('INJECTED_OUTSIDE'))\n  const status = (await ctx.get('tools').execute", /INJECTED_OUTSIDE/u],
     ['unexpected-inside', "    await ctx.loader.root.update([...rows, { ...providerRow, id: 'duplicate-code-provider' }])", "    ctx.logger.error(new Error('INJECTED_INSIDE'))\n    await ctx.loader.root.update([...rows, { ...providerRow, id: 'duplicate-code-provider' }])", /INJECTED_INSIDE/u],
     ['missing-rejection', "    await ctx.loader.root.update([...rows, { ...providerRow, id: 'duplicate-code-provider' }])", '    await ctx.loader.root.update(rows)', /real plugin lifecycle/u],
     ['wrong-type', 'duplicate.fiber.await()', `Promise.reject(Object.assign(new Error('wrong type'), {name:'LspError',code:'LSP_CONFLICT'}))`, /actual LspError type/u],

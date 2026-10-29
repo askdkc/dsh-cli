@@ -41,9 +41,10 @@ for (const retire of [false, true]) {
   assert.equal(writes, 0)
 }
 
-function fixture(jobs?: unknown, options: { throwOnEvent?: string; effectCleanups?: (() => void)[]; unregisteredEvents?: string[] } = {}) {
+function fixture(jobs?: unknown, options: { throwOnEvent?: string; throwOnEventOccurrence?: number; effectCleanups?: (() => void)[]; unregisteredEvents?: string[] } = {}) {
   const writes: string[] = []
   let creates = 0
+  let matchingRegistrations = 0
   const listeners = new Map<string, (...args: unknown[]) => void>()
   const services: Record<string, unknown> = {
     settings: {
@@ -76,7 +77,7 @@ function fixture(jobs?: unknown, options: { throwOnEvent?: string; effectCleanup
   if (jobs !== undefined) services.jobs = jobs
   const ctx = {
     on(event: string, listener: (...args: unknown[]) => void) {
-      if (event === options.throwOnEvent) throw new Error(`fixture registration failed: ${event}`)
+      if (event === options.throwOnEvent && ++matchingRegistrations === (options.throwOnEventOccurrence ?? 1)) throw new Error(`fixture registration failed: ${event}`)
       listeners.set(event, listener)
       return () => { listeners.delete(event); options.unregisteredEvents?.push(event) }
     },
@@ -181,7 +182,7 @@ function fixture(jobs?: unknown, options: { throwOnEvent?: string; effectCleanup
   const unregisteredEvents: string[] = []
   const jobs = { list: () => [], kill() {}, onJobsChanged: () => () => { jobsUnsubscribes += 1 } }
   assert.throws(
-    () => fixture(jobs, { throwOnEvent: 'agent/created', unregisteredEvents }),
+    () => fixture(jobs, { throwOnEvent: 'agent/created', throwOnEventOccurrence: 2, unregisteredEvents }),
     /fixture registration failed: agent\/created/,
   )
   assert.ok(unregisteredEvents.includes('agent/status'), 'earlier agent-view subscription was rolled back')

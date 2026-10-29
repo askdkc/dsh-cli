@@ -7,6 +7,7 @@ import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import AgentPresetRegistry from '@deepseek-ai/dsh-agent-preset-registry'
 import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+import AgentRegistry from '@deepseek-ai/dsh-agent'
 import { parse } from 'yaml'
 import { settled } from './lib/term-test.mjs'
 import { registerBundledPresets } from '../lib/types/dsh-adapter/bundled-presets.js'
@@ -105,6 +106,7 @@ try {
   runtime.baseUrl = new URL('../cordis.patch.yml', import.meta.url).href
   await runtime.plugin(Loader)
   await runtime.plugin(SessionProjectionRegistry)
+  await runtime.plugin(AgentRegistry)
   await runtime.plugin(AgentPresetRegistry, { default: 'liangshen' })
   runtime.loader.builtins.fixture = ctx => {
     mounted++

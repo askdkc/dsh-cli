@@ -38,7 +38,7 @@ import { historicalChildCatalogSource } from '@deepseek-ai/dsh-session-format-v3
 // profile workspace. The island stays a workspace package; its rc.2 peer
 // closure is pinned by the pnpm-workspace overrides either way.
 import SqliteSessionPersistence, { Context as LegacyContext, SessionStore as LegacySessionStore } from '../vendor/sqlite-island/index.js'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import * as JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
 import { settled } from './lib/term-test.mjs'
 
 function argValue(flag: string): string | undefined {

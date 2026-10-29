@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { ReasoningEffortId, type LlmModelInfo } from '@deepseek-ai/dsh-llm'
-import type { Agent, ModelSelectionRef } from '@deepseek-ai/dsh-agent'
+import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { CommandCompletionNode } from '../../commands.js'
 import { nearestLowerEffort, readEffortPref, resolveEffortDefault, writeEffortPref } from '../../effortPrefs.js'
 import { snapshotLiveSessionEvents } from '../compat/liveSession.js'
@@ -24,7 +24,6 @@ export function createModelActions(
   deps: {
     owner: Pick<ChannelOwner, 'current'>
     binding: Pick<Binding, 'capture' | 'isCurrent'>
-    selection: ModelSelectionRef
     initialEffort?: string
     agent(): Agent
     notify: ChannelState['notify']
@@ -33,7 +32,7 @@ export function createModelActions(
     checkContextWarning(): void
   },
 ) {
-  const { owner, selection, notify } = deps
+  const { owner, notify } = deps
   const llmRuntime = ctx.get('llm') as
     | {
       resolveModelInfo(provider: string, model: string): Promise<{ context?: { contextWindow: number }; reasoning?: { efforts: ReadonlyArray<{ id: string; name: string; description?: string }>; defaultEffort?: string } }>
@@ -101,7 +100,11 @@ export function createModelActions(
     // This same binding-time lookup is the route's initial tier refresh even
     // without a stored preference. Do not make a separate competing refresh
     // operation that could invalidate the selected preference completion.
-    if (preferredEffort === undefined) return
+    if (preferredEffort === undefined) {
+      state.reasoningEffort = capture.binding.agent.model?.current()?.reasoningEffort ?? resolved.defaultEffort
+      state.emit()
+      return
+    }
     const available = resolved.efforts.map(effort => effort.id)
     // Exact hit applies silently; a miss falls back to the nearest LOWER tier
     // the route offers (never up), and both miss paths notify exactly once
@@ -113,39 +116,16 @@ export function createModelActions(
         lastEffortFallbackNotice = { preferred: preferredEffort, applied: undefined }
         notify(t('effort-preference-unsupported', { preferred: preferredEffort }), { color: 'warning' })
       }
-      // Nothing is pinned, so the ROUTE's model default is what actually ships
-      // and the readout (status line, /effort status) must say so. Every switch
-      // tail clears it before this runs (session-resume.ts / model-switch.ts /
-      // session-live-adoption.ts / background-action.ts), but a resumed log's
-      // replayed `request/header` can leave an older tier behind — neither blank
-      // nor "last route's tier" is the truth. Only the readout moves: pinning
-      // the default into selection.current would put a tier the user never chose
-      // onto the wire, which is exactly what "never up" forbids.
+      // Omit explicit effort so the adapter can resolve its current default.
       const shipped = resolved.defaultEffort
       if (state.reasoningEffort !== shipped) {
         state.reasoningEffort = shipped
         state.emit()
       }
-      // An effort pin installed earlier (an exact hit, /effort <id>) survives
-      // every path that is NOT a bind: /settings' effortDefault hands the level
-      // straight to setDefaultEffort → applyPreferredEffort (plugin.ts:804 →
-      // setDefaultEffort above), which never resets selection.current — the four
-      // switch tails that do are all on the bind side. Leaving it would put the
-      // OLD tier back on the wire while the readout above announces the model
-      // default. Drop the effort only: the provider/model half of the pin is
-      // this route's, not the stale tier's. No emit — setDefaultEffort reaches
-      // here through that same non-bind path, and nothing UI-visible reads this
-      // ref (it is the router's ModelSelectionRef, not the IDE ChannelSelection
-      // the status line shows); the readout above already emits when it moves.
-      if (selection.current?.reasoningEffort !== undefined) {
-        selection.current = { provider: capture.provider, model: capture.model }
-      }
+      capture.binding.agent.model.select({ provider: capture.provider, model: capture.model })
       return
     }
-    // Dedupe gates ONLY the toast: bind resets selection.current on every
-    // session switch, so the pin below must re-apply unconditionally — an
-    // early return here would ship the model default from the second session
-    // on (review C1). The status line shows the tier that actually ships.
+    // Notice deduplication must not skip recording the preference for a newly bound session.
     const fresh = lastEffortFallbackNotice?.preferred !== preferredEffort || lastEffortFallbackNotice.applied !== applied
     if (applied !== preferredEffort && fresh) {
       lastEffortFallbackNotice = { preferred: preferredEffort, applied }
@@ -153,7 +133,7 @@ export function createModelActions(
     }
     if (applied === preferredEffort) lastEffortFallbackNotice = undefined
     state.reasoningEffort = applied
-    selection.current = { provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(applied) }
+    capture.binding.agent.model.select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(applied) })
     state.emit()
   }
   const refreshEffortLevels = (): void => {
@@ -170,7 +150,7 @@ export function createModelActions(
   }
   const applyEffort = (effort: { id: string; name: string }, capture: EffortCapture): void => {
     if (!effortCurrent(capture)) return
-    selection.current = { provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(effort.id) }
+    capture.binding.agent.model.select({ provider: capture.provider, model: capture.model, reasoningEffort: ReasoningEffortId(effort.id) })
     preferredEffort = effort.id
     state.reasoningEffort = effort.id
     writeEffortPref(effort.id)
@@ -292,5 +272,5 @@ export function createModelActions(
     if (!writePresetPref(target.id)) { notify(t('preset-switched-pref-failed', { id: target.id }), { color: 'warning' }); return true }
     notify(t('preset-switched-saved', { id: target.id }), { color: 'success' }); return true
   }
-  return { selection, applyPreferredEffort, refreshEffortLevels, listEfforts, setEffort, setDefaultEffort, warmEffortLevels, listModels, listProviders, dropModelNodeCache, warmModelNodes, modelNodes: () => modelNodeCache.nodes ?? [], warmPresetOptions, presetOptions: () => presetOptionCache.list ?? [], listPresets, switchPreset }
+  return { applyPreferredEffort, refreshEffortLevels, listEfforts, setEffort, setDefaultEffort, warmEffortLevels, listModels, listProviders, dropModelNodeCache, warmModelNodes, modelNodes: () => modelNodeCache.nodes ?? [], warmPresetOptions, presetOptions: () => presetOptionCache.list ?? [], listPresets, switchPreset }
 }

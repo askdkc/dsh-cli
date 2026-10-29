@@ -37,7 +37,7 @@ import { createChannelNotifications } from './channel/notifications.js'
 import { createSelectionAttachments } from './channel/ide-selection.js'
 import { IdeChannel, ideLockDir, type SelectionSnapshot } from './ide-channel.js'
 import type { Context } from '@deepseek-ai/cordis'
-import { type Agent, type AgentHandle, type CreateAgentOptions, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
+import { type Agent, type AgentHandle, type CreateAgentOptions } from '@deepseek-ai/dsh-agent'
 import type { CommandRuntime } from '@deepseek-ai/dsh-commands'
 import {
   createUserMessage,
@@ -351,7 +351,10 @@ function createChannelWithOwner(
   const inputDelivery = createInputDelivery(ctx, owner, binding, () => state,
     (...args) => notify(...args), trackPending, untrackPending, composer,
     () => currentSelection, (messageId, info) => selectionAttachments.remember(messageId, info),
-    agent => taskWorkflow?.waitForInput(agent) ?? Promise.resolve())
+    async agent => {
+      await bindingEvents.ready()
+      await taskWorkflow?.waitForInput(agent)
+    })
   const { dispatchUserText, deliverUserText, retireAttachment, withDecisionPending, clearStagedImages } = inputDelivery
   /**
    * The `tui/session-switch` decision event (pi's `session_before_switch`),
@@ -424,8 +427,6 @@ function createChannelWithOwner(
   // replacement work queued by interruptAndDeliver and leave the UI gated on
   // a working flag that has not observed turn/end yet.
 
-  // Model selection is installed by bindAgent; route/effort state is owned by model-actions.
-  const selection: ModelSelectionRef = { current: undefined, assembled: undefined }
   // Model/effort/preset actions are composed after state construction.
   // Registry command policy and rc.8 image encoding are an owner-scoped module.
   const externalCommands = createExternalCommandInvoker(ctx, {
@@ -734,7 +735,6 @@ function createChannelWithOwner(
   modelActions = createModelActions(ctx, state, {
     owner,
     binding,
-    selection,
     initialEffort: options.effort,
     agent: () => binding.agent,
     notify,
@@ -801,7 +801,6 @@ function createChannelWithOwner(
     state,
     seedActivity: options.seedActivity,
     inputConvergence,
-    selection,
     modelActions,
     modeActions,
     projector,
@@ -1028,27 +1027,12 @@ function createChannelWithOwner(
     listSubagents: localActions.listSubagents,
   })
 
-  // Subagents inherit provider/model from AgentOptions, but resumed TUI
-  // agents can legitimately carry their route only in persisted request
-  // headers. Their child scopes do not share this channel's per-agent
-  // ModelSelectionRef, so fill an otherwise incomplete first request from
-  // the active route. Keep complete child-specific routes authoritative.
-  const disposeInheritedChildRoute = ctx.on('agent/request', async (_payload, next) => {
-    // This listener intentionally serves child scopes, not the bound agent's
-    // selection pipeline. Capture the foreground route before awaiting so an
-    // old child waterfall cannot borrow a later binding's model (A→B→A safe).
-    const capture = binding.capture()
-    const provider = state.provider
-    const model = state.model
-    const resolved = await next()
-    if (!owner.current() || !binding.isCurrent(capture)) return resolved
-    if (
-      typeof resolved.provider === 'string' && resolved.provider.length > 0 &&
-      typeof resolved.model === 'string' && resolved.model.length > 0
-    ) {
-      return resolved
-    }
-    return { ...resolved, provider, model }
+  // Route-less children need a selection before their first step. Complete
+  // child choices are authoritative, including choices supplied by Kiokuko.
+  const disposeInheritedChildRoute = ctx.on('agent/created', ({ agent }) => {
+    if (!owner.current() || agent === binding.agent || !agent.model || agent.model.current()) return
+    const inherited = binding.agent.model?.current() ?? { provider: state.provider, model: state.model }
+    if (inherited.provider && inherited.model) agent.model.select(inherited)
   })
   owner.own(disposeInheritedChildRoute)
   try {

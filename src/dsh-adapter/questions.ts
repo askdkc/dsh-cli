@@ -40,6 +40,7 @@ export interface QuestionSelection {
  * should preserve what the user typed without making it count as answered.
  */
 export type QuestionDraft = QuestionSelection
+export type { AskUserQuestionItem } from '@deepseek-ai/dsh-user-questions'
 
 /** One queued or active ask, with its running answers. */
 interface PendingQuestion {

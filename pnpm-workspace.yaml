@@ -45,9 +45,12 @@ overrides:
 allowBuilds:
   # Optional postinstall-only (pi-ai transitive deps): nothing at runtime
   # needs their build scripts.
+  '@deepseek-ai/dsh-subprocess-local': true
   '@google/genai': false
+  core-js: true
   esbuild: false
   koffi: false
+  node-pty: true
   protobufjs: false
 minimumReleaseAgeExclude:
   # Prerelease adaptation: the current cohort can be younger than

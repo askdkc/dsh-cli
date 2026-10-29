@@ -32,7 +32,7 @@ import wrapText from '../../ink/wrap-text.js'
 import { useDeclaredCursor } from '../../ink/hooks/use-declared-cursor.js'
 import { Divider } from '../design-system/Divider.js'
 import { POINTER } from '../../terminal-utils/figures.js'
-import type { QuestionDraft, QuestionSelection } from '../../dsh-adapter/questions.js'
+import type { AskUserQuestionItem, QuestionDraft, QuestionSelection } from '../../dsh-adapter/questions.js'
 import { PlanReviewPanel } from './PlanReviewPanel.js'
 import { QuestionMinimizedBar } from './QuestionMinimizedBar.js'
 import { isPlainReturnInput } from '../../utils/modifiers.js'
@@ -75,7 +75,7 @@ export type AskUserQuestionPanelProps = {
     readonly defaultSelected?: readonly string[]
     /** Presentation intent tag (rc.6): 'plan-review' switches to the
      *  decision-card layout; an intent never changes the protocol. */
-    readonly intent?: { readonly kind: 'plan-review'; readonly approve: string }
+    readonly intent?: AskUserQuestionItem['intent']
   }
   /** 1-based position within the batch (progress header). */
   readonly position: number
@@ -137,7 +137,7 @@ export function AskUserQuestionPanel({
   // branch precedes every hook so hook order stays stable per remount key.
   if (question.intent?.kind === 'plan-review') {
     return <PlanReviewPanel
-      question={question}
+      question={{ ...question, intent: question.intent }}
       onAnswer={onAnswer}
       onCancel={onCancel}
       readClipboardOverride={readClipboardOverride}

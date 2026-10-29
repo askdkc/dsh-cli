@@ -37,6 +37,16 @@ import {
   resolveModelRoute,
   validateModelRoute,
 } from '../lib/types/modelRoute.js'
+import assert from 'node:assert/strict'
+
+assert.deepEqual(recordedModelRoute([
+  { type: 'request/header', data: { header: { config: { provider: 'old', model: 'old-model' } } } },
+  { type: 'model/selection', data: { provider: 'new', model: 'next-model', reasoningEffort: 'max' } },
+]), { provider: 'new', model: 'next-model' }, 'resume must retain a selection that has not reached a request header')
+assert.deepEqual(recordedModelRoute([
+  { type: 'model/selection', data: { provider: 'new', model: 'next-model' } },
+  { type: 'request/header', data: { header: { config: { provider: 'old', model: 'prepared-model' } } } },
+]), { provider: 'new', model: 'next-model' }, 'an already prepared request cannot consume a different pending selection')
 
 let failed = 0
 function check(name, ok, extra = '') {

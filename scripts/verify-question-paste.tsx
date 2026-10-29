@@ -26,6 +26,8 @@
  * and ANSI-stripped (no xterm dependency).
  */
 process.env.FORCE_COLOR = '3'
+const { setLang } = await import('../src/i18n.js')
+setLang('zh')
 
 const [{ PassThrough, Writable }, React, { Terminal: XTerm }, { AskUserQuestionPanel }, { render }, { settle, settled, sleep, viewportLines }] = await Promise.all([
   import('node:stream'),

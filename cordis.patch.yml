@@ -104,9 +104,6 @@
 - id: tool-pwsh
   disabled: true
 
-- id: tool-ralph
-  disabled: true
-
 - id: tool-result-pruner
   disabled: true
 
@@ -129,9 +126,6 @@
   disabled: true
 
 - id: tool-subagent-fork
-  disabled: true
-
-- id: tool-subagent-list-agents
   disabled: true
 
 - id: tool-todo

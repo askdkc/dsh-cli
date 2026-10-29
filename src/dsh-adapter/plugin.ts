@@ -30,7 +30,7 @@ import { explicitModelRoute, recordedModelRoute, resolveModelRoute, validateMode
 import type { ModelRoute } from '../modelRoute.js'
 import { migratePresetPref, readPresetPref } from '../presetPrefs.js'
 import { readEffortPref } from '../effortPrefs.js'
-import { composePreset, filterMinimalPresetTools, resolvePersistedPreset, resolvePersistedRoute, runningPresetOf } from './presets.js'
+import { composePreset, registerPresetQuestionToolAdmission, resolvePersistedPreset, resolvePersistedRoute, runningPresetOf } from './presets.js'
 import { registerBundledPresets } from './bundled-presets.js'
 import { awaitConfiguredKiokukoStartup, ensureCliUserQuestions } from './startup-addons.js'
 import { registerTuiSessionEventTypes, snapshotLiveSessionEvents } from './compat/index.js'
@@ -302,16 +302,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   const userQuestions = await ensureCliUserQuestions(ctx)
   if (!await awaitConfiguredKiokukoStartup(ctx)) return
   ctx.plugin(toolAskUser)
-  // The host-level tool mount above is intentional for the TUI and for user
-  // presets, but the official Minimal preset is a strict two-tool trajectory
-  // (persistent bash + str_replace_editor). Filter only that preset at the
-  // final assembly boundary. Reading the session on every assembly also makes
-  // blank-session /preset switches and resumed sessions behave correctly.
-  ctx.on('system-prompt/assemble', async (_assembly, context, next) => {
-    const assembled = await next()
-    const presetId = context.agent === undefined ? undefined : runningPresetOf(context.agent.session)
-    return filterMinimalPresetTools(assembled, presetId)
-  })
+  registerPresetQuestionToolAdmission(ctx)
   const questionStore = new QuestionStore(adapterRuntimeFor(ctx))
   bindQuestionStore(ctx, questionStore)
   // Reject questions still parked in the UI when its fiber is disposed.
