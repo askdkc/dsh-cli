@@ -21,3 +21,4 @@ HANDOVER.md
 # run-ci-group artifacts
 ci-render-logs/
 .kiokuko.json
+.agenticreplay/

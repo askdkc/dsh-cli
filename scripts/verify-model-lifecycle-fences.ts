@@ -27,6 +27,14 @@ assert.deepEqual(legacyOptions, { provider: 'next-provider', model: 'next-model'
 const nativeModel = { current: () => undefined, select: () => undefined }
 assert.equal(agentModel({ model: nativeModel } as never), nativeModel, 'native model selection stays authoritative')
 
+// Model selection is an optional Agent capability. Binding a session must not
+// abort when an Agent exposes neither surface, and the returned selection stays
+// total so callers need no guards: reads report "unknown", writes change nothing.
+const withoutSurface = agentModel({} as never)
+assert.equal(withoutSurface.current(), undefined, 'an Agent without a model surface reports no selection')
+withoutSurface.select({ provider: 'p', model: 'm' })
+assert.equal(withoutSurface.current(), undefined, 'selecting on an Agent without a model surface changes nothing')
+
 const oldAgent = { ctx: { tag: 'old' }, session: { events: [], append: () => { throw new Error('old fact should not be appended') } , snapshotEvents() { return this.events }} }
 const newFacts: unknown[] = []
 const newAgent = { ctx: { tag: 'new' }, session: { events: [], append: (type: string, data: unknown) => newFacts.push([type, data]) , snapshotEvents() { return this.events }} }
