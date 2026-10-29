@@ -49,9 +49,11 @@ function deferred() {
 async function fixture(run) {
   const ctx = new Context()
   const releases = []
+  const warnings = []
   // Expected import/activation failures below are asserted through the actual
-  // frontend rejection. Avoid printing them as unrelated verifier failures.
+  // Loader boundary. Avoid printing them as unrelated verifier failures.
   ctx.logger.error = () => {}
+  ctx.logger.warn = (...args) => warnings.push(args.map(String).join(' '))
   await ctx.plugin(Loader)
   const loader = ctx.get('loader')
   loader.await = () => { throw new Error('the frontend must never await the whole Loader') }
@@ -69,7 +71,7 @@ async function fixture(run) {
     observed.result = Promise.resolve(observed.fiber).then(() => undefined, error => error)
     return observed
   }
-  try { await run({ ctx, loader, hold, front }) } finally {
+  try { await run({ ctx, loader, hold, front, warnings }) } finally {
     for (const release of releases) release()
     await ctx.fiber.dispose()
   }
@@ -136,14 +138,22 @@ for (const options of [undefined, { disabled: true }, { config: { enabled: false
 }
 
 for (const stage of ['import', 'apply']) {
-  await fixture(async ({ loader, front }) => {
+  await fixture(async ({ ctx, loader, front, warnings }) => {
     loader.import = () => stage === 'import'
       ? Promise.reject(new Error('fixture import failure'))
-      : { name: 'kiokuko-dsh', apply() { throw new Error('fixture apply failure') } }
+      : {
+        name: 'kiokuko-dsh',
+        apply(addon) {
+          addon.provide('startupTestPartialKiokuko', true)
+          throw new Error('fixture apply failure')
+        },
+      }
     await loader.root.update([{ id: 'kiokuko', name: 'kiokuko-dsh' }])
     const ui = front()
-    assert.match((await ui.result)?.message ?? '', /kiokuko-dsh startup failed \(kiokuko\)/)
-    assert.equal(ui.ready, false, 'a configured addon failure cannot expose input')
+    assert.equal(await ui.result, undefined)
+    assert.equal(ui.ready, true, 'an optional addon failure must not take down the CLI')
+    assert.equal(ctx.get('startupTestPartialKiokuko'), undefined, 'failed addon registrations must roll back before input is exposed')
+    assert.ok(warnings.some(line => line.includes('kiokuko-dsh') && line.includes('continuing without it')), 'degraded startup must be visible')
   })
 }
 

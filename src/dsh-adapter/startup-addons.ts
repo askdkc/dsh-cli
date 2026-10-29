@@ -26,9 +26,11 @@ export async function ensureCliUserQuestions(ctx: Context): Promise<UserQuestion
 }
 
 /**
- * The configured Kiokuko entry must finish mounting commands and tool hooks
- * before the first interactive input. This is a one-shot integration contract:
- * unrelated Loader work and later addon reloads do not own the frontend.
+ * A configured Kiokuko entry which is still loading must finish mounting
+ * commands and tool hooks before the first interactive input. A terminal
+ * Loader failure has already rolled the addon back, so it is reported and the
+ * CLI continues without that optional instance. Unrelated Loader work and later
+ * addon reloads do not own the frontend.
  *
  * The profile's include patches have already expanded before its CLI row runs.
  * No configured entry (including a bare host) means there is nothing to await.
@@ -64,7 +66,10 @@ export async function awaitConfiguredKiokukoStartup(ctx: Context, timeoutMs = 30
       else resolve(ready)
     }
     const failed = (entry: StartupEntry, reason: string, cause?: unknown): void => {
-      finish(false, new Error(`kiokuko-dsh startup failed (${entry.id}): ${reason}`, { cause }))
+      const detail = cause instanceof Error ? cause.message : cause === undefined ? '' : String(cause)
+      const suffix = detail && detail !== reason ? `: ${detail}` : ''
+      ctx.logger.warn(`kiokuko-dsh startup failed (${entry.id}): ${reason}${suffix}; continuing without it`)
+      finish(true)
     }
     const schedule = (): void => {
       if (queued || finished) return
