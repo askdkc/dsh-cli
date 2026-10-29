@@ -1236,8 +1236,10 @@ for (const columns of [32, 80]) {
   let commandCalls = 0
   let commandImageCount = 0
   const commandNotices: Array<{ text: string; color?: string }> = []
+  const commandOutputs: Array<{ title: string; lines: readonly string[] }> = []
   const channel = {
     ...makeChannel(),
+    pushLocal: (title: string, lines: readonly string[]) => { commandOutputs.push({ title, lines }) },
     commandList: [
       ...LOCAL_COMMANDS,
       {
@@ -1330,6 +1332,9 @@ for (const columns of [32, 80]) {
       && !discarded.includes('stage-1')
       && channel.hasStagedImage('stage-1'),
     `${JSON.stringify(discarded)}\n${screen.text()}`)
+  check('chat command: multiline details remain available as sanitized transcript output',
+    commandOutputs.some(output => output.lines.includes('Plugin result') && output.lines.some(line => line.startsWith('🌈')))
+      && commandOutputs.every(output => output.lines.every(line => stringWidth(line) <= 240 && !/[\u0000-\u001f\u007f-\u009f]/u.test(line))))
   const commandNotice = commandNotices.at(-1)
   check('chat command: result notices are bounded single-line text and retain error styling',
     commandNotice?.text.startsWith('Plugin result 🌈') === true
