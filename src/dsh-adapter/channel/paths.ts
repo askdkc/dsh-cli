@@ -75,8 +75,8 @@ export async function listPathCandidates(fs: FileSuggestionFs, cwd: string, quer
   const nameQuery = slash < 0 || bareDir ? '' : normalized.slice(slash + 1)
   // `~/` expands against the host home (matches the cwd resolution rules);
   // drive-letter and POSIX-absolute prefixes pass through untouched.
-  const expanded = directoryPart === '~/'
-    ? `${homeDir()}/`
+  const expanded = directoryPart.startsWith('~/')
+    ? join(homeDir(), directoryPart.slice(2))
     : directoryPart.startsWith('/') || /^[A-Za-z]:\//.test(directoryPart)
       ? directoryPart
       : join(cwd, directoryPart || '.')

@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { homeDir } from '../lib/types/utils/paths.js'
 import { createChannel } from '../lib/types/dsh-adapter/channel.js'
 
 const fixture = await mkdtemp(join(tmpdir(), 'dsh-cli-file-completion-'))
@@ -96,6 +97,54 @@ try {
     `ordinary nested source exceeded the completion depth limit:\n${filesWithNestedSource.join('\n')}`,
   )
   console.log('PASS: ordinary nested source remains reachable in @ completion')
+
+  // Resolve home-prefixed queries without traversing the user's home directory.
+  const requested = []
+  const homeChannel = createChannel(
+    {
+      ...ctx,
+      get(name) {
+        return name === 'fs'
+          ? {
+              async resolve(path) {
+                return { displayPath: path }
+              },
+              async listDir(target) {
+                requested.push(target.displayPath)
+                return [{ name: 'file.txt', type: 'file' }]
+              },
+            }
+          : undefined
+      },
+    },
+    makeAgent(),
+    {
+      model: 'test-model',
+      provider: 'test-provider',
+      cwd: fixture,
+      activity: false,
+    },
+  )
+  for (const [query, expected] of [
+    ['~/', homeDir()],
+    ['~/nested/', join(homeDir(), 'nested')],
+    ['~/nested/deeper/f', join(homeDir(), 'nested', 'deeper')],
+    ['./src/f', join(fixture, 'src')],
+  ]) {
+    const candidates = await homeChannel.listFileCandidates(query)
+    assert.equal(
+      requested.at(-1).replace(/\/$/, ''),
+      expected,
+      `Resolve ${query} against its actual anchor`,
+    )
+    assert.equal(candidates.length, 1)
+    assert.ok(
+      candidates[0].path.startsWith(query.slice(0, query.lastIndexOf('/') + 1)),
+    )
+  }
+  console.log(
+    'PASS: bare and nested home completion keep the home anchor and user path spelling',
+  )
 } finally {
   await rm(fixture, { recursive: true, force: true })
 }
