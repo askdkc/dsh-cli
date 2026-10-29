@@ -1,5 +1,7 @@
 import { Context, Service } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
+import type { SessionHeader, SessionId } from '@deepseek-ai/dsh-session'
+import type {} from '@deepseek-ai/dsh-session-persistence'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import { assertCapabilityShadowPolicy, type AdapterRuntimeOptions } from '../adapter/kernel/runtime.js'
 import { adapterRuntimeFor } from '../adapter/kernel/runtime-context.js'
@@ -30,6 +32,7 @@ interface FenceState {
 interface HostState {
   root: Context
   fences: Map<string, FenceState>
+  parents: Map<SessionId, SessionId | undefined>
 }
 const hosts = new WeakMap<Context, HostState>()
 const services = new WeakMap<object, HostState>()
@@ -43,30 +46,57 @@ function token(value: unknown): string {
   return value
 }
 
-/** Use current native registry objects and bounded parent links, never a
- * caller's claimed ancestor or another session object with the same ID. */
-function scopeFor(host: HostState, fence: FenceState, agent?: Agent): string | undefined {
+/** Retain only immutable native lineage, not live Session/Agent handles. */
+function rememberParent(host: HostState, header: Pick<SessionHeader, 'id' | 'parentSession'>): void {
+  if (typeof header.id !== 'string' || !header.id ||
+    header.parentSession !== undefined && (typeof header.parentSession !== 'string' || !header.parentSession)) throw new Error(INVALID)
+  if (host.parents.has(header.id) && host.parents.get(header.id) !== header.parentSession) throw new Error(INVALID)
+  host.parents.set(header.id, header.parentSession)
+}
+
+type FenceScope = string | undefined | { unloaded: SessionId }
+
+/** The executing agent/session must still be live. Ancestors may have retired
+ * after /model or /rewind; their immutable lineage remains authoritative. */
+function scopeFor(host: HostState, fence: FenceState, agent?: Agent): FenceScope {
   if (!agent) return undefined
   if (host.root.agents.get(agent.id) !== agent || host.root.sessions.get(agent.session.id) !== agent.session) throw new Error(INVALID)
-  let session = agent.session
+  let id = agent.session.id
   const seen = new Set<string>()
   for (let depth = 0; depth < 64; depth++) {
-    if (seen.has(session.id)) throw new Error(INVALID)
-    seen.add(session.id)
-    if (fence.sessions.has(session.id)) return session.id
-    const parent = session.header.parentSession
-    if (!parent) return undefined
-    const next = host.root.sessions.get(parent)
-    if (!next) throw new Error(INVALID)
-    session = next
+    if (seen.has(id)) throw new Error(INVALID)
+    seen.add(id)
+    if (fence.sessions.has(id)) return id
+    const live = host.root.sessions.get(id)
+    if (live) rememberParent(host, live.header)
+    if (!host.parents.has(id)) return { unloaded: id }
+    const parent = host.parents.get(id)
+    if (parent === undefined) return undefined
+    id = parent
   }
   throw new Error(INVALID)
+}
+
+/** Cold resume may never load the ancestors into SessionStore. Read only their
+ * headers, without acquiring write ownership or restoring their event logs. */
+async function prepareScope(host: HostState, fence: FenceState, agent: Agent): Promise<void> {
+  let scope = scopeFor(host, fence, agent)
+  for (let reads = 0; typeof scope === 'object' && reads < 64; reads++) {
+    const source = host.root.get('sessionPersistence', false)
+    const snapshot = await source?.stat(scope.unloaded)
+    if (!snapshot || snapshot.header.id !== scope.unloaded) throw new Error(INVALID)
+    rememberParent(host, snapshot.header)
+    // Recheck live identities and current protection after every awaited read.
+    scope = scopeFor(host, fence, agent)
+  }
+  if (typeof scope === 'object') throw new Error(INVALID)
 }
 
 function denyTool(host: HostState, execution: Readonly<ToolExecution>): string | undefined {
   for (const fence of host.fences.values()) {
     try {
       const scope = scopeFor(host, fence, execution.agent)
+      if (typeof scope === 'object') return INVALID
       if (!scope) {
         if (fence.tools.includes(execution.name)) return DENIED
         continue
@@ -88,7 +118,9 @@ function denyTool(host: HostState, execution: Readonly<ToolExecution>): string |
 async function beforeStep(host: HostState, agent: Agent): Promise<boolean> {
   for (const fence of host.fences.values()) {
     try {
+      await prepareScope(host, fence, agent)
       const scope = scopeFor(host, fence, agent)
+      if (typeof scope === 'object') return false
       if (!scope) continue
       const attachment = fence.attachment
       if (!attachment?.current() || agent.session.id !== scope) return false
@@ -107,9 +139,13 @@ function hostFor(ctx: Context): HostState {
   const root = compositionRoot(ctx)
   let host = hosts.get(root)
   if (host) return host
-  host = { root, fences: new Map() }
+  host = { root, fences: new Map(), parents: new Map() }
   const state = host
   withHostRootCapability(() => {
+    for (const session of root.sessions.list()) rememberParent(state, session.header)
+    root.on('session/created', session => {
+      if (root.sessions.get(session.id) === session) rememberParent(state, session.header)
+    }, { global: true })
     root.tools.guard(execution => denyTool(state, execution))
     root.on('agent/pre-step', async (payload, next) => await beforeStep(state, payload.agent) ? next() : { kind: 'reject' }, { prepend: true, global: true })
   })

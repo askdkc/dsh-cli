@@ -158,7 +158,7 @@
     "verify:plugin-commands": "node --import tsx/esm scripts/verify-plugin-commands.ts",
     "verify:plugin-negotiation": "node --import tsx/esm scripts/verify-plugin-negotiation.ts",
     "verify:plugin-lifecycle": "node --import tsx/esm scripts/verify-plugin-lifecycle.ts",
-    "verify:execution-fences": "node --import tsx/esm scripts/verify-execution-fences.ts",
+    "verify:execution-fences": "node --import tsx/esm scripts/verify-execution-fences.ts && node scripts/verify-execution-fence-lifecycle.mjs",
     "verify:runtime-themes": "node --import tsx/esm scripts/verify-runtime-themes.ts",
     "verify:tips": "node --import tsx/esm scripts/verify-tips.tsx",
     "verify:thinking-preview": "node --import tsx/esm scripts/verify-thinking-preview.tsx",

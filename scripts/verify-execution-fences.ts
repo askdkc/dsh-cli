@@ -16,23 +16,24 @@ const root = new Context()
 const agents = new Map<string, any>(), sessions = new Map<string, any>()
 root.provide('systemPrompt', { tools: () => () => {} })
 root.provide('agents', { get: (id: string) => agents.get(id) })
-root.provide('sessions', { get: (id: string) => sessions.get(id) })
+root.provide('sessions', { get: (id: string) => sessions.get(id), list: () => [...sessions.values()] })
 await root.plugin(ToolRuntime)
 await root.plugin(NativeToolExecutor)
 const hostFiber = root.plugin(host)
 await hostFiber
-const session = { id: 'session', header: { cwd: home } }
+const session = { id: 'session', header: { id: 'session', cwd: home } }
 const agent: any = { id: 'agent', session }
 agent.ctx = createScope(root, agent).ctx
 sessions.set(session.id, session); agents.set(agent.id, agent)
-const otherSession = { id: 'other', header: { cwd: home } }
+const otherSession = { id: 'other', header: { id: 'other', cwd: home } }
 const other: any = { id: 'other-agent', session: otherSession }
 other.ctx = createScope(root, other).ctx
 sessions.set(otherSession.id, otherSession); agents.set(other.id, other)
-let effects = 0
+let effects = 0, forkEffects = 0
 const output = { schema: {}, render: (_: unknown, value: unknown) => [{ type: 'text', text: String(value) }] }
 root.tools.register({ name: 'fenced_eval', description: 'Fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { effects++; return 42 } } as never)
 root.tools.register({ name: 'native_write', description: 'Fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { effects++; return 1 } } as never)
+root.tools.register({ name: 'fork_tool', description: 'Fork fixture', parameters: { type: 'object', properties: {} }, output, execute: async () => { forkEffects++; return 1 } } as never)
 const execute = (name = 'fenced_eval', nativeAgent = agent) => root.tools.execute({ calls: [{ type: 'tool-call', id: crypto.randomUUID(), name, arguments: '{}' }], agent: nativeAgent, signal: new AbortController().signal } as never)
 let lease: any, retainedContext: any
 let ownerCommand: (() => void) | undefined
@@ -61,6 +62,97 @@ const ownerPlugin = { name: 'fence-owner', apply(ctx: any) {
 try {
   const owner = root.plugin(ownerPlugin)
   await owner
+  // /model forks the conversation, then disposes the old handle. The native
+  // registry removes the parent, even though the child's lineage is valid.
+  const sourceSession = { id: 'model-source', header: { id: 'model-source', cwd: home } }
+  sessions.set(sourceSession.id, sourceSession)
+  root.emit('session/created', sourceSession as never)
+  const switchedSession = { id: 'model-target', header: { id: 'model-target', cwd: home, parentSession: sourceSession.id } }
+  const switched: any = { id: 'model-target-agent', session: switchedSession }
+  switched.ctx = createScope(root, switched).ctx
+  sessions.set(switchedSession.id, switchedSession); agents.set(switched.id, switched)
+  root.emit('session/created', switchedSession as never)
+  sessions.delete(sourceSession.id)
+  let switchedSteps = 0
+  const switchedStep = () => root.waterfall('agent/pre-step' as never, { agent: switched } as never,
+    async () => { switchedSteps++; return { kind: 'enter', messages: [] } })
+  assert.equal((await switchedStep() as any).kind, 'enter', 'model switch must admit input after its unprotected parent is retired')
+  let beforeSwitchedTool = forkEffects
+  await execute('fork_tool', switched)
+  assert.equal(forkEffects, beforeSwitchedTool + 1, 'ordinary tools remain usable after model switch')
+  beforeSwitchedTool = forkEffects
+  // Remembering a retired parent must preserve, not bypass, later protection.
+  lease.protect(sourceSession.id)
+  assert.equal((await switchedStep() as any).kind, 'reject')
+  await execute('fork_tool', switched)
+  assert.equal(forkEffects, beforeSwitchedTool, 'retired protected parent still fences its child')
+  lease.release(sourceSession.id)
+  assert.equal((await switchedStep() as any).kind, 'enter')
+  assert.equal(switchedSteps, 2)
+
+  // Cold resume: no ancestor has been live in this host. Metadata reads must
+  // establish the chain without opening a session or claiming its write lock.
+  const stored = new Map<string, any>([
+    ['cold-parent', { id: 'cold-parent', parentSession: 'cold-root' }],
+    ['cold-root', { id: 'cold-root' }],
+  ])
+  const reads: string[] = []
+  let metadataRead: (() => Promise<void>) | undefined
+  root.provide('sessionPersistence', { stat: async (id: string) => {
+    reads.push(id)
+    await metadataRead?.()
+    const header = stored.get(id)
+    return header ? { header } : undefined
+  } })
+  const coldSession = { id: 'cold-resume', header: { id: 'cold-resume', parentSession: 'cold-parent' } }
+  const cold: any = { id: 'cold-agent', session: coldSession }
+  cold.ctx = createScope(root, cold).ctx
+  sessions.set(coldSession.id, coldSession); agents.set(cold.id, cold)
+  const coldStep = () => root.waterfall('agent/pre-step' as never, { agent: cold } as never,
+    async () => ({ kind: 'enter', messages: [] }))
+  await execute('fork_tool', cold)
+  assert.equal(forkEffects, beforeSwitchedTool, 'unresolved ancestry cannot grant tool execution')
+  assert.equal((await coldStep() as any).kind, 'enter', 'cold resume reads retired ancestor metadata')
+  assert.deepEqual(reads, ['cold-parent', 'cold-root'])
+  await execute('fork_tool', cold)
+  assert.equal(forkEffects, beforeSwitchedTool + 1)
+  beforeSwitchedTool = forkEffects
+  await coldStep()
+  assert.equal(reads.length, 2, 'immutable parent headers are reused')
+  lease.protect('cold-root')
+  assert.equal((await coldStep() as any).kind, 'reject', 'cold protected ancestor still fences descendants')
+  await execute('fork_tool', cold)
+  assert.equal(forkEffects, beforeSwitchedTool)
+  lease.release('cold-root')
+  assert.equal((await coldStep() as any).kind, 'enter', 'explicit release permits retry')
+
+  for (const [name, header] of [
+    ['missing-parent', undefined],
+    ['wrong-parent', { id: 'different-id' }],
+    ['cyclic-parent', { id: 'cyclic-parent', parentSession: 'cyclic-parent' }],
+  ] as const) {
+    if (header) stored.set(name, header)
+    const invalidSession = { id: `child-${name}`, header: { id: `child-${name}`, parentSession: name } }
+    const invalid: any = { id: `agent-${name}`, session: invalidSession }
+    invalid.ctx = createScope(root, invalid).ctx
+    sessions.set(invalidSession.id, invalidSession); agents.set(invalid.id, invalid)
+    const result = await root.waterfall('agent/pre-step' as never, { agent: invalid } as never,
+      async () => ({ kind: 'enter', messages: [] }))
+    assert.equal((result as any).kind, 'reject', `${name} must fail closed`)
+    await execute('fork_tool', invalid)
+    assert.equal(forkEffects, beforeSwitchedTool)
+  }
+  const raceSession = { id: 'race-resume', header: { id: 'race-resume', parentSession: 'race-parent' } }
+  const race: any = { id: 'race-agent', session: raceSession }
+  race.ctx = createScope(root, race).ctx
+  sessions.set(raceSession.id, raceSession); agents.set(race.id, race)
+  stored.set('race-parent', { id: 'race-parent' })
+  metadataRead = async () => { agents.set(race.id, { ...race }) }
+  const raced = await root.waterfall('agent/pre-step' as never, { agent: race } as never,
+    async () => ({ kind: 'enter', messages: [] }))
+  assert.equal((raced as any).kind, 'reject', 'metadata reads cannot admit a retired agent')
+  metadataRead = undefined
+
   // A registered command runs in the dispatcher's async activation, while
   // its opaque lease remains bound to the original plugin activation.
   let commandInvoked = false
@@ -109,7 +201,7 @@ try {
   const step = () => root.waterfall('agent/pre-step' as never, { agent } as never, async () => { steps++; return 'next' })
   ready = false; await step(); assert.equal(steps, 0)
   ready = true; await step(); assert.equal(steps, 1)
-  const childSession = { id: 'child', header: { cwd: home, parentSession: session.id } }
+  const childSession = { id: 'child', header: { id: 'child', cwd: home, parentSession: session.id } }
   const child: any = { id: 'child-agent', session: childSession }
   child.ctx = createScope(root, child).ctx
   sessions.set(childSession.id, childSession); agents.set(child.id, child)
@@ -150,7 +242,7 @@ try {
       const isolated = new Context()
       isolated.provide('systemPrompt', { tools: () => () => {} })
       isolated.provide('agents', { get: (id: string) => agents.get(id) })
-      isolated.provide('sessions', { get: (id: string) => sessions.get(id) })
+      isolated.provide('sessions', { get: (id: string) => sessions.get(id), list: () => [...sessions.values()] })
       try {
         await isolated.plugin(ToolRuntime)
         await isolated.plugin(ExecutionFenceRuntime)

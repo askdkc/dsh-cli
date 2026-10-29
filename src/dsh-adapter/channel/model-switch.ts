@@ -54,6 +54,9 @@ export function createModelSwitchAction(
       // A compaction checkpoint may not settle after the model fork snapshot.
       await deps.settleCompaction()
       taskHandoff = await deps.prepareTaskHandoff?.()
+      // Even a blank parent must survive retirement: cold resume needs its
+      // durable lineage to distinguish ordinary forks from protected children.
+      await ctx.get('sessions', false)?.flush(adoption.agent.session)
       // No boundary = the whole source log (continue the conversation). Slice
       // the SOURCE snapshot: sessions.fork() registers a real child, and its
       // snapshot length is not the inherited cut.
