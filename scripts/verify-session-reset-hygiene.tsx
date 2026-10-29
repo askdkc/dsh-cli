@@ -167,7 +167,7 @@ const subagentRows = (channel: { rows: Array<{ kind: string }> }) => channel.row
   initial.followup = message => sent.push((message as { content: unknown[] }).content)
   switched.followup = message => sent.push((message as { content: unknown[] }).content)
   provide('agents', { create: () => Promise.resolve(makeHandle(switched)) })
-  provide('sessions', { fork: () => ({ events: [] }) })
+  provide('sessions', { async flush() {} })
   provide('attachments', {
     imageLimits: {
       maxImageBytes: 1_000_000,

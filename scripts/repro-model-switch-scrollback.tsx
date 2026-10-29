@@ -128,9 +128,7 @@ let agentCounter = 0
 const handlers = new Map<string, unknown>()
 const services: Record<string, unknown> = {
   sessions: {
-    fork(session: { events: readonly unknown[] }) {
-      return { events: session.events }
-    },
+    async flush() {},
   },
   agents: {
     async create(options: { sessionId: string; seed: readonly unknown[] }) {
