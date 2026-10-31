@@ -8,12 +8,64 @@ import { OpenCodeAdapter } from '../lib/opencode-adapter.js'
 import { CredentialFile } from '../lib/credentials.js'
 import { OPEN_CODE_SNAPSHOTS } from '../lib/opencode-owned.generated.js'
 import { AssistantStreamAccumulator, expandAssistantStream } from '@deepseek-ai/dsh-llm'
-const raw = (npm = '@ai-sdk/openai-compatible') => ({ npm, models: { 'future-model': { name: 'Future', limit: { context: 100000, output: 4000 }, modalities: { input: ['text', 'image'], output: ['text'] }, tool_call: true, reasoning: true, temperature: true, reasoning_options: [{ type: 'effort', values: ['low', 'high'] }] } } })
-const snapshot = (route = 'opencode', npm) => normalizeCatalog(route, ['future-model'], raw(npm), Date.now())
-const listing = ids => ({ data: ids.map(id => ({ id })) })
+const raw = (npm = '@ai-sdk/openai-compatible') => ({ data: [{
+  id: 'future-model', type: 'chat', name: 'Future',
+  api: { [npm === '@ai-sdk/anthropic' ? 'messages' : npm === '@ai-sdk/openai' ? 'responses' : npm === '@ai-sdk/google' ? 'generate-content' : 'chat-completions']: { sdk: { aisdk: npm } } },
+  limit: { context: 100000, output: 4000 }, modalities: { input: ['text', 'image/png'], output: ['text'] },
+  capabilities: { tools: { supported: true }, reasoning: { supported: true, effort: ['low', 'high'] }, temperature: true },
+}] })
+const snapshot = (route = 'opencode', npm) => normalizeCatalog(route, raw(npm), Date.now())
+const listing = ids => ({ data: ids.map(id => ({ ...structuredClone(raw().data[0]), id, ...(id === 'future-model' ? {} : { api: {} }) })) })
 const sse = events => new Response(events.map(event => `data: ${JSON.stringify(event)}\n\n`).join('') + 'data: [DONE]\n\n', { headers: { 'content-type': 'text/event-stream' } })
+test('startup loads official Zen models without models.dev, preserving the saved list on failure', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'dsh-zen-startup-'))
+  const official = { data: ['chat-completions', 'messages', 'responses', 'generate-content'].map((wire, index) => ({
+    id: `new-${wire}`, name: `New ${wire}`, type: 'chat',
+    api: { [wire]: { sdk: { aisdk: ['@ai-sdk/mistral', '@ai-sdk/anthropic', '@ai-sdk/openai', '@ai-sdk/google'][index] } } },
+    limit: { context: 200000, output: 32000 }, modalities: { input: ['text', 'image/png'], output: ['text'] },
+    capabilities: { tools: { supported: true }, reasoning: { supported: true, effort: ['low', 'high'] } },
+  })) }
+  const requests = []; let fail = false; let changes = 0
+  const bundled = snapshot(); bundled.fetchedAt = 1
+  const fetcher = async url => {
+    requests.push(String(url))
+    if (fail) throw new Error('offline')
+    assert.equal(String(url), 'https://opencode.ai/zen/v1/models')
+    return Response.json(official)
+  }
+  const catalog = new OpenCodeCatalog('opencode', bundled, { directory, changed: () => changes++, fetcher })
+  const store = new CredentialFile(join(directory, 'keys.json'))
+  const adapter = new OpenCodeAdapter({ catalogs: new Map([['opencode', catalog]]), store })
+  try {
+    await catalog.start()
+    assert.deepEqual(requests, ['https://opencode.ai/zen/v1/models'])
+    assert.equal(catalog.status().source, 'live')
+    assert.deepEqual(catalog.status().excluded, [])
+    assert.deepEqual(await adapter.listModels('opencode'), [], 'credentials still gate the picker')
+    await store.modify('opencode', async () => ({ type: 'api_key', key: 'fixture-key' }))
+    assert.deepEqual((await adapter.listModels('opencode')).map(model => model.id).sort(), official.data.map(model => model.id).sort())
+    for (const model of official.data) {
+      const resolved = await adapter.resolveModel('opencode', model.id)
+      assert.equal(resolved.context.contextWindow, 200000)
+      assert.deepEqual(resolved.inputModalities, ['text', 'image'])
+      assert.deepEqual(resolved.reasoning.efforts.map(effort => effort.id), ['low', 'high'])
+    }
+    assert.equal(changes, 1)
+    fail = true
+    await catalog.refresh()
+    assert.equal(catalog.models().length, official.data.length)
+    assert.match(catalog.status().warning, /retaining/)
+    assert.equal(changes, 1)
+    const restarted = new OpenCodeCatalog('opencode', bundled, { directory, fetcher })
+    try {
+      await restarted.start()
+      assert.equal(restarted.status().source, 'cache')
+      assert.deepEqual(restarted.models().map(model => model.id).sort(), official.data.map(model => model.id).sort())
+    } finally { restarted.dispose() }
+  } finally { catalog.dispose(); await rm(directory, { recursive: true, force: true }) }
+})
 test('normalization classifies every id without copying a sibling or another route', () => {
-  const result = normalizeCatalog('opencode', ['future-model', 'unknown', 'future-model'], raw(), 1)
+  const result = normalizeCatalog('opencode', { data: [raw().data[0], listing(['unknown']).data[0], raw().data[0]] }, 1)
   assert.equal(result.models.length, 1); assert.equal(result.excluded[0].id, 'unknown')
   assert.equal(result.models[0].cost, undefined)
   assert.deepEqual(parseSnapshot(result, 'opencode'), result)
@@ -21,22 +73,22 @@ test('normalization classifies every id without copying a sibling or another rou
   assert.throws(() => rosterIds(listing([])))
   assert.throws(() => rosterIds({ data: [{ id: 1 }] }))
 })
-test('only exact-route missing metadata reuses a verified model; explicit unsupported protocol excludes it', () => {
-  const previous = snapshot()
-  assert.equal(normalizeCatalog('opencode', ['future-model'], { models: {} }, 2, previous).models.length, 1)
-  assert.equal(normalizeCatalog('opencode', ['future-model'], raw('arbitrary-package'), 2, previous).models.length, 0)
+test('official listing rejects unsupported wire metadata rather than borrowing another route', () => {
+  const data = raw('arbitrary-package')
+  assert.throws(() => normalizeCatalog('opencode', data, 2), /no usable models/)
+  assert.equal(normalizeCatalog('opencode', { data: [...raw().data, ...data.data.map(model => ({ ...model, id: 'unsupported' }))] }, 2).excluded[0].id, 'unsupported')
 })
 test('cache startup, single-flight refresh, delisting and failed refresh preserve the verified generation', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'dsh-catalog-')); let calls = 0; let ids = ['future-model']; let fail = false; let changes = 0
-  const fetcher = async url => { calls++; if (fail) throw new Error('secret must not reach diagnostic'); return Response.json(String(url).includes('models.dev') ? { opencode: raw() } : listing(ids)) }
+  const fetcher = async () => { calls++; if (fail) throw new Error('secret must not reach diagnostic'); return Response.json(listing(ids)) }
   const catalog = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher, changed: () => changes++ })
   try {
-    await catalog.start(); assert.equal(calls, 0)
+    await catalog.start(); assert.equal(calls, 1)
     await Promise.all([catalog.refresh(), catalog.refresh()]); assert.equal(calls, 2)
-    assert.equal(catalog.status().source, 'live'); assert.equal(changes, 1)
+    assert.equal(catalog.status().source, 'live'); assert.equal(changes, 2)
     assert.equal(JSON.parse(await readFile(join(directory, 'opencode.json'))).version, 1)
-    ids = ['unknown']; await catalog.refresh(); assert.equal(catalog.models().length, 0); assert.equal(catalog.status().excluded.length, 1)
-    fail = true; await catalog.refresh(); assert.equal(catalog.status().excluded.length, 1); assert(!catalog.status().warning.includes('secret'))
+    ids = ['unknown']; await catalog.refresh(); assert.deepEqual(catalog.models().map(model => model.id), ['future-model']); assert.match(catalog.status().warning, /retaining/)
+    fail = true; await catalog.refresh(); assert.equal(catalog.models().length, 1); assert(!catalog.status().warning.includes('secret'))
     catalog.dispose(); await assert.rejects(catalog.refresh(), /disposed/)
     await writeFile(join(directory, 'opencode.json'), '{broken')
     const recovered = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher }); await recovered.start(); assert.equal(recovered.models().length, 1); assert(recovered.status().warning); recovered.dispose()
@@ -124,12 +176,12 @@ async function collect(stream) {
 for (const usage of [undefined, { prompt_tokens: 2, completion_tokens: 1 }, {
   prompt_tokens: 2, completion_tokens: 1,
   prompt_tokens_details: { cached_tokens: 0 }, completion_tokens_details: { reasoning_tokens: 0 },
-}]) test(`DeepSeek chat stream persists with optional usage ${JSON.stringify(usage)}`, async () => {
+}]) test(`Zen chat stream persists with optional usage ${JSON.stringify(usage)}`, async () => {
   await environment(undefined, async () => sse([
     { choices: [{ index: 0, delta: { reasoning_content: 'thinking' }, finish_reason: null }] },
     { choices: [{ index: 0, delta: { content: 'answer' }, finish_reason: 'stop' }], ...(usage ? { usage } : {}) },
   ]), async ({ adapter }) => {
-    const chunks = await collect(adapter.stream({ provider: 'opencode', model: 'deepseek-v4-flash', messages: [] }))
+    const chunks = await collect(adapter.stream({ provider: 'opencode', model: 'future-model', messages: [] }))
     const tokens = chunks.find(chunk => chunk.type === 'usage').usage
     const response = chunks.at(-1).replayState.response
     assert.equal(Object.hasOwn(response, 'responseId'), false)
@@ -142,7 +194,7 @@ for (const usage of [undefined, { prompt_tokens: 2, completion_tokens: 1 }, {
       assert.equal(tokens.reasoningTokens, 0)
     }
     assert.equal(chunks.at(-1).reason.kind, 'stop')
-  }, OPEN_CODE_SNAPSHOTS.opencode)
+  })
 })
 const chatReply = () => sse([{ id: 'response', choices: [{ index: 0, delta: { content: 'answer' }, finish_reason: 'stop' }], usage: { prompt_tokens: 1, completion_tokens: 1 } }])
 async function environment(npm, fetcher, body, owned = snapshot('opencode', npm)) {
@@ -213,7 +265,7 @@ for (const npm of ['@ai-sdk/openai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai
   assert.deepEqual(messages, original)
 })
 for (const npm of ['@ai-sdk/openai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai-sdk/openai-compatible']) test(`${npm} no effort support sends no effort and rejects explicit unsupported levels before fetching`, async () => {
-  const data = raw(npm); data.models['future-model'].reasoning_options = []
+  const data = raw(npm); data.data[0].capabilities.reasoning.effort = []
   let request; let calls = 0
   await environment(npm, async (_url, init) => { calls++; request = JSON.parse(init.body); throw new Error('request inspected') }, async ({ adapter }) => {
     assert.equal((await adapter.resolveModel('opencode', 'future-model')).reasoning, undefined)
@@ -225,7 +277,7 @@ for (const npm of ['@ai-sdk/openai', '@ai-sdk/anthropic', '@ai-sdk/google', '@ai
     assert.equal(request.reasoning_effort, undefined)
     assert.equal(request.output_config?.effort, undefined)
     assert.equal(request.generationConfig?.thinkingConfig?.thinkingLevel, undefined)
-  }, normalizeCatalog('opencode', ['future-model'], data, Date.now()))
+  }, normalizeCatalog('opencode', data, Date.now()))
 })
 test('native or unidentified reasoning still requires verified Responses replay metadata', async () => {
   for (const source of [undefined, { provider: 'opencode', model: 'future-model' }, { provider: 'opencode', model: 'future-model', replayState: { response: { provider: 'other', model: 'other' }, blocks: [] } }]) {
@@ -266,8 +318,8 @@ test('prepared call retains descriptor generation; logout prevents its subsequen
     const prepared = await adapter.prepareCall('opencode', 'future-model')
     const directory = await mkdtemp(join(tmpdir(), 'new-generation-'))
     try {
-      const refreshed = raw(); refreshed.models['future-model'].limit.output = 100
-      const updated = new OpenCodeCatalog('opencode', normalizeCatalog('opencode', ['future-model'], refreshed, Date.now()), { directory })
+      const refreshed = raw(); refreshed.data[0].limit.output = 100
+      const updated = new OpenCodeCatalog('opencode', normalizeCatalog('opencode', refreshed, Date.now()), { directory })
       // Replace the mutable catalog owner, leaving the prepared closure intact.
       adapter.options.catalogs.set('opencode', updated)
       await collect(prepared.stream({ provider: 'opencode', model: 'future-model', messages: [] }))
@@ -311,17 +363,17 @@ test('truncated SSE never emits a successful terminal event', async () => {
 })
 test('catalog completion after disposal cannot change models, save or notify', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'disposed-catalog-')); let complete; const pending = new Promise(resolve => { complete = resolve }); let changes = 0
-  const catalog = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher: async url => { await pending; return Response.json(String(url).includes('models.dev') ? { opencode: raw() } : listing(['unknown'])) }, changed: () => changes++ })
+  const catalog = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher: async () => { await pending; return Response.json(listing(['unknown'])) }, changed: () => changes++ })
   try { const operation = catalog.refresh(); catalog.dispose(); complete(); await operation; assert.equal(catalog.models().length, 1); assert.equal(changes, 0); await assert.rejects(readFile(join(directory, 'opencode.json')), { code: 'ENOENT' }) }
   finally { await rm(directory, { recursive: true, force: true }) }
 })
 test('explicit catalog commands share existing model-change notification and failure retains generation', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'catalog-api-')); let fail = false; let changes = 0
   const store = new CredentialFile(join(directory, 'keys.json')); let api
-  const catalog = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher: async url => { if (fail) throw new Error('offline'); return Response.json(String(url).includes('models.dev') ? { opencode: raw() } : listing(['future-model', 'unknown'])) }, changed: () => api.notifyModelsChanged('opencode') })
+  const catalog = new OpenCodeCatalog('opencode', snapshot(), { directory, fetcher: async () => { if (fail) throw new Error('offline'); return Response.json({ data: [raw().data[0], { ...raw().data[0], id: 'new-official' }] }) }, changed: () => api.notifyModelsChanged('opencode') })
   api = createDshAuthApi({ profiles: new Map([['opencode', { provider: 'opencode', displayName: 'Zen' }]]), catalogs: new Map([['opencode', catalog]]), store, resolveAsk: () => undefined, logger: { warn() {} } })
   const unsubscribe = api.onCredentialChange(() => changes++); const command = createAuthCommandHandler(api)
-  try { const status = await command({ rawInput: 'models opencode' }); assert(status.text.includes('bundled')); const refreshed = await command({ rawInput: 'refresh opencode' }); assert.equal(refreshed.kind, 'success'); assert(refreshed.text.includes('unknown')); assert.equal(changes, 1); fail = true; assert.equal((await command({ rawInput: 'refresh opencode' })).kind, 'error'); assert.equal(changes, 1); assert.equal(catalog.models().length, 1) }
+  try { const status = await command({ rawInput: 'models opencode' }); assert(status.text.includes('bundled')); const refreshed = await command({ rawInput: 'refresh opencode' }); assert.equal(refreshed.kind, 'success'); assert(refreshed.text.includes('2 models')); assert.deepEqual(catalog.models().map(model => model.id), ['future-model', 'new-official']); assert.equal(changes, 1); fail = true; assert.equal((await command({ rawInput: 'refresh opencode' })).kind, 'error'); assert.equal(changes, 1); assert.equal(catalog.models().length, 2) }
   finally { unsubscribe(); catalog.dispose(); await rm(directory, { recursive: true, force: true }) }
 })
 for (const npm of ['@ai-sdk/anthropic', '@ai-sdk/openai', '@ai-sdk/openai-compatible', '@ai-sdk/google']) {
@@ -361,16 +413,16 @@ test('catalog network body limits, cancellation and strict snapshot cost validat
 })
 test('older cross-process catalog cannot overwrite a newer persisted generation', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'catalog-generation-')); let slowReady; const slow = new Promise(resolve => { slowReady = resolve })
-  const newer = new OpenCodeCatalog('opencode', snapshot(), { directory, now: () => Date.now() + 20, fetcher: async url => Response.json(String(url).includes('models.dev') ? { opencode: raw() } : listing(['future-model', 'new'])) })
-  const older = new OpenCodeCatalog('opencode', snapshot(), { directory, now: () => Date.now() - 20, fetcher: async url => { await slow; return Response.json(String(url).includes('models.dev') ? { opencode: raw() } : listing(['future-model', 'old'])) } })
+  const newer = new OpenCodeCatalog('opencode', snapshot(), { directory, now: () => Date.now() + 20, fetcher: async () => Response.json(listing(['future-model', 'new'])) })
+  const older = new OpenCodeCatalog('opencode', snapshot(), { directory, now: () => Date.now() - 20, fetcher: async () => { await slow; return Response.json(listing(['future-model', 'old'])) } })
   try { const pending = older.refresh(); await newer.refresh(); slowReady(); await pending; const saved = JSON.parse(await readFile(join(directory, 'opencode.json'))); assert(saved.roster.includes('new')); assert(!saved.roster.includes('old')) }
   finally { newer.dispose(); older.dispose(); await rm(directory, { recursive: true, force: true }) }
 })
-test('successful roster still removes retired ids when model details fail; new ids are excluded individually', async () => {
+test('successful official roster removes retired ids and excludes invalid new metadata individually', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'catalog-partial-'))
-  const previous = normalizeCatalog('opencode', ['future-model', 'retired'], { ...raw(), models: { ...raw().models, retired: raw().models['future-model'] } }, 1)
-  const catalog = new OpenCodeCatalog('opencode', previous, { directory, fetcher: async url => { if (String(url).includes('models.dev')) throw new Error('offline metadata'); return Response.json(listing(['future-model', 'new'])) } })
-  try { await catalog.refresh(); assert.deepEqual(catalog.models().map(model => model.id), ['future-model']); assert.equal(catalog.status().excluded[0].id, 'new'); assert(catalog.status().warning.includes('exact-route')) } finally { catalog.dispose(); await rm(directory, { recursive: true, force: true }) }
+  const previous = normalizeCatalog('opencode', { data: [raw().data[0], { ...raw().data[0], id: 'retired' }] }, 1)
+  const catalog = new OpenCodeCatalog('opencode', previous, { directory, fetcher: async () => Response.json(listing(['future-model', 'new'])) })
+  try { await catalog.refresh(); assert.deepEqual(catalog.models().map(model => model.id), ['future-model']); assert.equal(catalog.status().excluded[0].id, 'new'); assert(catalog.status().warning.includes('unsupported')) } finally { catalog.dispose(); await rm(directory, { recursive: true, force: true }) }
 })
 
 // Receive actual protocol streams, persist their owned envelope, and resend it.
@@ -435,8 +487,7 @@ test('owned Anthropic metadata overrides the SDK limits and sampling table for a
 
 test('public protocol names cannot select inherited object properties', () => {
   for (const protocol of ['toString', 'constructor', '__proto__']) {
-    const result = normalizeCatalog('opencode', ['future-model'], raw(protocol), 1)
-    assert.equal(result.models.length, 0); assert.match(result.excluded[0].reason, /unsupported/)
+    assert.throws(() => normalizeCatalog('opencode', raw(protocol), 1), /no usable models/)
   }
 })
 
@@ -477,8 +528,8 @@ for (const [npm, assertSettings] of [
 ]) test(`${npm} owned effort passes through even when absent from SDK enums`, async () => {
   let request
   await environment(npm, async (_url, init) => { request = JSON.parse(init.body); throw new Error('inspect public effort') }, async ({ adapter }) => {
-    const publicData = raw(npm); publicData.models['future-model'].reasoning_options[0].values = ['future-effort']
-    adapter.options.catalogs.set('opencode', new OpenCodeCatalog('opencode', normalizeCatalog('opencode', ['future-model'], publicData, 1)))
+    const publicData = raw(npm); publicData.data[0].capabilities.reasoning.effort = ['future-effort']
+    adapter.options.catalogs.set('opencode', new OpenCodeCatalog('opencode', normalizeCatalog('opencode', publicData, 1)))
     await assert.rejects(collect(adapter.stream({ provider: 'opencode', model: 'future-model', reasoningEffort: 'future-effort', messages: [] })))
     assertSettings(request)
   })

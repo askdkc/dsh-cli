@@ -24,9 +24,11 @@ export interface OpenCodeCatalogStatus {
   provider: OpenCodeRoute; source: 'bundled' | 'cache' | 'live'; fetchedAt: number
   available: number; excluded: readonly { id: string; reason: string }[]; warning?: string
 }
-const PROTOCOLS: Record<string, OpenCodeProtocol> = {
-  '@ai-sdk/anthropic': 'messages', '@ai-sdk/openai': 'responses',
-  '@ai-sdk/openai-compatible': 'chat', '@ai-sdk/google': 'google',
+const PROTOCOLS: Record<string, { protocol: OpenCodeProtocol; sdks: readonly string[] }> = {
+  messages: { protocol: 'messages', sdks: ['@ai-sdk/anthropic'] },
+  responses: { protocol: 'responses', sdks: ['@ai-sdk/openai'] },
+  'chat-completions': { protocol: 'chat', sdks: ['@ai-sdk/openai-compatible', '@ai-sdk/mistral'] },
+  'generate-content': { protocol: 'google', sdks: ['@ai-sdk/google'] },
 }
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('catalog expected an object')
@@ -42,34 +44,42 @@ export function rosterIds(payload: unknown): string[] {
     return id
   }))].sort()
 }
-/** Normalize only exact-route metadata; every roster id has an explicit outcome. */
-export function normalizeCatalog(provider: OpenCodeRoute, roster: readonly string[], metadata: unknown, fetchedAt: number, previous?: OpenCodeSnapshot): OpenCodeSnapshot {
-  const section = object(metadata); const entries = object(section.models)
+/** Only the official route's model listing supplies metadata; each id has an explicit outcome. */
+export function normalizeCatalog(provider: OpenCodeRoute, payload: unknown, fetchedAt: number): OpenCodeSnapshot {
+  const data = object(payload).data
+  const roster = rosterIds(payload)
+  const entries = new Map<string, unknown>()
+  for (const row of data as unknown[]) entries.set(object(row).id as string, row)
   const models: OpenCodeModel[] = []; const excluded: OpenCodeSnapshot['excluded'] = []
-  for (const id of [...new Set(roster)].sort()) {
+  for (const id of roster) {
     try {
-      if (entries[id] === undefined) {
-        const old = previous?.provider === provider ? previous.models.find(model => model.id === id) : undefined
-        if (old) { models.push(structuredClone(old)); continue }
-        throw new Error('metadata unavailable for this route and id')
-      }
-      const raw = object(entries[id]); const wire = raw.provider === undefined ? section.npm : object(raw.provider).npm
-      const protocol = typeof wire === 'string' && Object.hasOwn(PROTOCOLS, wire) ? PROTOCOLS[wire] : undefined
+      const raw = object(entries.get(id)); const api = object(raw.api)
+      const wires = Object.keys(api)
+      const route = wires.length === 1 && Object.hasOwn(PROTOCOLS, wires[0]!) ? PROTOCOLS[wires[0]!] : undefined
+      const sdk = route && object(object(api[wires[0]!]).sdk).aisdk
       const limit = object(raw.limit); const modalities = object(raw.modalities)
-      if (!protocol) throw new Error('unsupported or unknown wire protocol')
+      const capabilities = object(raw.capabilities)
+      if (!route || !route.sdks.includes(sdk as string)) throw new Error('unsupported or unknown wire protocol')
+      if (raw.type !== 'chat') throw new Error('not a chat model')
       if (!positive(limit.context) || !positive(limit.output)) throw new Error('context or output limit unavailable')
       if (!Array.isArray(modalities.input) || !modalities.input.includes('text') || !Array.isArray(modalities.output) || !modalities.output.includes('text')) throw new Error('not a verified text-generation model')
-      if (typeof raw.tool_call !== 'boolean' || typeof raw.reasoning !== 'boolean' || typeof raw.temperature !== 'boolean') throw new Error('model capabilities unavailable')
-      const effortOption = Array.isArray(raw.reasoning_options) ? raw.reasoning_options.map(object).find(option => option.type === 'effort') : undefined
-      const efforts = effortOption?.values ?? []
+      const tools = object(capabilities.tools); const reasoning = object(capabilities.reasoning)
+      if (typeof tools.supported !== 'boolean' || typeof reasoning.supported !== 'boolean') throw new Error('model capabilities unavailable')
+      const efforts = reasoning.effort ?? []
       if (!Array.isArray(efforts) || !efforts.every(value => typeof value === 'string')) throw new Error('invalid reasoning efforts')
-      const cost = Object.fromEntries(Object.entries(raw.cost === undefined ? {} : object(raw.cost)).filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)) as Record<string, number>
-      models.push({ id, name: typeof raw.name === 'string' ? raw.name : id, protocol, contextWindow: limit.context, maxTokens: limit.output,
-        inputModalities: modalities.input.includes('image') ? ['text', 'image'] : ['text'], toolCall: raw.tool_call, reasoning: raw.reasoning,
-        temperature: raw.temperature, efforts: [...efforts], ...(Object.keys(cost).length ? { cost } : {}) })
+      const textCost = raw.cost === undefined ? undefined : object(object(raw.cost).text)
+      const input = textCost === undefined ? undefined : object(textCost.input)
+      const output = textCost === undefined ? undefined : object(textCost.output)
+      const cache = input?.cache === undefined ? undefined : object(input.cache)
+      const amounts = { input: input?.price, output: output?.price, cache_read: cache?.read, cache_write: cache?.write }
+      const cost = Object.fromEntries(Object.entries(amounts).filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)) as Record<string, number>
+      models.push({ id, name: typeof raw.name === 'string' && raw.name ? raw.name : id, protocol: route.protocol, contextWindow: limit.context, maxTokens: limit.output,
+        inputModalities: modalities.input.some(value => typeof value === 'string' && value.startsWith('image/')) ? ['text', 'image'] : ['text'], toolCall: tools.supported, reasoning: reasoning.supported,
+        temperature: capabilities.temperature === true, efforts: [...efforts], ...(Object.keys(cost).length ? { cost } : {}) })
     } catch (error) { excluded.push({ id, reason: error instanceof Error ? error.message : 'invalid metadata' }) }
   }
-  return { version: 1, provider, fetchedAt, roster: [...new Set(roster)].sort(), models, excluded }
+  if (!models.length) throw new Error('catalog has no usable models')
+  return { version: 1, provider, fetchedAt, roster, models, excluded }
 }
 /** Validate cache/snapshot data using the same normalizer as fetched metadata. */
 export function parseSnapshot(value: unknown, provider: OpenCodeRoute): OpenCodeSnapshot {
@@ -79,7 +89,7 @@ export function parseSnapshot(value: unknown, provider: OpenCodeRoute): OpenCode
   if (new Set(roster).size !== roster.length) throw new Error('duplicate snapshot roster id')
   const models = raw.models.map(value => {
     const model = object(value)
-    if (typeof model.id !== 'string' || typeof model.protocol !== 'string' || !Object.values(PROTOCOLS).includes(model.protocol as OpenCodeProtocol) || !positive(model.contextWindow) || !positive(model.maxTokens) || typeof model.name !== 'string' || !model.name || !Array.isArray(model.inputModalities) || !model.inputModalities.includes('text') || model.inputModalities.some(v => v !== 'text' && v !== 'image') || !Array.isArray(model.efforts) || !model.efforts.every(v => typeof v === 'string' && v.length > 0) || [model.toolCall, model.reasoning, model.temperature].some(v => typeof v !== 'boolean')) throw new Error('invalid cached model')
+    if (typeof model.id !== 'string' || typeof model.protocol !== 'string' || !Object.values(PROTOCOLS).some(route => route.protocol === model.protocol) || !positive(model.contextWindow) || !positive(model.maxTokens) || typeof model.name !== 'string' || !model.name || !Array.isArray(model.inputModalities) || !model.inputModalities.includes('text') || model.inputModalities.some(v => v !== 'text' && v !== 'image') || !Array.isArray(model.efforts) || !model.efforts.every(v => typeof v === 'string' && v.length > 0) || [model.toolCall, model.reasoning, model.temperature].some(v => typeof v !== 'boolean')) throw new Error('invalid cached model')
     const cost = model.cost === undefined ? undefined : object(model.cost)
     if (cost && Object.values(cost).some(value => typeof value !== 'number' || !Number.isFinite(value) || value < 0)) throw new Error('invalid cached cost')
     return { id: model.id, name: model.name, protocol: model.protocol as OpenCodeProtocol, contextWindow: model.contextWindow, maxTokens: model.maxTokens,
@@ -125,7 +135,7 @@ export class OpenCodeCatalog {
     try { const cached = parseSnapshot(JSON.parse(await readFile(this.path, 'utf8')), this.provider); if (!this.disposed && cached.fetchedAt > this.snapshot.fetchedAt) { this.snapshot = cached; this.source = 'cache'; this.options.changed?.() } }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') this.warning = 'catalog cache unreadable; using bundled information' }
     if (this.disposed) return
-    if ((this.options.now?.() ?? Date.now()) - this.snapshot.fetchedAt >= 3_600_000) void this.refresh()
+    await this.refresh()
     this.timer = setInterval(() => { void this.refresh() }, 3_600_000); this.timer.unref()
   }
   refresh(): Promise<OpenCodeCatalogStatus> {
@@ -137,12 +147,10 @@ export class OpenCodeCatalog {
   private async update(): Promise<OpenCodeCatalogStatus> {
     const startedAt = this.options.now?.() ?? Date.now()
     try {
-      const [listing, details] = await Promise.all([fetchCatalogJson(`${OPEN_CODE_URLS[this.provider]}/models`, this.options.fetcher ?? fetch, this.abort.signal), fetchCatalogJson('https://models.dev/api.json', this.options.fetcher ?? fetch, this.abort.signal).then(value => ({ value, failed: false }), () => ({ value: undefined, failed: true }))])
-      let section: unknown = { models: {} }; let detailsUnavailable = details.failed
-      if (!details.failed) { try { section = object(details.value)[this.provider] ?? { models: {} } } catch { detailsUnavailable = true } }
-      const next = normalizeCatalog(this.provider, rosterIds(listing), section, startedAt, this.snapshot)
+      const listing = await fetchCatalogJson(`${OPEN_CODE_URLS[this.provider]}/models`, this.options.fetcher ?? fetch, this.abort.signal)
+      const next = normalizeCatalog(this.provider, listing, startedAt)
       if (this.disposed || next.fetchedAt < this.snapshot.fetchedAt) return this.status()
-      this.snapshot = next; this.source = 'live'; this.warning = detailsUnavailable ? 'model details unavailable; reusing exact-route verified metadata' : undefined; this.options.changed?.()
+      this.snapshot = next; this.source = 'live'; this.warning = next.excluded.length ? 'some official models have unsupported metadata' : undefined; this.options.changed?.()
       try { await this.save(next) }
       catch { if (!this.disposed) this.warning = 'catalog updated in memory; cache save failed' }
     } catch { if (!this.disposed) this.warning = 'catalog refresh failed; retaining last verified information' }

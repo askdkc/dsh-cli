@@ -129,8 +129,9 @@ the `/auth login <provider>` hint — never silently.
   logs the refusal and mounts the remaining routes. Keep one provider on one
   adapter.
 - OpenCode Zen/Go own their catalog and transports independently of the host's
-  pi version. Official `/models` rosters and exact-route models.dev metadata
-  refresh hourly. Startup uses the verified cache or bundled snapshot immediately.
+  pi version. Each startup fetches the official `/models` listing and its
+  model metadata; subsequent updates run hourly. The verified cache or bundled
+  snapshot remains available while the request runs and if it fails.
   `/auth models [provider]` shows freshness and excluded model reasons;
   `/auth refresh [provider]` requests an update. Failed updates keep the last
   verified catalog. Unsupported or incomplete models are excluded individually;

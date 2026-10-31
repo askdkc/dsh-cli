@@ -1,42 +1,42 @@
-/** Generated from official rosters and exact-route models.dev metadata. */
+/** Generated from official Zen model listings. */
 export const OPEN_CODE_SNAPSHOTS = {
   "opencode": {
     "version": 1,
     "provider": "opencode",
-    "fetchedAt": 1790827880774,
+    "fetchedAt": 1793449583264,
     "roster": [
+      "beam-free",
       "big-pickle",
       "claude-fable-5",
       "claude-fable-5-1",
       "claude-haiku-4-5",
+      "claude-haiku-5-5",
       "claude-opus-4-5",
       "claude-opus-4-6",
       "claude-opus-4-7",
       "claude-opus-4-8",
       "claude-opus-5",
       "claude-opus-5-5",
-      "claude-sonnet-4",
       "claude-sonnet-4-5",
       "claude-sonnet-4-6",
       "claude-sonnet-5",
       "claude-sonnet-5-5",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-free",
-      "deepseek-v4-flash-vision-exp",
       "deepseek-v4-pro",
       "deepseek-v4.1-flash",
-      "gemini-3-flash",
-      "gemini-3.1-pro",
+      "deepseek-v4.1-flash-free",
+      "flint-40b-free",
       "gemini-3.5-flash",
       "gemini-3.5-flash-lite",
       "gemini-3.6-flash",
       "gemini-3.7-flash",
       "gemini-3.8-flash",
+      "gemini-4-argon",
       "glm-5",
       "glm-5.1",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
+      "glm-5.3-flash-free",
       "gpt-5",
       "gpt-5-codex",
       "gpt-5-nano",
@@ -65,32 +65,51 @@ export const OPEN_CODE_SNAPSHOTS = {
       "grok-4.6",
       "grok-4.7",
       "grok-build-0.1",
-      "jev-1.13",
-      "jev-1.13-free",
       "kimi-k2.5",
       "kimi-k2.6",
       "kimi-k2.7-code",
       "kimi-k3",
-      "ling-3.0-flash-fin-free",
-      "longcat-2.5-preview-free",
-      "mimo-v2.5-free",
       "mimo-v2.6-flash-free",
       "minimax-m2.5",
       "minimax-m2.7",
       "minimax-m3",
+      "mistral-large-4",
       "muse-spark-1.2",
-      "muse-spark-1.2-contributor-free",
       "muse-spark-1.3",
-      "muse-spark-1.3-contributor-free",
-      "nemotron-3-ultra-free",
+      "muse-wonder-1.0",
       "nemotron-3.5-lightning-free",
+      "nemotron-3.5-super-vl-free",
       "qwen3.5-plus",
       "qwen3.6-plus",
       "qwen3.8-flash",
-      "qwen3.8-max",
-      "space-bunny-free"
+      "qwen3.8-max"
     ],
     "models": [
+      {
+        "id": "beam-free",
+        "name": "Beam Free",
+        "protocol": "chat",
+        "contextWindow": 1048576,
+        "maxTokens": 131072,
+        "inputModalities": [
+          "text"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
+        }
+      },
       {
         "id": "big-pickle",
         "name": "Big Pickle",
@@ -184,6 +203,33 @@ export const OPEN_CODE_SNAPSHOTS = {
           "output": 5,
           "cache_read": 0.1,
           "cache_write": 1.25
+        }
+      },
+      {
+        "id": "claude-haiku-5-5",
+        "name": "Claude Haiku 5.5",
+        "protocol": "messages",
+        "contextWindow": 1000000,
+        "maxTokens": 128000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "cost": {
+          "input": 0.1,
+          "output": 0.5,
+          "cache_read": 0.01,
+          "cache_write": 0.125
         }
       },
       {
@@ -346,27 +392,6 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "claude-sonnet-4",
-        "name": "Claude Sonnet 4",
-        "protocol": "messages",
-        "contextWindow": 1000000,
-        "maxTokens": 64000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 3,
-          "output": 15,
-          "cache_read": 0.3,
-          "cache_write": 3.75
-        }
-      },
-      {
         "id": "claude-sonnet-4-5",
         "name": "Claude Sonnet 4.5",
         "protocol": "messages",
@@ -468,76 +493,6 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "deepseek-v4-flash",
-        "name": "DeepSeek V4 Flash",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 384000,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "low",
-          "high",
-          "max"
-        ],
-        "cost": {
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.028
-        }
-      },
-      {
-        "id": "deepseek-v4-flash-free",
-        "name": "DeepSeek V4 Flash Free",
-        "protocol": "chat",
-        "contextWindow": 200000,
-        "maxTokens": 128000,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "low",
-          "high",
-          "max"
-        ],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
-        }
-      },
-      {
-        "id": "deepseek-v4-flash-vision-exp",
-        "name": "DeepSeek V4 Flash Vision Exp",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 384000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "low",
-          "high",
-          "max"
-        ],
-        "cost": {
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.028
-        }
-      },
-      {
         "id": "deepseek-v4-pro",
         "name": "DeepSeek V4 Pro",
         "protocol": "chat",
@@ -555,7 +510,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "cost": {
           "input": 1.74,
-          "output": 3.84,
+          "output": 3.48,
           "cache_read": 0.145
         }
       },
@@ -584,11 +539,11 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "gemini-3-flash",
-        "name": "Gemini 3 Flash",
-        "protocol": "google",
-        "contextWindow": 1048576,
-        "maxTokens": 65536,
+        "id": "deepseek-v4.1-flash-free",
+        "name": "DeepSeek V4.1 Flash Free",
+        "protocol": "chat",
+        "contextWindow": 200000,
+        "maxTokens": 32000,
         "inputModalities": [
           "text",
           "image"
@@ -597,26 +552,24 @@ export const OPEN_CODE_SNAPSHOTS = {
         "reasoning": true,
         "temperature": true,
         "efforts": [
-          "minimal",
           "low",
-          "medium",
-          "high"
+          "high",
+          "max"
         ],
         "cost": {
-          "input": 0.5,
-          "output": 3,
-          "cache_read": 0.05
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
         }
       },
       {
-        "id": "gemini-3.1-pro",
-        "name": "Gemini 3.1 Pro Preview",
-        "protocol": "google",
-        "contextWindow": 1048576,
+        "id": "flint-40b-free",
+        "name": "Flint 40B Free",
+        "protocol": "chat",
+        "contextWindow": 262144,
         "maxTokens": 65536,
         "inputModalities": [
-          "text",
-          "image"
+          "text"
         ],
         "toolCall": true,
         "reasoning": true,
@@ -624,12 +577,14 @@ export const OPEN_CODE_SNAPSHOTS = {
         "efforts": [
           "low",
           "medium",
-          "high"
+          "high",
+          "xhigh",
+          "max"
         ],
         "cost": {
-          "input": 2,
-          "output": 12,
-          "cache_read": 0.2
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
         }
       },
       {
@@ -654,8 +609,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         "cost": {
           "input": 1.5,
           "output": 9,
-          "cache_read": 0.15,
-          "input_audio": 1.5
+          "cache_read": 0.15
         }
       },
       {
@@ -705,8 +659,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         "cost": {
           "input": 1.5,
           "output": 7.5,
-          "cache_read": 0.15,
-          "input_audio": 1.5
+          "cache_read": 0.15
         }
       },
       {
@@ -730,8 +683,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         "cost": {
           "input": 1.5,
           "output": 7.5,
-          "cache_read": 0.15,
-          "input_audio": 1.5
+          "cache_read": 0.15
         }
       },
       {
@@ -755,8 +707,31 @@ export const OPEN_CODE_SNAPSHOTS = {
         "cost": {
           "input": 1.5,
           "output": 7.5,
-          "cache_read": 0.15,
-          "input_audio": 1.5
+          "cache_read": 0.15
+        }
+      },
+      {
+        "id": "gemini-4-argon",
+        "name": "Gemini 4 Argon",
+        "protocol": "google",
+        "contextWindow": 1048576,
+        "maxTokens": 65536,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "cost": {
+          "input": 2,
+          "output": 10,
+          "cache_read": 0.1
         }
       },
       {
@@ -867,6 +842,30 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
+        "id": "glm-5.3-flash-free",
+        "name": "GLM-5.3-Flash Free",
+        "protocol": "chat",
+        "contextWindow": 200000,
+        "maxTokens": 32000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "low",
+          "high",
+          "max"
+        ],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
+        }
+      },
+      {
         "id": "gpt-5",
         "name": "GPT-5",
         "protocol": "responses",
@@ -952,7 +951,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": false,
+        "temperature": true,
         "efforts": [
           "none",
           "low",
@@ -1050,7 +1049,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": false,
+        "temperature": true,
         "efforts": [
           "none",
           "low",
@@ -1101,7 +1100,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": false,
+        "temperature": true,
         "efforts": [
           "none",
           "low",
@@ -1177,7 +1176,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": false,
+        "temperature": true,
         "efforts": [
           "none",
           "low",
@@ -1203,7 +1202,7 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": false,
+        "temperature": true,
         "efforts": [
           "none",
           "low",
@@ -1369,10 +1368,10 @@ export const OPEN_CODE_SNAPSHOTS = {
           "max"
         ],
         "cost": {
-          "input": 2.5,
-          "output": 15,
-          "cache_read": 0.25,
-          "cache_write": 3.125
+          "input": 2,
+          "output": 12,
+          "cache_read": 0.2,
+          "cache_write": 2.5
         }
       },
       {
@@ -1591,12 +1590,12 @@ export const OPEN_CODE_SNAPSHOTS = {
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": true,
+        "temperature": false,
         "efforts": [],
         "cost": {
           "input": 0.6,
           "output": 3,
-          "cache_read": 0.08
+          "cache_read": 0.1
         }
       },
       {
@@ -1653,71 +1652,15 @@ export const OPEN_CODE_SNAPSHOTS = {
         "reasoning": true,
         "temperature": false,
         "efforts": [
+          "low",
+          "high",
           "max"
         ],
         "cost": {
           "input": 3,
           "output": 15,
-          "cache_read": 0.3
-        }
-      },
-      {
-        "id": "ling-3.0-flash-fin-free",
-        "name": "Ling 3.0 Flash Fin Free",
-        "protocol": "chat",
-        "contextWindow": 262144,
-        "maxTokens": 32768,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
-        }
-      },
-      {
-        "id": "longcat-2.5-preview-free",
-        "name": "LongCat 2.5 Preview Free",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 131072,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
-        }
-      },
-      {
-        "id": "mimo-v2.5-free",
-        "name": "MiMo V2.5 Free",
-        "protocol": "chat",
-        "contextWindow": 200000,
-        "maxTokens": 32000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
+          "cache_read": 0.3,
+          "cache_write": 3
         }
       },
       {
@@ -1799,6 +1742,29 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
+        "id": "mistral-large-4",
+        "name": "Mistral Large 4",
+        "protocol": "chat",
+        "contextWindow": 524288,
+        "maxTokens": 262144,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "none",
+          "high"
+        ],
+        "cost": {
+          "input": 0.68,
+          "output": 2.09,
+          "cache_read": 0.07
+        }
+      },
+      {
         "id": "muse-spark-1.2",
         "name": "Muse Spark 1.2",
         "protocol": "responses",
@@ -1822,32 +1788,6 @@ export const OPEN_CODE_SNAPSHOTS = {
           "input": 1.25,
           "output": 4.25,
           "cache_read": 0.15
-        }
-      },
-      {
-        "id": "muse-spark-1.2-contributor-free",
-        "name": "Muse Spark 1.2 Free",
-        "protocol": "responses",
-        "contextWindow": 1048576,
-        "maxTokens": 131072,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "minimal",
-          "low",
-          "medium",
-          "high",
-          "xhigh"
-        ],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
         }
       },
       {
@@ -1877,8 +1817,8 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "muse-spark-1.3-contributor-free",
-        "name": "Muse Spark 1.3 Free",
+        "id": "muse-wonder-1.0",
+        "name": "Muse Wonder",
         "protocol": "responses",
         "contextWindow": 1048576,
         "maxTokens": 131072,
@@ -1894,31 +1834,13 @@ export const OPEN_CODE_SNAPSHOTS = {
           "low",
           "medium",
           "high",
-          "xhigh"
+          "xhigh",
+          "max"
         ],
         "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
-        }
-      },
-      {
-        "id": "nemotron-3-ultra-free",
-        "name": "Nemotron 3 Ultra Free",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 128000,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
+          "input": 4,
+          "output": 20,
+          "cache_read": 0.2
         }
       },
       {
@@ -1934,6 +1856,33 @@ export const OPEN_CODE_SNAPSHOTS = {
         "reasoning": true,
         "temperature": true,
         "efforts": [],
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
+        }
+      },
+      {
+        "id": "nemotron-3.5-super-vl-free",
+        "name": "Nemotron 3.5 Super VL Free",
+        "protocol": "chat",
+        "contextWindow": 1048576,
+        "maxTokens": 131072,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "none",
+          "minimal",
+          "low",
+          "medium",
+          "high",
+          "xhigh"
+        ],
         "cost": {
           "input": 0,
           "output": 0,
@@ -2020,7 +1969,11 @@ export const OPEN_CODE_SNAPSHOTS = {
         "toolCall": true,
         "reasoning": true,
         "temperature": true,
-        "efforts": [],
+        "efforts": [
+          "low",
+          "medium",
+          "xhigh"
+        ],
         "cost": {
           "input": 2,
           "output": 6,
@@ -2029,77 +1982,49 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       }
     ],
-    "excluded": [
-      {
-        "id": "jev-1.13",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "jev-1.13-free",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "space-bunny-free",
-        "reason": "model capabilities unavailable"
-      }
-    ]
+    "excluded": []
   },
   "opencode-go": {
     "version": 1,
     "provider": "opencode-go",
-    "fetchedAt": 1790827880959,
+    "fetchedAt": 1793449583488,
     "roster": [
-      "deepseek-flash",
-      "deepseek-v4-flash",
-      "deepseek-v4-flash-vision-exp",
+      "beam-free",
+      "claude-haiku-5-5",
       "deepseek-v4-pro",
       "deepseek-v4.1-flash",
-      "glm-5",
-      "glm-5.1",
+      "gemini-4-argon",
       "glm-5.2",
       "glm-5.3",
       "glm-5.3-flash",
       "gpt-5.6-luna",
       "gpt-6-luna",
-      "grok-4.5",
-      "grok-4.6",
       "grok-4.7",
       "hy3",
-      "hy3-preview",
       "hy4-preview",
-      "kimi-k2.5",
-      "kimi-k2.6",
+      "iceman-contributor-free",
       "kimi-k2.7-code",
       "kimi-k3",
+      "kimi-k3.1-pro",
       "longcat-2.0",
-      "longcat-2.5-preview-free",
-      "mimo-v2-omni",
-      "mimo-v2-pro",
-      "mimo-v2.5",
-      "mimo-v2.5-pro",
       "mimo-v2.6-flash",
       "mimo-v2.6-pro",
-      "minimax-m2.5",
-      "minimax-m2.7",
       "minimax-m3",
+      "minimax-m3.1-flash",
       "muse-spark-1.2-contributor",
       "muse-spark-1.3-contributor",
-      "omen-alpha",
-      "qwen3.5-plus",
-      "qwen3.6-plus",
-      "qwen3.7-max",
       "qwen3.7-plus",
       "qwen3.8-flash",
       "qwen3.8-max",
-      "space-bunny-free"
+      "step-5-preview"
     ],
     "models": [
       {
-        "id": "deepseek-v4-flash",
-        "name": "DeepSeek V4 Flash",
+        "id": "beam-free",
+        "name": "Beam Free",
         "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 384000,
+        "contextWindow": 1048576,
+        "maxTokens": 131072,
         "inputModalities": [
           "text"
         ],
@@ -2108,37 +2033,42 @@ export const OPEN_CODE_SNAPSHOTS = {
         "temperature": true,
         "efforts": [
           "low",
+          "medium",
           "high",
+          "xhigh",
           "max"
         ],
         "cost": {
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": 0.003
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
         }
       },
       {
-        "id": "deepseek-v4-flash-vision-exp",
-        "name": "DeepSeek V4 Flash Vision Exp",
-        "protocol": "chat",
+        "id": "claude-haiku-5-5",
+        "name": "Claude Haiku 5.5",
+        "protocol": "messages",
         "contextWindow": 1000000,
-        "maxTokens": 384000,
+        "maxTokens": 128000,
         "inputModalities": [
           "text",
           "image"
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": true,
+        "temperature": false,
         "efforts": [
           "low",
+          "medium",
           "high",
+          "xhigh",
           "max"
         ],
         "cost": {
-          "input": 0.15,
-          "output": 0.6,
-          "cache_read": 0.003
+          "input": 0.1,
+          "output": 0.5,
+          "cache_read": 0.01,
+          "cache_write": 0.125
         }
       },
       {
@@ -2185,6 +2115,30 @@ export const OPEN_CODE_SNAPSHOTS = {
           "input": 0.15,
           "output": 0.6,
           "cache_read": 0.003
+        }
+      },
+      {
+        "id": "gemini-4-argon",
+        "name": "Gemini 4 Argon",
+        "protocol": "google",
+        "contextWindow": 1048576,
+        "maxTokens": 65536,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": false,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "cost": {
+          "input": 2,
+          "output": 10,
+          "cache_read": 0.1
         }
       },
       {
@@ -2313,55 +2267,6 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "grok-4.5",
-        "name": "Grok 4.5",
-        "protocol": "responses",
-        "contextWindow": 500000,
-        "maxTokens": 500000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "low",
-          "medium",
-          "high"
-        ],
-        "cost": {
-          "input": 2,
-          "output": 6,
-          "cache_read": 0.3
-        }
-      },
-      {
-        "id": "grok-4.6",
-        "name": "Grok 4.6",
-        "protocol": "responses",
-        "contextWindow": 500000,
-        "maxTokens": 500000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [
-          "low",
-          "medium",
-          "high",
-          "xhigh"
-        ],
-        "cost": {
-          "input": 2,
-          "output": 6,
-          "cache_read": 0.5
-        }
-      },
-      {
         "id": "grok-4.7",
         "name": "Grok 4.7",
         "protocol": "responses",
@@ -2432,23 +2337,22 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "kimi-k2.6",
-        "name": "Kimi K2.6",
+        "id": "iceman-contributor-free",
+        "name": "Iceman Contributor Free",
         "protocol": "chat",
         "contextWindow": 262144,
-        "maxTokens": 65536,
+        "maxTokens": 131072,
         "inputModalities": [
-          "text",
-          "image"
+          "text"
         ],
         "toolCall": true,
         "reasoning": true,
-        "temperature": true,
+        "temperature": false,
         "efforts": [],
         "cost": {
-          "input": 0.95,
-          "output": 4,
-          "cache_read": 0.16
+          "input": 0,
+          "output": 0,
+          "cache_read": 0
         }
       },
       {
@@ -2490,7 +2394,33 @@ export const OPEN_CODE_SNAPSHOTS = {
         "cost": {
           "input": 3,
           "output": 15,
-          "cache_read": 0.3
+          "cache_read": 0.3,
+          "cache_write": 3
+        }
+      },
+      {
+        "id": "kimi-k3.1-pro",
+        "name": "Kimi K3.1 Pro",
+        "protocol": "chat",
+        "contextWindow": 1048576,
+        "maxTokens": 131072,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": false,
+        "efforts": [
+          "low",
+          "high",
+          "max"
+        ],
+        "cost": {
+          "input": 2,
+          "output": 10,
+          "cache_read": 0.2,
+          "cache_write": 2
         }
       },
       {
@@ -2510,65 +2440,6 @@ export const OPEN_CODE_SNAPSHOTS = {
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.006
-        }
-      },
-      {
-        "id": "longcat-2.5-preview-free",
-        "name": "LongCat 2.5 Preview Free",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 131072,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0,
-          "output": 0,
-          "cache_read": 0
-        }
-      },
-      {
-        "id": "mimo-v2.5",
-        "name": "MiMo V2.5",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 128000,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0.14,
-          "output": 0.28,
-          "cache_read": 0.0028
-        }
-      },
-      {
-        "id": "mimo-v2.5-pro",
-        "name": "MiMo V2.5 Pro",
-        "protocol": "chat",
-        "contextWindow": 1048576,
-        "maxTokens": 128000,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0.435,
-          "output": 0.87,
-          "cache_read": 0.003625
         }
       },
       {
@@ -2612,26 +2483,6 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "minimax-m2.7",
-        "name": "MiniMax-M2.7",
-        "protocol": "messages",
-        "contextWindow": 204800,
-        "maxTokens": 131072,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0.3,
-          "output": 1.2,
-          "cache_read": 0.06,
-          "cache_write": 0.375
-        }
-      },
-      {
         "id": "minimax-m3",
         "name": "MiniMax-M3",
         "protocol": "messages",
@@ -2649,6 +2500,32 @@ export const OPEN_CODE_SNAPSHOTS = {
           "input": 0.3,
           "output": 1.2,
           "cache_read": 0.06
+        }
+      },
+      {
+        "id": "minimax-m3.1-flash",
+        "name": "MiniMax M3.1 Flash",
+        "protocol": "chat",
+        "contextWindow": 1000000,
+        "maxTokens": 512000,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "cost": {
+          "input": 0.15,
+          "output": 0.6,
+          "cache_read": 0.015
         }
       },
       {
@@ -2704,50 +2581,9 @@ export const OPEN_CODE_SNAPSHOTS = {
         }
       },
       {
-        "id": "qwen3.6-plus",
-        "name": "Qwen3.6 Plus",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 65536,
-        "inputModalities": [
-          "text",
-          "image"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 0.5,
-          "output": 3,
-          "cache_read": 0.05,
-          "cache_write": 0.625
-        }
-      },
-      {
-        "id": "qwen3.7-max",
-        "name": "Qwen3.7 Max",
-        "protocol": "chat",
-        "contextWindow": 1000000,
-        "maxTokens": 65536,
-        "inputModalities": [
-          "text"
-        ],
-        "toolCall": true,
-        "reasoning": true,
-        "temperature": true,
-        "efforts": [],
-        "cost": {
-          "input": 2.5,
-          "output": 7.5,
-          "cache_read": 0.5,
-          "cache_write": 3.125
-        }
-      },
-      {
         "id": "qwen3.7-plus",
         "name": "Qwen3.7 Plus",
-        "protocol": "chat",
+        "protocol": "messages",
         "contextWindow": 1000000,
         "maxTokens": 65536,
         "inputModalities": [
@@ -2793,7 +2629,7 @@ export const OPEN_CODE_SNAPSHOTS = {
       {
         "id": "qwen3.8-max",
         "name": "Qwen3.8 Max",
-        "protocol": "chat",
+        "protocol": "messages",
         "contextWindow": 1000000,
         "maxTokens": 131072,
         "inputModalities": [
@@ -2814,53 +2650,32 @@ export const OPEN_CODE_SNAPSHOTS = {
           "cache_read": 0.25,
           "cache_write": 2.5
         }
+      },
+      {
+        "id": "step-5-preview",
+        "name": "Step 5 Preview",
+        "protocol": "chat",
+        "contextWindow": 1000000,
+        "maxTokens": 65536,
+        "inputModalities": [
+          "text",
+          "image"
+        ],
+        "toolCall": true,
+        "reasoning": true,
+        "temperature": true,
+        "efforts": [
+          "low",
+          "medium",
+          "high"
+        ],
+        "cost": {
+          "input": 1,
+          "output": 2.7,
+          "cache_read": 0.1
+        }
       }
     ],
-    "excluded": [
-      {
-        "id": "deepseek-flash",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "glm-5",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "glm-5.1",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "hy3-preview",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "kimi-k2.5",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "mimo-v2-omni",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "mimo-v2-pro",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "minimax-m2.5",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "omen-alpha",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "qwen3.5-plus",
-        "reason": "metadata unavailable for this route and id"
-      },
-      {
-        "id": "space-bunny-free",
-        "reason": "model capabilities unavailable"
-      }
-    ]
+    "excluded": []
   }
 }
