@@ -20,6 +20,25 @@
 本仓库是 dkc 基于 [chimney 的 dsh-TUI](https://github.com/ccch1mneyyy/dsh-TUI)
 独立开发的 fork。
 
+## 仅本次启动不加载 Kiokuko
+
+```sh
+dsh-cli --ignore-kiokuko
+dsh-cli --ignore-kiokuko --resume <session-id>
+```
+
+`dsh-cli` 可以独立运行，Kiokuko 是可选插件。该选项在 import 之前禁用
+`kiokuko-dsh` 及其子路径插件（包括模型集成），不会启动其服务、工具或钩子。
+同时排除 Kiokuko bundle 的修改，但保留 profile、home、`--patch` 中的显式
+覆盖和其他插件。Kiokuko 提供的模型供应商和工具将不可用。已有历史保留，恢复
+会话也不会重新启用 Kiokuko。
+
+不会卸载插件或保存禁用设置；临时文件使用后删除，下次不带该参数启动即恢复
+普通 profile。它是启动选项，不是对运行中会话的卸载命令。可用 `--dump-config`
+查看有效启动配置；不可与 schema/default-only dump 或 profile 替换组合。
+无法安全组合时会报告诊断并停止，而不会默默加载 Kiokuko。正常宿主启动维护
+和会话中明确进行的设置修改仍遵循宿主原有行为。
+
 ## 界面预览
 
 <div align="center">

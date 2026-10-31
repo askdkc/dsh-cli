@@ -28,8 +28,8 @@
  * `DSH_CLI_LANG` 显式指定时从其值，否则默认英文（同 src/i18n.ts 的缺省）。
  */
 import { spawn, spawnSync } from 'node:child_process'
-import { existsSync, readFileSync, readdirSync, realpathSync, rmSync } from 'node:fs'
-import { homedir } from 'node:os'
+import { existsSync, readFileSync, readdirSync, realpathSync, rmSync, mkdtempSync, writeFileSync, mkdirSync, symlinkSync } from 'node:fs'
+import { homedir, tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -456,6 +456,7 @@ const MSG = {
       `  version                Show launcher and profile versions\n` +
       `  help                   Show this help\n\n` +
       `Options:\n` +
+      `  --ignore-kiokuko       Do not load Kiokuko plugins for this launch (settings unchanged)\n` +
       `  --resume [id]          Resume the last (or the given) session\n` +
       `  -c, --continue         Same as --resume\n` +
       `  <path|url>             Open with the given workspace target\n\n` +
@@ -471,6 +472,7 @@ const MSG = {
       `  version                显示启动器与 profile 版本\n` +
       `  help                   显示本帮助\n\n` +
       `选项：\n` +
+      `  --ignore-kiokuko       本次启动不加载 Kiokuko 插件（不修改设置）\n` +
       `  --resume [id]          恢复上次（或指定 id 的）会话\n` +
       `  -c, --continue         同 --resume\n` +
       `  <路径|URL>             以指定工作区目标启动\n\n` +
@@ -533,7 +535,11 @@ const GENERATED_FILE_ENTRIES = new Set([
 // `dsh-cli --help` 在没装 dsh、profile 残缺时也必须能出（否则求助命令
 // 本身先触发一轮安装）。后续位置的同名字符串不截获，保持既有透传与
 // 工作区目标嗅探行为不变。
-const subcommand = process.argv[2]
+const subcommand = process.argv.slice(2).find(arg => arg !== '--ignore-kiokuko')
+if (process.argv.slice(2).includes('--ignore-kiokuko') && ['update', 'migrate', 'doctor', 'safe'].includes(subcommand)) {
+  console.error('[dsh-cli] --ignore-kiokuko is a session startup option; do not combine it with maintenance commands')
+  process.exit(1)
+}
 if (subcommand === 'version' || subcommand === '--version' || subcommand === '-v') {
   const role = runningInsideProfile ? 'profile' : 'launcher'
   console.log(`${PACKAGE} ${ownVersion ?? 'unknown'} (${role})`)
@@ -737,19 +743,149 @@ const forwardExit = child => {
 // 或 safe 菜单）。Windows 经 cmd()/shell:true 启动（见 cmd 注释），壳层
 // 观察到的 signal 不保证等同内部 dsh 的中断语义：判定一律只看数值 code，
 // 不从数值反推信号（spec §5.1）。
-const startDshSession = (dshArgs, profile = PROFILE, env = process.env) =>
-  new Promise(resolve => {
-    const child = spawn(...dshCmd(['--profile', profile, ...dshArgs]), {
-      stdio: 'inherit',
-      env,
-      ...shellOpt,
+// This is a launch-local overlay, not a profile edit or a post-import UI gate.
+// Keep it inline: launcher migration copies only this bin, never lib helpers.
+async function kiokukoLaunchOverlay(dshArgs, profile, env) {
+  const hostArgs = [], appArgs = []
+  let host = true
+  for (let i = 0; i < dshArgs.length; i++) {
+    const arg = dshArgs[i]
+    if (host && ['--dump-config-schema', '--dump-default-config'].includes(arg)) {
+      throw new Error('--ignore-kiokuko supports --dump-config, not schema/default-only dumps')
+    }
+    if (host && (arg === '--patch' || arg.startsWith('--patch='))) {
+      hostArgs.push(arg)
+      if (arg === '--patch') {
+        if (!dshArgs[i + 1] || dshArgs[i + 1].startsWith('-')) throw new Error('--patch needs a path')
+        hostArgs.push(dshArgs[++i])
+      }
+    } else if (host && arg === '--dump-config') {
+      appArgs.push(arg)
+    } else {
+      // Do not move flags out of the application's positional/unknown tail.
+      // A profile replacement is a persistent operation, not this opt-out.
+      if (host && (arg === '--from-default-profile' || arg.startsWith('--from-default-profile='))) {
+        throw new Error('--ignore-kiokuko cannot be combined with --from-default-profile')
+      }
+      host = false
+      appArgs.push(arg)
+    }
+  }
+  const { parseDocument } = await import('yaml')
+  const manifest = readJson(join(profileDir, 'package.json'))
+  if (!Array.isArray(manifest?.dsh?.profile?.bundles)) throw new Error('cannot inspect the profile bundle list')
+  const bundles = manifest.dsh.profile.bundles
+  const compose = excluded => {
+    // Both boot-free dumps use private shadow manifests: even config dumping
+    // can normalize an old profile. Real startup still uses the original one.
+    const shadowHome = mkdtempSync(join(tmpdir(), 'dsh-cli-profile-view-'))
+    try {
+      const shadow = join(shadowHome, 'profiles', profile)
+      mkdirSync(shadow, { recursive: true })
+      const copy = structuredClone(manifest)
+      copy.dsh.profile.bundles = bundles.filter(name => !excluded || name !== 'kiokuko-dsh')
+      writeFileSync(join(shadow, 'package.json'), JSON.stringify(copy), { mode: 0o600 })
+      symlinkSync(join(profileDir, 'node_modules'), join(shadow, 'node_modules'), 'junction')
+      const compatibility = join(profileDir, 'compatibility.json')
+      if (existsSync(compatibility)) writeFileSync(join(shadow, 'compatibility.json'), readFileSync(compatibility), { mode: 0o600 })
+      // Keep original paths: relative inserted modules are anchored to the
+      // source patch's directory (not to a copied/symlinked patch's realpath).
+      const inherited = []
+      for (const path of [join(profileDir, 'cordis.patch.yml'), homePatchFile]) {
+        if (existsSync(path)) inherited.push('--patch', resolve(path))
+      }
+      const dump = spawnSync(...dshCmd(['--profile', profile, ...inherited, ...hostArgs, '--dump-config']), {
+        env: { ...env, DSH_HOME: shadowHome }, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024, timeout: 30_000, ...shellOpt,
+      })
+      if (dump.error || dump.status !== 0) throw new Error('cannot compose the profile; no session was started')
+      // Never evaluate !!js. Keep its expression object intact for any value
+      // restored by the final overlay, so the host retains normal semantics.
+      const parsed = parseDocument(dump.stdout, {
+        customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => ({ __jsExpr: value }) }],
+      })
+      if (parsed.errors.length || parsed.warnings.length) throw new Error('cannot safely parse the composed profile')
+      const entries = parsed.toJS()
+      if (!Array.isArray(entries)) throw new Error('composed profile is not an entry list')
+      return entries
+    } finally {
+      rmSync(shadowHome, { recursive: true, force: true })
+    }
+  }
+  const entries = compose(false)
+  const withoutBundle = bundles.includes('kiokuko-dsh') ? compose(true) : entries
+  const index = rows => {
+    const result = new Map()
+    const visit = entries => {
+      for (const entry of entries) {
+        if (!entry || typeof entry !== 'object' || typeof entry.id !== 'string' || !entry.id || result.has(entry.id)) {
+          throw new Error('composed profile entry ids are missing or ambiguous')
+        }
+        result.set(entry.id, entry)
+        if (entry.group && Array.isArray(entry.config)) visit(entry.config)
+      }
+    }
+    visit(rows)
+    return result
+  }
+  const actual = index(entries), desired = index(withoutBundle), patches = []
+  for (const [id, entry] of actual) {
+    const target = desired.get(id)
+    const isKiokuko = typeof entry.name === 'string' && (entry.name === 'kiokuko-dsh' || entry.name.startsWith('kiokuko-dsh/'))
+    if (!target || isKiokuko) {
+      patches.push({ id, ...(entry.name ? { name: entry.name } : {}), disabled: true })
+      continue
+    }
+    const patch = { id }
+    for (const key of new Set([...Object.keys(entry), ...Object.keys(target)])) {
+      if (key === 'id') continue
+      if (key === 'config' && entry.group && target.group) {
+        const children = rows => Array.isArray(rows) ? rows.map(child => child.id).filter(id => desired.has(id)) : []
+        if (JSON.stringify(children(entry.config)) !== JSON.stringify(children(target.config))) throw new Error('cannot safely restore changed group membership')
+        continue
+      }
+      if (JSON.stringify(entry[key]) === JSON.stringify(target[key])) continue
+      if (key === 'name' || key === 'group') throw new Error('cannot safely restore a changed plugin identity')
+      // Include patches assign values; null does not delete a property.
+      if (!(key in target) && key !== 'disabled') throw new Error(`cannot safely restore removed entry field: ${key}`)
+      patch[key] = key in target ? target[key] : false
+    }
+    if (Object.keys(patch).length > 1) patches.push(patch)
+  }
+  if ([...desired.keys()].some(id => !actual.has(id))) throw new Error('cannot safely restore a missing profile entry')
+  const directory = mkdtempSync(join(tmpdir(), 'dsh-cli-ignore-kiokuko-'))
+  const path = join(directory, 'cordis.patch.yml')
+  try {
+    // JSON is a YAML subset; only selected ids/names enter the private file.
+    writeFileSync(path, JSON.stringify(patches), { mode: 0o600 })
+    return { args: [...hostArgs, '--patch', path, ...appArgs], cleanup: () => rmSync(directory, { recursive: true, force: true }) }
+  } catch (error) {
+    rmSync(directory, { recursive: true, force: true })
+    throw error
+  }
+}
+
+const ignoreKiokuko = process.argv.slice(2).includes('--ignore-kiokuko')
+
+const startDshSession = async (dshArgs, profile = PROFILE, env = process.env) => {
+  let overlay
+  try {
+    if (ignoreKiokuko && profile === PROFILE) overlay = await kiokukoLaunchOverlay(dshArgs, profile, env)
+    return await new Promise(resolve => {
+      const child = spawn(...dshCmd(['--profile', profile, ...(overlay?.args ?? dshArgs)]), {
+        stdio: 'inherit', env, ...shellOpt,
+      })
+      child.on('error', err => resolve({ kind: 'error', error: err }))
+      child.on('exit', (code, signal) => {
+        if (signal) resolve({ kind: 'signal', signal })
+        else resolve({ kind: 'exit', code: code ?? 0 })
+      })
     })
-    child.on('error', err => resolve({ kind: 'error', error: err }))
-    child.on('exit', (code, signal) => {
-      if (signal) resolve({ kind: 'signal', signal })
-      else resolve({ kind: 'exit', code: code ?? 0 })
-    })
-  })
+  } catch (error) {
+    return { kind: 'error', error }
+  } finally {
+    overlay?.cleanup()
+  }
+}
 
 // 救援子进程的环境：显式构造，而不是把宿主 process.env 原样交给它。救援的
 // 语义是「干净冷启动」，而启动器自己写进 process.env 的会话控制变量会把刚
@@ -1334,7 +1470,13 @@ if (!runningInsideProfile && ownVersion !== undefined && process.env.DSH_CLI_NO_
   const argv = process.argv.slice(2)
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
-    if (a === '--resume' || a === '-c' || a === '--continue' || a.startsWith('--resume=')) {
+    if (a === '--ignore-kiokuko') {
+      // Consumed here, preserved verbatim through the outer launcher.
+      continue
+    } else if (a === '--patch' && argv[i + 1] !== undefined) {
+      // A patch path is not a workspace target.
+      args.push(a, argv[++i])
+    } else if (a === '--resume' || a === '-c' || a === '--continue' || a.startsWith('--resume=')) {
       let sessionId = ''
       if (a.startsWith('--resume=')) {
         sessionId = a.slice('--resume='.length).trim()

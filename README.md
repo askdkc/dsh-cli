@@ -19,6 +19,29 @@
 
 This is dkc's independently developed fork of [dsh-TUI by chimney](https://github.com/ccch1mneyyy/dsh-TUI).
 
+## Run without Kiokuko for one launch
+
+```sh
+dsh-cli --ignore-kiokuko
+dsh-cli --ignore-kiokuko --resume <session-id>
+```
+
+`dsh-cli` works independently; Kiokuko is optional. `--ignore-kiokuko` prevents
+`kiokuko-dsh` and its subpath plugins (including model integration) from loading
+for this launch, before their imports, services, tools or hooks run. It omits
+Kiokuko's bundle effects while preserving explicit profile, home and `--patch`
+overrides and other plugins. Kiokuko-provided providers/tools are unavailable.
+Existing session history remains; resuming does not re-enable the plugin.
+
+The option does not uninstall anything or save an opt-out setting. Temporary
+composition files are removed after use; the next launch without the flag uses
+the ordinary profile again. It is a startup option, not an unload command for an
+already-running session. `--dump-config` shows the effective startup tree;
+schema/default-only dumps and profile replacement cannot be combined with this
+option. If the host cannot safely compose the exclusion, startup fails with a
+diagnostic rather than silently loading Kiokuko. Normal host startup housekeeping
+and explicit in-session settings edits still follow the host's normal behavior.
+
 ## Preview
 
 <div align="center">

@@ -20,6 +20,27 @@
 このリポジトリは [chimney 氏の dsh-TUI](https://github.com/ccch1mneyyy/dsh-TUI)
 を基に dkc が独自に開発する fork 版です。
 
+## 今回だけ Kiokuko なしで起動する
+
+```sh
+dsh-cli --ignore-kiokuko
+dsh-cli --ignore-kiokuko --resume <session-id>
+```
+
+`dsh-cli` は単独で動作し、Kiokuko は任意です。このオプションは
+`kiokuko-dsh` とサブパスのプラグイン（モデル連携を含む）を import 前に
+無効化し、サービス・ツール・フックを起動しません。Kiokuko の bundle による
+変更も除外しますが、profile・home・`--patch` の明示的な設定と他のプラグインは
+維持します。Kiokuko 提供のモデルプロバイダーやツールは利用できません。
+履歴は残り、`--resume` でも Kiokuko は再有効化されません。
+
+アンインストールや無効化設定の保存は行いません。一時ファイルは使用後に削除し、
+次回フラグなしで起動すれば通常の profile に戻ります。実行中のセッションから
+アンロードするコマンドではありません。`--dump-config` で起動構成を確認できます。
+schema/default-only dump と profile 置換は併用できません。安全に構成できない場合は
+Kiokuko を黙って読み込まず、診断付きで起動を中止します。通常のホスト起動時の
+保守処理や、セッション内で明示的に行う設定変更は従来どおりです。
+
 ## 画面プレビュー
 
 <div align="center">
