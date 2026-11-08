@@ -579,6 +579,14 @@ jobs:
       - run: node scripts/verify-standalone-layout.mjs
       - run: node scripts/verify-standalone-extraction.mjs
       - run: node scripts/verify-standalone-runtime.mjs
+      - name: Cache standalone Node.js binaries
+        uses: actions/cache@v5
+        with:
+          path: ~/.pkg-cache
+          key: standalone-node-${{ matrix.target }}-${{ hashFiles('pnpm-lock.yaml') }}
+      - name: Fetch verified standalone Node.js
+        timeout-minutes: 3
+        run: node scripts/prefetch-standalone-node.mjs "${{ matrix.target }}"
       - run: pnpm bundle:standalone --targets ${{ matrix.target }}
       - run: node scripts/verify-standalone-artifact.mjs
 
