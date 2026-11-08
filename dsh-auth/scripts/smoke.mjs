@@ -175,6 +175,7 @@ try {
   ok(profile.piProvider.auth.oauth !== undefined, 'the provider keeps its OAuth flow object')
   ok(typeof profile.piProvider.auth.oauth?.name === 'string', 'the flow carries a display name')
   ok(profile.maxRequestImageBytes === 20 * 1024 * 1024, 'image budgets mirror llm-pi-ai defaults')
+  ok(profile.maxRequestImages === 50 && profile.imageOffloadCountQuantum === 10, 'image count and offload step mirror llm-pi-ai defaults')
   ok(OAUTH_PROVIDER_IDS.length === 3, `mounted provider set is the expected trio (got ${OAUTH_PROVIDER_IDS.join(',')})`)
   let unknownProvider = ''
   try {

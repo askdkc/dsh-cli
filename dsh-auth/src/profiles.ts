@@ -4,8 +4,7 @@
  *
  * The hand-built profile mirrors what an empty llm-pi-ai settings profile
  * resolves to for a catalog route, including the image-request defaults
- * (llm-pi-ai's own `DEFAULT_*` constants are not exported; the values below
- * are those constants, and the comment on each says so).
+ * (llm-pi-ai does not expose its `DEFAULT_*` constants at the package entry).
  *
  * @module dsh-auth/profiles
  */
@@ -23,6 +22,11 @@ const MAX_REQUEST_IMAGE_BYTES = 20 * 1024 * 1024
 const REQUEST_IMAGE_PIXEL_BUDGET = 2048 * 2048
 /** llm-pi-ai `DEFAULT_REQUEST_IMAGE_MAX_BYTES` (1 MiB per image). */
 const REQUEST_IMAGE_MAX_BYTES = 1024 * 1024
+/** Image count defaults from llm-pi-ai. Older peers ignore these fields. */
+const REQUEST_IMAGE_COUNT_DEFAULTS = {
+  maxRequestImages: 50,
+  imageOffloadCountQuantum: 10,
+}
 /** llm-pi-ai `DEFAULT_STREAM_IDLE_TIMEOUT_MS` (5 minutes). */
 const STREAM_IDLE_TIMEOUT_MS = 300_000
 
@@ -111,5 +115,6 @@ export function buildOAuthProfile(
     maxRequestImageBytes: MAX_REQUEST_IMAGE_BYTES,
     requestImagePixelBudget: REQUEST_IMAGE_PIXEL_BUDGET,
     requestImageMaxBytes: REQUEST_IMAGE_MAX_BYTES,
+    ...REQUEST_IMAGE_COUNT_DEFAULTS,
   }
 }
