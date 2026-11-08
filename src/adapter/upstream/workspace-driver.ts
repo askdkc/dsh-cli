@@ -14,14 +14,13 @@
  */
 
 import type { Context } from '../../dsh-adapter/types.js'
-import type { HostWorkspacePort, HostWorkspaceTarget } from '../ports/workspace.js'
+import type { HostWorkspacePort } from '../ports/workspace.js'
 import type { CapabilityLifecycle } from '../kernel/lifecycle.js'
 import { lifecycleFromDetection } from '../kernel/lifecycle.js'
 import type { Detection, DetectionEvidence } from './detection.js'
 import type { UpstreamDriver, UpstreamDriverMount } from './driver.js'
 import { getHostWorkspaceRuntime, type TuiWorkspaceHost } from '../../dsh-adapter/workspaces.js'
 
-const CAPABILITY = 'host.workspaces'
 const WORKSPACE_FEATURES = Object.freeze([
   'host.workspaces.list',
   'host.workspaces.resolve',

@@ -37,7 +37,6 @@ import {
 } from '../adapter/standard/grants.js'
 import {
   componentIdentityOf,
-  requireComponentIdentity,
   requiresDecisionEvents,
   type VerifiedComponentIdentity,
 } from './component-identity.js'

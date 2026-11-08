@@ -1,4 +1,4 @@
-import type { TuiWorkspaceTarget, TuiWorkspaceKind, TuiWorkspaceCommand, TuiWorkspaceCommandResult, TuiWorkspaceChoice, TuiWorkspaceEntry } from '../adapter/ports/channel-workspace.js'
+import type { TuiWorkspaceTarget, TuiWorkspaceCommand, TuiWorkspaceCommandResult, TuiWorkspaceEntry } from '../adapter/ports/channel-workspace.js'
 export type { TuiWorkspaceTarget, TuiWorkspaceKind, TuiWorkspaceCommand, TuiWorkspaceCommandResult, TuiWorkspaceChoice, TuiWorkspaceEntry } from '../adapter/ports/channel-workspace.js'
 /**
  * Workspace-target extension seam for terminal front doors.

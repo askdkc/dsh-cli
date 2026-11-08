@@ -1,6 +1,5 @@
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import type { TuiCommandShell } from '../workspaces.js'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
 import { markChannelReadDirty } from '../../adapter/channel/read-view.js'
 import { writeActivityFrames } from '../../activityPrefs.js'
 import { isPresetName, normalizeActivityPreset } from '../../components/activityFrames.js'

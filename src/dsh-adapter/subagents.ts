@@ -1,6 +1,6 @@
 import type { AssistantStreamFrame } from '@deepseek-ai/dsh-agent'
 import { toolResultPayload } from './compat/messages.js'
-import type { SubagentState, SubagentStatus, SubagentOutputLine, SubagentOutputKind, SubagentToolCall, SubagentTokenUsage } from '../adapter/ports/channel-view.js'
+import type { SubagentState, SubagentStatus, SubagentOutputLine, SubagentOutputKind, SubagentToolCall } from '../adapter/ports/channel-view.js'
 export type { SubagentState, SubagentStatus, SubagentOutputLine, SubagentOutputKind, SubagentToolCall, SubagentTokenUsage } from '../adapter/ports/channel-view.js'
 
 

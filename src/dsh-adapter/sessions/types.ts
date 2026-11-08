@@ -1,4 +1,4 @@
-import type { SessionSummary, SessionKind, SessionTitle, TitleSource, PreviewEntry } from '../../adapter/ports/channel-session.js'
+import type { SessionSummary, SessionTitle } from '../../adapter/ports/channel-session.js'
 export type { SessionSummary, SessionKind, SessionTitle, TitleSource, PreviewEntry } from '../../adapter/ports/channel-session.js'
 
 

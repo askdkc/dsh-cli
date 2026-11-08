@@ -230,14 +230,6 @@ function verifyChannelLiveSync(ctx: unknown): CapabilityLifecycle[] {
   return out
 }
 
-function requireChannel(ctx: unknown): Channel {
-  const channel = channelFor(ctx)
-  if (channel === undefined) {
-    throw new Error('dsh-cli: live TUI Channel is not registered for this composition root')
-  }
-  return channel
-}
-
 /**
  * Captures exactly one registered Channel for one mounted Host Port.  A port
  * may wait until its first use because the Kernel can mount before React

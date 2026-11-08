@@ -1,6 +1,6 @@
 import React from 'react'
 import { Box, Text } from '../ui.js'
-import { WHALE_FRAMES, type WhaleFrame } from './whaleFrames.js'
+import { WHALE_FRAMES } from './whaleFrames.js'
 import { composeWhaleGrid, poseKey, type WhaleLayerPose } from './whaleLayers.js'
 
 /**

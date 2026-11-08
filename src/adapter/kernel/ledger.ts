@@ -18,7 +18,7 @@
  */
 
 import type { HostOwnerRef } from '../ports/owner.js'
-import { assertCapabilityShadowPolicy, assertShadowPolicy, type AdapterMode } from './runtime.js'
+import { assertCapabilityShadowPolicy, type AdapterMode } from './runtime.js'
 
 export type KernelLedgerOperation = 'create' | 'bind' | 'replace' | 'release' | 'cleanup-failed'
 export type KernelLedgerResult = 'applied' | 'pending' | 'failed'

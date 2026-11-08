@@ -6,7 +6,6 @@ import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
 import * as toolAskUser from '@deepseek-ai/dsh-tool-ask-user'
 import type { Context } from '@deepseek-ai/cordis'
 import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import Schema from '@deepseek-ai/schemastery'
 import { Config } from './index.js'
 import { configValues, createSettingsScope, resolveSettingsNamespace, type RuntimeConfig } from './compat/settings.js'
 import { createChannel } from './channel.js'
@@ -39,7 +38,7 @@ import { readHomePrefs } from '../homePrefs.js'
 import { resolveSessionCwd } from '../utils/workspaceRoot.js'
 import { beginRestartAttempt, checkForCliUpdate, installedCliVersion, isBootDeadlockTarget, isStandaloneRuntime, isVersionNewer, logRestartEvent, resolveDshProfileName, resolveCliUpdateTarget, restartCli, updateCliAndRestart, writeHandoffNotice } from '../update.js'
 import { getLang, isLang, resolveStartupLang, setLang, t, writeLangPref } from '../i18n.js'
-import { DEFAULT_PAGE_MARGIN, DEFAULT_STATUS_BAR, applyMermaidDiagrams, applyPageMargin, isPageMarginMode, normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, parsePageMarginSpec, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../cliDisplayPrefs.js'
+import { DEFAULT_PAGE_MARGIN, applyMermaidDiagrams, applyPageMargin, isPageMarginMode, normalizePageMargin, normalizeScrollGutter, normalizeStatusBar, normalizeToolBackground, parsePageMarginSpec, type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../cliDisplayPrefs.js'
 import {
   draftComboConflicts,
   effectiveComboString,
@@ -299,7 +298,7 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // agent so per-step assembly includes ask_user_question. The answerer needs
   // the channel owner and registers immediately after channel creation. Optional-service access goes through `ctx.get`, not the
   // inject proxy.
-  const userQuestions = await ensureCliUserQuestions(ctx)
+  await ensureCliUserQuestions(ctx)
   if (!await awaitConfiguredKiokukoStartup(ctx, undefined, message => {
     process.stderr.write(`[dsh-cli] ${message}\n`)
   })) return

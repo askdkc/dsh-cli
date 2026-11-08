@@ -78,18 +78,6 @@ const NOOP_TOGGLE_STREAM_VIEW = (_rowId: number): void => {}
 // until it catches up — settling mid-reveal must not snap (that is the
 // "non-streaming delivery becomes a smooth flow" contract).
 
-function assistantRevealText(row: ChatRow, enabled: boolean): string {
-  const stripped = stripNarration(row.text)
-  return revealTextOf(`a${row.id}`, stripped, {
-    enabled,
-    active: row.streaming === true || row.fresh === true,
-  })
-}
-
-function reasoningRevealText(row: ChatRow, enabled: boolean): string {
-  return revealTextOf(`r${row.id}`, row.text, { enabled, active: row.streaming === true })
-}
-
 /** Display length only (layout signature; no slice allocation). */
 function revealDisplayLen(row: ChatRow, enabled: boolean): number {
   if (row.kind === 'assistant') {

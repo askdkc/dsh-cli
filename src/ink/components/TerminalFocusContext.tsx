@@ -1,4 +1,4 @@
-import React, { createContext, type PropsWithChildren, useMemo, useSyncExternalStore } from 'react'
+import { createContext, type PropsWithChildren, useMemo, useSyncExternalStore } from 'react'
 import { getTerminalFocusState, subscribeTerminalFocus, type TerminalFocusState } from '../terminal-focus-state.js'
 export type { TerminalFocusState }
 export type TerminalFocusContextProps = { readonly isTerminalFocused: boolean; readonly terminalFocusState: TerminalFocusState }

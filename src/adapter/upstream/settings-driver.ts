@@ -20,7 +20,6 @@ import type { Detection, DetectionEvidence } from './detection.js'
 import type { UpstreamDriver, UpstreamDriverMount } from './driver.js'
 import { getHostSettingsSections, type TuiSettingsSectionsHost } from '../../dsh-adapter/settings-sections.js'
 
-const CAPABILITY = 'host.settings'
 const SETTINGS_FEATURES = Object.freeze([
   'host.settings.register',
   'host.settings.list',

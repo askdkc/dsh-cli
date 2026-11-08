@@ -1,8 +1,6 @@
 import React, { type Ref, useCallback, useEffect, useRef, useState } from 'react';
 import type { Except } from 'type-fest';
 import type { DOMElement } from '../dom.js';
-import type { ClickEvent } from '../events/click-event.js';
-import type { FocusEvent } from '../events/focus-event.js';
 import type { KeyboardEvent } from '../events/keyboard-event.js';
 import type { Styles } from '../styles.js';
 import Box from './Box.js';

@@ -1,4 +1,4 @@
-import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
+import type { AgentHandle } from '@deepseek-ai/dsh-agent'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
 import type { ChannelState } from './types.js'
 import type { createChannelBinding } from './binding.js'

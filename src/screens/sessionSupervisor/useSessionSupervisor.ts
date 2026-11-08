@@ -15,14 +15,13 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { basename } from 'node:path'
 import { t } from '../../i18n.js'
-import { truncateWidth } from '../../sessions/format.js'
 import { normalizeWorkspaceCwd } from '../../sessions/view.js'
 import { readSessionPins, setSessionPinned } from '../../sessionPins.js'
 import { readSessionOwners, type SessionMountOwner } from '../../sessionMounts.js'
 import type { SessionSummary } from '../../dsh-adapter/sessions/index.js'
 import type { TuiWorkspaceEntry, TuiWorkspaceTarget } from '../../workspaces.js'
 import type { ChannelUi as Channel } from '../../adapter/channel/ui-policy.js'
-import { RAIL_CHROME_ROWS, WORKSPACE_ROW_LINES, RAIL_MIN_TOTAL_COLUMNS, RAIL_WIDTH_MIN, RAIL_WIDTH_MAX, SESSION_ROW_LINES, SESSION_PANE_CHROME_ROWS, MenuAction, MENU_ACTIONS, MENU_WIDTH, MENU_HEIGHT, MENU_LABEL_KEYS, SupervisorLiveState, RailEntry, UNREGISTERED_RAIL_ID, message, samePath, sessionMatchesQuery } from './model.js'
+import { RAIL_CHROME_ROWS, WORKSPACE_ROW_LINES, RAIL_MIN_TOTAL_COLUMNS, RAIL_WIDTH_MIN, RAIL_WIDTH_MAX, SESSION_ROW_LINES, SESSION_PANE_CHROME_ROWS, MenuAction, MENU_ACTIONS, SupervisorLiveState, RailEntry, UNREGISTERED_RAIL_ID, message, samePath, sessionMatchesQuery } from './model.js'
 
 /**
  * The last successful listing, per channel, carried across mounts of this
@@ -94,7 +93,7 @@ export interface SessionSupervisorInput {
  * @returns Every value the screen renders from, plus the action callbacks.
  */
 export function useSessionSupervisor(input: SessionSupervisorInput) {
-  const { channel, home, onOpenSession, onNewSession, onStopSession, liveStateOf, columns, rows } = input
+  const { channel, onOpenSession, onNewSession, onStopSession, liveStateOf, columns, rows } = input
 
   const [entries, setEntries] = useState<readonly RailEntry[]>([])
   // Lazy so a non-empty snapshot from this channel's previous mount paints as

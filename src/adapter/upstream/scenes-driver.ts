@@ -21,7 +21,6 @@ import type { Detection, DetectionEvidence } from './detection.js'
 import type { UpstreamDriver, UpstreamDriverMount } from './driver.js'
 import { getHostSceneRuntime, type TuiSceneHost } from '../../dsh-adapter/scenes.js'
 
-const CAPABILITY = 'host.scenes'
 const SCENE_FEATURES = Object.freeze([
   'host.scenes.register',
   'host.scenes.list',

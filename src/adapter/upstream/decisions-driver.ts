@@ -17,8 +17,6 @@ import type { Detection, DetectionEvidence } from './detection.js'
 import type { UpstreamDriver, UpstreamDriverMount } from './driver.js'
 import { KERNEL_TUI_DECISION_EVENT_NAMES as TUI_DECISION_EVENT_NAMES } from '../kernel/contract-catalog.js'
 
-const CAPABILITY = 'host.decisions'
-
 function serviceEvidence(id: string): DetectionEvidence {
   return { kind: 'service', id }
 }

@@ -7,7 +7,6 @@ import type { ContractCoordinate, HostContract, HostDescriptor } from './types.j
 import type { CapabilityLifecycle } from '../kernel/lifecycle.js'
 import { hasProbeEvidence, hasVerificationEvidence } from '../kernel/lifecycle.js'
 import { digestFile, loadSpecData, verifyContractProfiles } from './registry.js'
-import { TUI_DECISION_EVENT_NAMES } from './tui-extension.js'
 import { HOST_SUPPORTED_CONTRACTS } from '../spec/protocol-constants.js'
 import { createContractIndex, validateHost } from './validate.js'
 import { check } from './schema-check.js'

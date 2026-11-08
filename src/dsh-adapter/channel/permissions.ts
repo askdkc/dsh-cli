@@ -1,4 +1,3 @@
-import { t } from '../../i18n.js'
 import { type SessionModeSpec } from '../../sessionModes.js'
 import { cleanRenderText } from '../sanitize.js'
 import type { PermissionPresetOption, PermissionPresetService, PermissionPresetSnapshot } from './types.js'

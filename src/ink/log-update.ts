@@ -9,11 +9,9 @@ import {
   type Cell,
   CellWidth,
   cellAt,
-  charInCellAt,
   diffEach,
   type Hyperlink,
   isEmptyCellAt,
-  type Screen,
   type StylePool,
   shiftRows,
   transitionAnsiCodes,
@@ -22,7 +20,6 @@ import {
 import {
   CURSOR_HOME,
   cursorDown,
-  cursorUp,
   eraseToEndOfScreen,
   scrollDown as csiScrollDown,
   scrollUp as csiScrollUp,
@@ -290,7 +287,6 @@ export class LogUpdate {
     // For growing, the viewportY calculation below (with cursorRestoreScroll)
     // catches unreachable scrollback rows in the diff loop instead.
     const cursorAtBottom = prev.cursor.y >= prev.screen.height
-    const isGrowing = next.screen.height > prev.screen.height
     // When content fills the viewport exactly (height == viewport) and the
     // cursor is at the bottom, the cursor-restore LF at the end of the
     // previous frame scrolled 1 row into scrollback. Use >= to catch this.
@@ -749,14 +745,6 @@ function transitionStyle(
     diff.push({ type: 'styleStr', str })
   }
   return targetId
-}
-
-function readLine(screen: Screen, y: number): string {
-  let line = ''
-  for (let x = 0; x < screen.width; x++) {
-    line += charInCellAt(screen, x, y) ?? ' '
-  }
-  return line.trimEnd()
 }
 
 function fullResetSequence_CAUSES_FLICKER(

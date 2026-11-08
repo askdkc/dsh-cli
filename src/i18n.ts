@@ -875,20 +875,11 @@ const dict = {
   'session-kind-fork': { zh: '回溯分支', en: 'Rewound branch' },
   'session-kind-subagent': { zh: '子 agent 运行', en: 'Sub-agent run' },
   'session-project-unknown': { zh: '（未记录目录）', en: '(no directory recorded)' },
-  'session-workspace-all': { zh: '全部工作目录', en: 'All working directories' },
-  'session-workspace-current': { zh: '当前', en: 'current' },
-  'session-workspace-project-count': { zh: '{{n}} 个目录', en: '{{n}} directories' },
-  'session-workspace-all-detail': { zh: '跨目录浏览 · {{n}} 个会话', en: 'browse across directories · {{n}} sessions' },
-  'session-workspace-empty': { zh: '暂无历史会话', en: 'no history yet' },
   // Right-click session menu items (components/sessions/SessionListRow.tsx).
   'resume-menu-pin': { zh: '固定到顶部', en: 'Pin to top' },
   'resume-menu-unpin': { zh: '取消固定', en: 'Unpin' },
   // Session pinning (supervisor toasts + persisted pin state).
   'resume-pin-save-failed': { zh: '固定状态保存失败，未应用更改', en: 'Could not save pin; no change was applied' },
-  'session-count-shown': { zh: '{{n}} 个会话', en: '{{n}} sessions' },
-  'session-preview-times': { zh: '创建于 {{created}} · 最后活动 {{updated}}', en: 'created {{created}} · last active {{updated}}' },
-  'session-preview-loading': { zh: '正在读取会话结尾…', en: 'Reading the end of this session…' },
-  'session-preview-empty': { zh: '这个会话没有可预览的往来消息', en: 'No exchanges to preview in this session' },
 
   // ── picker 通用快捷键提示（整句本地化，zh 不用 "to" 结构；**段** 渲染为粗体主快捷键）─
   'hint-confirm-exit': { zh: '**Enter** 确认 · Esc 退出', en: '**Enter** to confirm · Esc to exit' },

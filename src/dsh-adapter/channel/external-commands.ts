@@ -1,6 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { CommandExecution, CommandRuntime } from '@deepseek-ai/dsh-commands'
+import type { CommandRuntime } from '@deepseek-ai/dsh-commands'
 import { commandOwner } from '../command-attribution.js'
 import { assertCapabilityShadowPolicy } from '../../adapter/kernel/runtime.js'
 import { t } from '../../i18n.js'

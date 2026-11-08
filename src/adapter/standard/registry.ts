@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { getAdmissionCatalog } from './tui-extension.js'
 import { EXPECTED_PERMISSIONS } from '../spec/protocol-constants.js'
-import type { ContractRegistry, PermissionEntry, PermissionRegistry, RegistryEntry } from './types.js'
+import type { ContractRegistry, PermissionRegistry, RegistryEntry } from './types.js'
 
 export const DSH_STD_REVISION = '614dfa1ac168db79fcf4577cf0ebb34e2e3b944b'
 export const ECOSYSTEM_SPEC_REVISION = 'd28c267fe7fd775428ec2dccd65b0b7efd4dacee'

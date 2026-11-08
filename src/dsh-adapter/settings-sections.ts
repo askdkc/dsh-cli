@@ -1,4 +1,4 @@
-import type { TuiSettingsSection, TuiSettingsGroup, TuiSettingsField, TuiSettingsFieldKind, TuiSettingsFieldOption, TuiSettingsFieldWrite } from '../adapter/ports/channel-settings.js'
+import type { TuiSettingsSection } from '../adapter/ports/channel-settings.js'
 export type { TuiSettingsSection, TuiSettingsGroup, TuiSettingsField, TuiSettingsFieldKind, TuiSettingsFieldOption, TuiSettingsFieldWrite } from '../adapter/ports/channel-settings.js'
 /**
  * Plugin settings-section extension seam for terminal front doors.
@@ -13,7 +13,6 @@ export type { TuiSettingsSection, TuiSettingsGroup, TuiSettingsField, TuiSetting
  */
 
 import { Context, Service } from '@deepseek-ai/cordis'
-import type { LocalizedDescriptions } from '../commands.js'
 import { activationFiber, bindCallerEffect, compositionRoot, concreteService, requirePluginCaller } from './host-access.js'
 import { vetSectionSecretRefs } from './credentialRefGuard.js'
 import {

@@ -1,4 +1,4 @@
-import type { FileCandidate, FileCandidateKind } from '../adapter/ports/channel-catalog.js'
+import type { FileCandidate } from '../adapter/ports/channel-catalog.js'
 export type { FileCandidate, FileCandidateKind } from '../adapter/ports/channel-catalog.js'
 
 

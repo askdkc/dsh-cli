@@ -21,11 +21,9 @@ import { createTreeRewindAction } from './channel/session-tree-actions.js'
 import { createModelActions } from './channel/model-actions.js'
 import { createWorkspaceActions } from './channel/workspace-actions.js'
 import { createModelSwitchAction } from './channel/model-switch.js'
-import { createModeActions } from './channel/mode-actions.js'
 import { createFileActions } from './channel/file-actions.js'
 import { createReportActions } from './channel/reports.js'
 import { createSessionMetadataActions } from './channel/session-metadata.js'
-import { markChannelReadDirty } from '../adapter/channel/read-view.js'
 import { createAgentViewProjection } from './channel/agent-view-projection.js'
 import { createJobProjection } from './channel/job-projection.js'
 import { createExternalCommandInvoker } from './channel/external-commands.js'
@@ -37,33 +35,17 @@ import { createChannelNotifications } from './channel/notifications.js'
 import { createSelectionAttachments } from './channel/ide-selection.js'
 import { IdeChannel, ideLockDir, type SelectionSnapshot } from './ide-channel.js'
 import type { Context } from '@deepseek-ai/cordis'
-import { type Agent, type AgentHandle, type CreateAgentOptions } from '@deepseek-ai/dsh-agent'
+import { type Agent, type AgentHandle } from '@deepseek-ai/dsh-agent'
 import type { CommandRuntime } from '@deepseek-ai/dsh-commands'
-import {
-  createUserMessage,
-  ReasoningEffortId,
-  type UserMessage,
-} from '@deepseek-ai/dsh-llm'
+import { type UserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
-import { randomUUID } from 'node:crypto'
-import { writeActivityFrames } from '../activityPrefs.js'
 import { adapterRuntimeFor } from '../adapter/kernel/runtime-context.js'
-import {
-  assertCapabilityShadowPolicy,
-} from '../adapter/kernel/runtime.js'
 import { readGrantStore } from '../adapter/standard/grants.js'
-import { HIDDEN_COMMAND_NAMES, isCommandCompletionToken, isLocalCommandName, LOCAL_COMMANDS, parseCommandName, type LocalCommand } from '../commands.js'
-import { isPresetName } from '../components/activityFrames.js'
-import { t, tOr, type Lang } from '../i18n.js'
-import { readModelPref } from '../modelPrefs.js'
-import { resolveModelRoute, validateModelRoute } from '../modelRoute.js'
-import { readPresetPref } from '../presetPrefs.js'
-import { readAgentViewSessions, touchAgentViewSession, touchSession } from '../sessionHistory.js'
-import { DEFAULT_SESSION_MODES, resolveSessionModes, type SessionModeSpec } from '../sessionModes.js'
-import { resolveDshProfileName } from '../update.js'
-import { logForDebugging } from '../utils/debug.js'
+import { isCommandCompletionToken, LOCAL_COMMANDS } from '../commands.js'
+import { t } from '../i18n.js'
+import { touchSession } from '../sessionHistory.js'
+import { DEFAULT_SESSION_MODES, resolveSessionModes } from '../sessionModes.js'
 import { channelCommands } from './channel/commands.js'
-import { normalizeInputDecision, normalizeRewindDoneSummary, normalizeRewindPromptDecision, NOTICE_CELLS } from './channel/decisions.js'
 import { createChannelEmitter } from './channel/emitter.js'
 import { createInputActions, type InputConvergence } from './channel/input-actions.js'
 import { createTaskWorkflowProjection } from './channel/task-workflow.js'
@@ -73,27 +55,20 @@ import { agentModel } from './compat/agent-model.js'
 import { runForegroundShell, type ForegroundShell } from './compat/shell.js'
 import { createPermissionModeRoster } from './channel/mode-roster.js'
 import { createPermissionModeActions } from './channel/mode-permission-actions.js'
-import { expandMentions, mentionAttachments, mentionFs } from './channel/mentions.js'
-import { sessionCwdMatches } from './channel/paths.js'
+import { mentionAttachments } from './channel/mentions.js'
 import { permissionPresetSnapshotFromService, unavailablePermissionPresetSnapshot } from './channel/permissions.js'
 import { createPreferences } from './channel/preferences.js'
 import { createSettingsHosts } from './channel/settings-host.js'
 import { createChannelOwner, registerChannelOwner } from './channel/owner.js'
-import { ARGS_PREVIEW_LIMIT, foldBack, harnessToolResultView, LOCAL_OUTPUT_LIMIT, preview, RESULT_PREVIEW_LIMIT, toolErrorText } from './channel/transcript.js'
-import type { AgentViewRow, Channel, ChannelGoal, ChannelImageBlock, ChannelState, ChatRow, CredentialStatus, EffortOption, JobControl, LoadedContextEntry, LoadedContextFile, LoadedContextSkill, LoadedContextTool, MentionFs, NotificationItem, PendingMessage, PresetOption, ResumeResult, StagedImageInput, SubagentControl, SubagentRow, TodoPanelItem, ToolCallView, ToolResultView, ToolsRegistryLike } from './channel/types.js'
-import { estimateTokens, isTokenDelta, tokenDeltaChars, usageOutputTokens } from './channel/usage.js'
+import { foldBack } from './channel/transcript.js'
+import type { ChannelState, ChatRow, MentionFs, ResumeResult, ToolsRegistryLike } from './channel/types.js'
 import { getHostCommandTrees } from './command-trees.js'
 import { installDecisionGuard, markDecisionDispatchTopology } from './decision-guard.js'
-import type {
-  TuiRewindMode
-} from './extension-events.js'
 import { dispatchTuiDecision, dispatchTuiNotification, normalizeCancelDecision } from './extension-events.js'
 import { getHostGrantStore } from './host-grants.js'
 import type { JobsRuntime } from './jobs.js'
 import { getHostMessageObserver, type TuiMessageObserverRuntime } from './message-observer.js'
-import { composePreset, runningPresetOf, serviceForAgent } from './presets.js'
 import { getHostRenderers, type TuiRendererRuntime } from './renderers.js'
-import { cleanRenderText } from './sanitize.js'
 import { getHostSceneRuntime, type TuiSceneRuntime } from './scenes.js'
 import {
   listSummaries,
@@ -101,20 +76,11 @@ import {
   type SessionSource,
   type SessionSummary
 } from './sessions/index.js'
-import {
-  buildSessionTree,
-  liveTailWindow,
-  type FamilySession,
-  type SessionTreeData,
-} from './sessionTree.js'
 import { getHostSettingsSections, getLocalSettingsSectionsHost, type TuiSettingsSection, type TuiSettingsSectionsRuntime } from './settings-sections.js'
-import { SubagentActivityStore, type SubagentState } from './subagents.js'
 import { getHostThemes, type TuiThemeRuntime } from './themes.js'
-import { attachSessionToWorkspace } from './workspace.js'
-import { createLocalWorkspaceRuntime, getHostWorkspaceRuntime, type TuiWorkspaceTarget } from './workspaces.js'
+import { createLocalWorkspaceRuntime, getHostWorkspaceRuntime } from './workspaces.js'
 export type { SubagentState } from './subagents.js'
 
-import { isSubagentToolName, parseJobOutputId, toolCommandOf, BACKGROUND_START_ACK, todoPanelItems } from './channel/projection-helpers.js'
 /** Token buffer below the context window at which the context-low warning fires. */
 const CONTEXT_WARNING_BUFFER_TOKENS = 20_000
 
@@ -211,7 +177,6 @@ function createChannelWithOwner(
       return agents?.get(id)
     },
   })
-  const subagentStore = subagentProjection.store
   const subagentControl = subagentProjection.control
   const pendingTaskDescriptions = subagentProjection.pendingTaskDescriptions
   // Job projection owns registry callbacks and transcript rows. The optional
@@ -268,9 +233,6 @@ function createChannelWithOwner(
   // identity (permission + plan allowed; permission + sandbox/approval is
   // contradictory and dropped with a warning).
   const { modes: resolvedConfiguredSessionModes, dropped: droppedModeIds } = resolveSessionModes(options.modes)
-  const invalidConfiguredPermissionIds = resolvedConfiguredSessionModes
-    .filter(spec => spec.permission !== undefined && !isCommandCompletionToken(spec.permission))
-    .map(spec => spec.id)
   const filteredConfiguredSessionModes = resolvedConfiguredSessionModes
     .filter(spec => spec.permission === undefined || isCommandCompletionToken(spec.permission))
   const configuredSessionModes = filteredConfiguredSessionModes.length > 0
@@ -294,9 +256,6 @@ function createChannelWithOwner(
   // in the construction rollback funnel immediately; normal release remains
   // idempotent through the same disposer.
   owner.own(() => emitter.dispose())
-  // foldRows incremental cursor (see foldRows): rows only append past the
-  // fold line, so each pass touches only newly-eligible rows.
-  const foldCursor: { rows: unknown; index: number } = { rows: null, index: 0 }
   const notify: ChannelState['notify'] = (...args) => {
     if (!owner.current()) return () => undefined
     return channelCommands(state).notify(...args)
@@ -307,7 +266,7 @@ function createChannelWithOwner(
     percent => t('context-low-warning', { percent }),
     CONTEXT_WARNING_BUFFER_TOKENS,
   )
-  const { warning: contextWarning, resetContextWarning, checkContextWarning, trackPending, untrackPending } = bookkeeping
+  const { resetContextWarning, checkContextWarning, trackPending, untrackPending } = bookkeeping
   // IDE selection channel (AC-5): one IdeChannel per channel factory, started
   // in the background against the session cwd — lock discovery needs it, env
   // direct-connect does not but tolerates the extra hint. start() is fully
@@ -628,7 +587,6 @@ function createChannelWithOwner(
   const skillRegistryFor = skillCatalog.registryFor
   const refreshCommandList = skillCatalog.refreshCommands
   const refreshSkillCommands = skillCatalog.refreshSkillCommands
-  const releaseSkillCommands = skillCatalog.release
   // Each helper captures binding/cwd at invocation, rather than receiving a
   // root-state bag. Its late completions are rejected by owner + binding.
   fileActions = createFileActions({

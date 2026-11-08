@@ -87,8 +87,6 @@ export class KernelRuntime {
   readonly generationId: string
   private readonly context: unknown
   private readonly drivers: readonly UpstreamDriver[]
-  private readonly kernelSlices: readonly KernelSlice[] | undefined
-  private readonly slices: readonly string[] | undefined
   private readonly hostId: string | undefined
   private readonly hostVersion: string | undefined
   private readonly headless: boolean | undefined
@@ -115,9 +113,7 @@ export class KernelRuntime {
     this.context = options.context
     this.mode = options.mode
     this.generationId = options.generationId
-    this.kernelSlices = options.kernelSlices
     const selectedSlices = normalizeAdapterSliceList(options.slices ?? [])
-    this.slices = selectedSlices
     const requestedKernelSlices = selectedSlices.length === 0
       ? (options.kernelSlices ?? [])
       : (options.kernelSlices ?? []).filter(slice =>
@@ -457,7 +453,7 @@ export class KernelRuntime {
   }
 
   diagnosticSnapshot(): KernelDiagnosticSnapshot {
-    const build = this.descriptorBuild()
+    this.descriptorBuild()
     return Object.freeze({
       mode: this.mode,
       generationId: this.generationId,

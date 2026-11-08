@@ -399,7 +399,6 @@ hostContext: compositionRoot(ctx),
     const caller = activationContext(pluginCtx)
     if (caller === undefined) throw new PluginStorageError('STORAGE_UNAVAILABLE', 'storage.local.open requires a live activation context')
     assertCallerContext(this.ctx, caller, 'storage.local.open', this)
-    const state = storageStateFor(this)
     const identity = requireComponentIdentity(caller)
     if (!requiresContract(identity, 'storage.dsh/v1alpha1', 'LocalStorage')) {
       throw new PluginStorageError(

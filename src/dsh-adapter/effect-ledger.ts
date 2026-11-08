@@ -41,10 +41,7 @@ import { Context, Service } from '@deepseek-ai/cordis'
 import { DATA_DIR } from '../utils/paths.js'
 import { loadSpecData } from '../adapter/standard/registry.js'
 import { check } from '../adapter/standard/schema-check.js'
-import {
-  assertCapabilityShadowPolicy,
-  type AdapterRuntimeOptions,
-} from '../adapter/kernel/runtime.js'
+import { type AdapterRuntimeOptions } from '../adapter/kernel/runtime.js'
 import { adapterRuntimeFor } from '../adapter/kernel/runtime-context.js'
 import { componentIdentityOf } from './component-identity.js'
 import { compositionRoot, concreteService } from './host-access.js'
@@ -134,7 +131,7 @@ export class TuiEffectLedgerRuntime extends Service {
     state.kernelLedger = createKernelLedger(
       record => this.appendKernelRecord(record, state),
       state.runtime.mode,
-      context => this.resolveKernelOwner(context, state),
+      context => this.resolveKernelOwner(context),
       state.runtime.slices,
     )
     ledgerStates.set(this, state)
@@ -215,7 +212,7 @@ export class TuiEffectLedgerRuntime extends Service {
 
   /** Kernel-ledger owner resolver: verified activation identity wins; host /
    * undeclared fallbacks are explicit and never borrowed from fiber names. */
-  private resolveKernelOwner(identity: unknown, state: LedgerState): HostOwnerRef {
+  private resolveKernelOwner(identity: unknown): HostOwnerRef {
     if (!Context.is(identity)) {
       return { componentId: 'undeclared', activationId: 'undeclared' }
     }
@@ -246,11 +243,6 @@ export class TuiEffectLedgerRuntime extends Service {
     return state.generationId
   }
 
-  /** Continue numbering after the existing file's max sequence (restart-safe). */
-  private resumeSequence(): number {
-    return resumeSequence(ledgerStateFor(this).file)
-  }
-
   private fiberOf(identity: Context | undefined): object | undefined {
     if (identity === undefined) return undefined
     try {
@@ -259,22 +251,6 @@ export class TuiEffectLedgerRuntime extends Service {
     } catch {
       return undefined
     }
-  }
-
-  private pluginIdOf(identity: Context | undefined, fiber: object | undefined, verifiedComponentId?: string): string {
-    if (identity === undefined) return 'undeclared'
-    if (verifiedComponentId !== undefined) return cleanField(verifiedComponentId, 128, 'undeclared')
-    let name = ''
-    try {
-      name = typeof identity.fiber?.name === 'string' ? identity.fiber.name : ''
-    } catch {
-      name = ''
-    }
-    // A non-root fiber without a verified Component is intentionally not
-    // attributed by its Cordis export name.  Names are display metadata and
-    // can differ from the manifest identity (or be impersonated).
-    if (fiber === undefined || name === '' || name === 'root') return 'host'
-    return 'undeclared'
   }
 
   private activationOf(fiber: object | undefined, pluginId: string): string {

@@ -1,5 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
-import { basename } from 'node:path'
+import React from 'react'
 import { Box, Text, useInput, useTerminalSize } from '../ui.js'
 import { t } from '../i18n.js'
 import type { ContextMenuEvent } from '../ink/events/context-menu-event.js'
@@ -18,14 +17,10 @@ import { useTerminalFocus } from '../ink/hooks/use-terminal-focus.js'
 import { useAnimationFrame } from '../ink/hooks/use-animation-frame.js'
 import { isPlainReturn, isMod } from '../utils/modifiers.js'
 import { truncateWidth } from '../sessions/format.js'
-import { normalizeWorkspaceCwd } from '../sessions/view.js'
-import { readSessionPins, setSessionPinned } from '../sessionPins.js'
-import { readSessionOwners, type SessionMountOwner } from '../sessionMounts.js'
-import type { SessionSummary } from '../dsh-adapter/sessions/index.js'
-import type { TuiWorkspaceEntry, TuiWorkspaceTarget } from '../workspaces.js'
+import type { TuiWorkspaceTarget } from '../workspaces.js'
 import type { ChannelUi as Channel } from '../adapter/channel/ui-policy.js'
 import { useSessionSupervisor } from './sessionSupervisor/useSessionSupervisor.js'
-import { RAIL_CHROME_ROWS, WORKSPACE_ROW_LINES, RAIL_MIN_TOTAL_COLUMNS, RAIL_WIDTH_MIN, RAIL_WIDTH_MAX, SESSION_ROW_LINES, SESSION_PANE_CHROME_ROWS, MenuAction, MENU_ACTIONS, MENU_WIDTH, MENU_HEIGHT, MENU_LABEL_KEYS, SupervisorLiveState, RailEntry, UNREGISTERED_RAIL_ID, message, samePath, sessionMatchesQuery } from './sessionSupervisor/model.js'
+import { WORKSPACE_ROW_LINES, SESSION_ROW_LINES, MENU_ACTIONS, MENU_WIDTH, MENU_HEIGHT, MENU_LABEL_KEYS, SupervisorLiveState, samePath, sessionMatchesQuery } from './sessionSupervisor/model.js'
 export { sessionMatchesQuery }
 
 /**
@@ -97,8 +92,6 @@ export function SessionSupervisor({
   const isTerminalFocused = useTerminalFocus()
 
   const {
-    entries,
-    sessions,
     loading,
     notice,
     setNotice,

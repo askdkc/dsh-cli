@@ -3,7 +3,6 @@ import type { Writable } from 'stream'
 import { appendFileSync } from 'node:fs'
 import { env } from '../utils/env.js'
 import { gte } from '../utils/semver.js'
-import { getClearTerminalSequence } from './clearTerminal.js'
 import type { Diff } from './frame.js'
 import {
   CURSOR_HOME,

@@ -13,7 +13,6 @@ import { formatJobDuration, type BackgroundJobState } from '../dsh-adapter/jobs.
  *  real Chat with partial channel literals that predate the jobs field. */
 const NO_BACKGROUND_JOBS: readonly BackgroundJobState[] = []
 import type { ChannelUi as Channel } from '../adapter/channel/ui-policy.js'
-import type { SelectionSnapshot } from '../dsh-adapter/ide-channel.js'
 import { modeDisplayName } from '../sessionModes.js'
 import { MiniWake } from '../components/trajectory/MiniWake.js'
 import { ContextBarView } from '../components/ContextBarView.js'

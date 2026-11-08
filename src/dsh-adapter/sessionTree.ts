@@ -1,4 +1,4 @@
-import type { SessionTreeData, TreeNode, TreeEntry, TreeEntryKind, SessionTreeMeta, SessionRewindFacts, TurnRange } from '../adapter/ports/channel-session.js'
+import type { SessionTreeData, TreeNode, TreeEntry, SessionTreeMeta, SessionRewindFacts } from '../adapter/ports/channel-session.js'
 export type { SessionTreeData, TreeNode, TreeEntry, TreeEntryKind, SessionTreeMeta, SessionRewindFacts, TurnRange } from '../adapter/ports/channel-session.js'
 /**
  * Session family tree — the model behind the /tree screen

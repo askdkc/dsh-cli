@@ -1,5 +1,4 @@
 import { RESPONSE_LANGUAGE_POLICY } from './response-language.js'
-import type { RecapOutcome } from '../adapter/ports/channel-catalog.js'
 export type { RecapOutcome } from '../adapter/ports/channel-catalog.js'
 /**
  * Session recap (`/recap`, pi-recap semantics): a single TOOL-LESS LLM

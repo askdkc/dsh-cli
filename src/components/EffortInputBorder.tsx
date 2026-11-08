@@ -19,7 +19,7 @@
  * 无档位表/无共享时钟均不触发。时钟复用 Ink core 共享时钟，仅动画
  * 窗口订阅（keepAlive），播完回到零开销静止边框。
  */
-import React, { useContext, useEffect, useReducer, useRef, useState } from 'react'
+import React, { useContext, useEffect, useReducer, useState } from 'react'
 import { Box, Text } from '../ui.js'
 import { ClockContext } from '../ink/components/ClockContext.js'
 import type { Color } from '../ink/styles.js'

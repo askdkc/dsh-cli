@@ -1,4 +1,4 @@
-import React, { type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { supportsHyperlinks } from '../supports-hyperlinks.js'
 import Text from './Text.js'
 

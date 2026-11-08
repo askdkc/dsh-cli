@@ -48,10 +48,6 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-function degraded(capability: string, service: string, missing: readonly string[], evidence: DetectionEvidence[] = []): CapabilityLifecycle[] {
-  return [lifecycleFromDetection(capability, { state: 'degraded', missing: [...missing], evidence })]
-}
-
 function degradedFeature(capability: string, evidence: DetectionEvidence[], missing: string): CapabilityLifecycle {
   return lifecycleFromDetection(capability, { state: 'degraded', missing: [missing], evidence })
 }

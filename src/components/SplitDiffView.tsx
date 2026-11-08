@@ -5,7 +5,6 @@ import { extname } from 'node:path'
 import type { ToolFileDiff } from '../dsh-adapter/channel.js'
 import type { Color } from '../ink/styles.js'
 import { getCliHighlightPromise, type CliHighlight } from '../terminal-utils/cliHighlight.js'
-import { chalkFromToken } from '../terminal-utils/syntaxTheme.js'
 import { highlightLines, syntaxThemeSignature, type SyntaxRun } from '../terminal-utils/syntaxRuns.js'
 // Backward-compatible re-export: repro scripts import chalkFromToken from
 // this module's old home.

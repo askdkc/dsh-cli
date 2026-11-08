@@ -1,37 +1,14 @@
 import type { ChannelUi } from '../../adapter/ports/channel-ui.js'
-import type { ChatRow, ToolRow, ToolCallView, ToolFileDiff, ToolResultView, SubagentRow, JobRow, TokenUsage, TokenBucket, NotificationItem, ChannelGoal, TodoPanelItem, LoadedContext, LoadedContextEntry, LoadedContextFile, LoadedContextSkill, LoadedContextTool, PendingMessage, SubagentControl, JobControl, StagedImageInput, StagedImageAdjustment, StagedImageHandle, ComposerImageRef, ComposerSubmission, ExternalCommandOutcome, TranscriptImage, ResumeResult, EffortOption, PermissionPresetSnapshot, PermissionPresetAvailability, PermissionPresetOption, PermissionPresetCurrent, PresetOption, SkillInfo, CredentialStatus, AgentViewRow, AgentViewStatus, AgentViewDispatchResult, BackgroundResult } from '../../adapter/ports/channel-view.js'
+import type { ChatRow, ToolCallView, ToolResultView, NotificationItem, TodoPanelItem, PendingMessage } from '../../adapter/ports/channel-view.js'
 export type { ChatRow, ToolRow, ToolCallView, ToolFileDiff, ToolResultView, SubagentRow, JobRow, TokenUsage, TokenBucket, NotificationItem, ChannelGoal, TodoPanelItem, LoadedContext, LoadedContextEntry, LoadedContextFile, LoadedContextSkill, LoadedContextTool, PendingMessage, SubagentControl, JobControl, StagedImageInput, StagedImageAdjustment, StagedImageHandle, ComposerImageRef, ComposerSubmission, ExternalCommandOutcome, TranscriptImage, ResumeResult, EffortOption, PermissionPresetSnapshot, PermissionPresetAvailability, PermissionPresetOption, PermissionPresetCurrent, PresetOption, SkillInfo, CredentialStatus, AgentViewRow, AgentViewStatus, AgentViewDispatchResult, BackgroundResult } from '../../adapter/ports/channel-view.js'
-import { type AgentStatus } from '@deepseek-ai/dsh-agent'
-import type { LlmModelInfo, LlmProviderInfo } from '@deepseek-ai/dsh-llm'
 import {
   type ContentBlock,
   type StreamChunk
 } from '@deepseek-ai/dsh-llm'
 import { type SessionEvent } from '@deepseek-ai/dsh-session'
-import { type CommandCompletion, type LocalCommand } from '../../commands.js'
-import type { SpinnerMode } from '../../components/Spinner/spinnerMode.js'
-import { type BalanceResult } from '../../deepseekBalance.js'
-import { type SessionModeSpec } from '../../sessionModes.js'
-import { type PageMarginSetting, type ScrollGutterMode, type StatusBarConfig, type ToolBackground } from '../../cliDisplayPrefs.js'
-import { type FileCandidate } from '../../utils/fileSuggestions.js'
-import type {
-  TuiRewindMode
-} from '../extension-events.js'
-import { type BackgroundJobState, type BackgroundJobStatus } from '../jobs.js'
-import type { OAuthProviderStatus, ProviderSetupHost } from '../providerWizard.js'
-import { type RecapOutcome } from '../recap.js'
+import { type BackgroundJobState } from '../jobs.js'
 import { type TuiSceneDescriptor } from '../scenes.js'
-import {
-  type PreviewEntry,
-  type SessionSummary
-} from '../sessions/index.js'
-import {
-  type SessionTreeData
-} from '../sessionTree.js'
-import { type TuiSettingsSection } from '../settings-sections.js'
-import type { SettingsHost } from '../settingsEditor.js'
 import { type SubagentState } from '../subagents.js'
-import { type TuiWorkspaceCommand, type TuiWorkspaceCommandResult, type TuiWorkspaceTarget } from '../workspaces.js'
 
 /** dsh-llm LlmRuntime as the side-question needs it: one streaming call. */
 export type SideQuestionLlm = {

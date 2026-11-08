@@ -15,7 +15,6 @@ import type React from 'react'
 import { Context, Service } from '@deepseek-ai/cordis'
 import { cleanScalarText } from './sanitize.js'
 import { activationFiber, assertCallerContext, bindCallerEffect, compositionRoot, concreteService, requirePluginCaller } from './host-access.js'
-import { componentIdentityOf } from './component-identity.js'
 import {
   assertCapabilityShadowPolicy,
   type AdapterRuntimeOptions,
@@ -306,8 +305,6 @@ export class TuiStatusRuntime extends Service {
     }
     const state = statusStateFor(this)
     const store = state.store
-    const callerIdentity = componentIdentityOf(caller)
-    const suppliedIdentity = identity === undefined ? callerIdentity : componentIdentityOf(identity)
     if (identity !== undefined) {
       try {
         assertCallerContext(caller, identity, 'tuiStatus.set')

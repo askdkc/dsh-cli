@@ -1,4 +1,4 @@
-import type { ProviderSetupHost, CatalogProviderCandidate, ConfiguredProvider, ProfilePathOp, OAuthSetupHost, OAuthProviderStatus, OAuthLoginResult } from '../adapter/ports/channel-settings.js'
+import type { ProviderSetupHost, ConfiguredProvider, OAuthSetupHost, OAuthProviderStatus } from '../adapter/ports/channel-settings.js'
 export type { ProviderSetupHost, CatalogProviderCandidate, ConfiguredProvider, ProfilePathOp, OAuthSetupHost, OAuthProviderStatus, OAuthLoginResult } from '../adapter/ports/channel-settings.js'
 /**
  * `/provider` wizard — interactively adds, edits, or deletes an LLM

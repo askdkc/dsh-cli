@@ -3106,7 +3106,6 @@ export function PromptInput({
     const [rowStart] = lineRanges[absoluteLine] ?? [0, 0]
     // Per-character style: 0 plain, 1 chip (a staged token), 2 inverse
     // (selection or caret cluster). Inverse wins over chip.
-    const PLAIN = 0
     const CHIP = 1
     const INVERSE = 2
     const kinds = new Uint8Array(text.length)
