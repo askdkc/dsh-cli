@@ -352,9 +352,12 @@ function createChannelWithOwner(
   const inputDelivery = createInputDelivery(ctx, owner, binding, () => state,
     (...args) => notify(...args), trackPending, untrackPending, composer,
     () => currentSelection, (messageId, info) => selectionAttachments.remember(messageId, info),
-    async agent => {
-      await bindingEvents.ready()
-      await taskWorkflow?.waitForInput(agent)
+    agent => {
+      const waitForHandoff = taskWorkflow?.captureInputWait(agent)
+      return async () => {
+        await bindingEvents.ready()
+        await waitForHandoff?.()
+      }
     })
   const { dispatchUserText, deliverUserText, retireAttachment, withDecisionPending, clearStagedImages } = inputDelivery
   /**

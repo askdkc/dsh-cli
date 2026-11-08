@@ -92,8 +92,8 @@ dsh plugin --profile dsh-cli add github:askdkc/kiokuko-dsh
 Jev 凭据，或按[决策指南](https://github.com/askdkc/kiokuko-dsh/blob/main/docs/typed-decisions.md)
 选择并配置已运行的 Laya worker。不会自动安装运行时或启动 worker。
 
-profile 启用 `kiokuko-dsh` 时，CLI 会等待该插件启动完成后再接受首次输入。
-导入或启动失败，或 30 秒内仍未完成激活时，CLI 会显示诊断并停止启动。
+profile 启用 `kiokuko-dsh` 时，CLI 最多等待 30 秒。导入或启动失败，或等待
+超时时，CLI 会显示警告并接受输入。超时后，Kiokuko 仍可在后台完成启动。
 未安装或已禁用 Kiokuko 时不会增加此等待。
 
 输入普通请求，例如 `検索機能を実装して`。Jev/Laya 接受编程分类后，现有问题面板

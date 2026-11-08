@@ -12,7 +12,7 @@ const settle = () => new Promise(resolve => setImmediate(resolve))
 const canonical = (sessionId, revision) => ({ sessionId, taskId: 'canonical-task', runId: 'canonical-task',
   state: 'Pending', revision, generation: 3, request: 'Continue the same task', reason: 'Interrupted', evidence: [], allowedOps: ['resume'] })
 
-async function exercise(failure) {
+async function exercise(failure, serviceDisappears = false) {
   const owner = createChannelOwner()
   const messages = [], warnings = []
   const makeHandle = (id, parentSession) => {
@@ -26,6 +26,7 @@ async function exercise(failure) {
   const binding = createChannelBinding(old.agent, old, owner)
   let target, task = canonical(old.agent.session.id, 12)
   const entered = deferred(), completed = deferred()
+  let available = true
   const host = {
     snapshot: async agent => ({ sessionId: agent.session.id, task: task.sessionId === agent.session.id ? task : null }),
     operate: async () => { throw new Error('Unexpected operation') },
@@ -48,13 +49,13 @@ async function exercise(failure) {
   const state = { cwd: process.env.HOME, rows: [], todos: [], working: false,
     agentId: old.agent.id, sessionId: old.agent.session.id, agentBindingGeneration: binding.bind(),
     emit: () => {}, notify: message => warnings.push(message) }
-  const projection = createTaskWorkflowProjection({ discover: () => host, capture: binding.capture,
+  const projection = createTaskWorkflowProjection({ discover: () => available ? host : undefined, capture: binding.capture,
     current: binding.isCurrent, rows: () => state.todos, publish: rows => { state.todos = rows }, warn: state.notify })
   owner.own(projection.dispose)
   await projection.refresh()
   const composer = { snapshot: () => new Map(), captureDraftImages: (_text, images) => images, clearStagedImages() {} }
   const delivery = createInputDelivery(ctx, owner, binding, () => state, state.notify, () => {}, () => {}, composer,
-    () => undefined, () => {}, agent => projection.waitForInput(agent))
+    () => undefined, () => {}, agent => projection.captureInputWait(agent))
   // The first view emit after adoption can synchronously enqueue real input.
   // It must not race the SQLite owner CAS that starts after this callback.
   state.emit = () => { if (target && binding.agent === target.agent) delivery.dispatchUserText('new target input', 'followup') }
@@ -73,10 +74,12 @@ async function exercise(failure) {
   assert.equal(binding.agent, target.agent)
   assert.equal(old.disposed, 0, 'native source remains live throughout handoff')
   assert.equal(messages.length, 0, 'first emitted target input remains parked in the actual FIFO')
+  delivery.dispatchUserText('second held input', 'followup')
   let retired = false
   const retirement = binding.waitForDisposal(old.agent.session.id).then(() => { retired = true })
   await settle()
   assert.equal(retired, false, '/resume source must await the handoff before reacquiring it')
+  if (serviceDisappears) available = false
   if (failure) completed.reject(new Error('Canonical CAS conflict'))
   else completed.resolve()
   assert.equal(await switching, true, 'model adoption has committed independently of task ownership')
@@ -85,19 +88,15 @@ async function exercise(failure) {
   assert.equal(target.disposed, 0)
   if (failure) {
     assert.equal(messages.length, 0)
-    delivery.dispatchUserText('still blocked', 'followup')
-    await settle()
-    assert.equal(messages.length, 0, 'failed owner transfer keeps later target sends closed')
     assert.ok(warnings.some(text => text.includes('CAS conflict')))
-    // Explicit /kioku-task create is represented by a committed host row.
-    task = canonical(target.agent.session.id, 1)
-    task.taskId = task.runId = 'explicit-new-task'
-    await projection.refresh()
-    delivery.dispatchUserText('new task input', 'followup')
+    assert.ok(warnings.some(text => text.includes('Resend')))
+    assert.equal(task.sessionId, old.agent.session.id)
+    assert.equal(state.todos.length, 0)
+    delivery.dispatchUserText('fresh input', 'followup')
     await settle(); await settle()
-    assert.equal(messages.length, 1)
+    assert.deepEqual(messages.map(message => message.content[0].text), ['fresh input'])
   } else {
-    assert.equal(messages.length, 1)
+    assert.deepEqual(messages.map(message => message.content[0].text), ['new target input', 'second held input'])
     assert.equal(state.todos[0].taskId, 'canonical-task')
     assert.equal(state.todos[0].revision, 13)
   }
@@ -106,4 +105,5 @@ async function exercise(failure) {
 
 await exercise(false)
 await exercise(true)
-console.log('PASS: model handoff preserves native source, holds real target input, fences failed sends, retires once, and permits explicit new-task recovery')
+await exercise(true, true)
+console.log('PASS: model handoff preserves native source, holds real target input, fences failed sends, retires once, and accepts fresh input after failure')

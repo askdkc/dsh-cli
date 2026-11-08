@@ -300,7 +300,9 @@ export async function apply(ctx: Context, runtimeConfig: RuntimeConfig<Config>, 
   // the channel owner and registers immediately after channel creation. Optional-service access goes through `ctx.get`, not the
   // inject proxy.
   const userQuestions = await ensureCliUserQuestions(ctx)
-  if (!await awaitConfiguredKiokukoStartup(ctx)) return
+  if (!await awaitConfiguredKiokukoStartup(ctx, undefined, message => {
+    process.stderr.write(`[dsh-cli] ${message}\n`)
+  })) return
   ctx.plugin(toolAskUser)
   registerPresetQuestionToolAdmission(ctx)
   const questionStore = new QuestionStore(adapterRuntimeFor(ctx))

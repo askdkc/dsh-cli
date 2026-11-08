@@ -132,8 +132,8 @@ A working SBCL is required; Linux also needs Bubblewrap with user, PID, and
 network namespaces. Profiles are isolated, so adding the plugin to another
 profile, such as `web`, does not enable Lisp mode in `dsh-cli`. Without the
 plugin, `/kioku-lisp` is unavailable and no Lisp-mode choice appears. With the
-plugin enabled, startup waits for it, and activation that exceeds 30 seconds
-stops startup with a diagnostic.
+plugin enabled, the CLI waits up to 30 seconds. On timeout it warns and accepts
+input while the Loader continues starting Kiokuko in the background.
 
 After restart, `/kioku-lisp status` reports whether Lisp is available. A coding
 request can then offer the Lisp choice, or `/kioku-lisp enable` turns it on for

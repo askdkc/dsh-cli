@@ -107,7 +107,7 @@ await settle()
 assert.equal(rows.some(row => row.source === 'kiokuko'), false)
 const handingOff = handoff(active)
 let delivered = false
-const parkedInput = projection.waitForInput(active).then(() => { delivered = true })
+const parkedInput = projection.captureInputWait(active)().then(() => { delivered = true })
 await settle()
 assert.equal(delivered, false, 'new target cannot start a turn before canonical ownership transfers')
 assert.equal(transfer[0], source)
@@ -125,14 +125,14 @@ assert.equal(rows[0].status, 'Working')
 assert.equal(rows[0].pendingStop.operation, 'wait')
 
 const failedHold = projection.holdInput(active)
+const capturedWait = projection.captureInputWait(active)
 failedHold(new Error('CAS conflict'))
-await assert.rejects(projection.waitForInput(active), /CAS conflict/u)
+await assert.rejects(capturedWait(), /CAS conflict/u)
 value = null
 await projection.refresh()
-await assert.rejects(projection.waitForInput(active), /CAS conflict/u, 'missing ownership cannot reopen failed input')
+assert.equal(projection.captureInputWait(active), undefined, 'new input does not inherit the settled failure')
 value = task('c', 50, 'ToDo')
 await projection.refresh()
-await projection.waitForInput(active)
 
 const staleHandoff = await projection.prepareHandoff()
 const staleTarget = active

@@ -26,11 +26,10 @@ export async function ensureCliUserQuestions(ctx: Context): Promise<UserQuestion
 }
 
 /**
- * A configured Kiokuko entry which is still loading must finish mounting
- * commands and tool hooks before the first interactive input. A terminal
- * Loader failure has already rolled the addon back, so it is reported and the
- * CLI continues without that optional instance. Unrelated Loader work and later
- * addon reloads do not own the frontend.
+ * Give configured Kiokuko entries time to mount commands and tool hooks
+ * before the first interactive input. The CLI continues after a Loader
+ * failure or a timeout. On timeout the Loader can still finish mounting
+ * the addon later. Unrelated Loader work and reloads do not own the frontend.
  *
  * The profile's include patches have already expanded before its CLI row runs.
  * No configured entry (including a bare host) means there is nothing to await.
@@ -39,7 +38,9 @@ export async function ensureCliUserQuestions(ctx: Context): Promise<UserQuestion
  * Entry.refresh() joins an import which has not created its fiber yet.
  * Returns false when this frontend is disposed while waiting.
  */
-export async function awaitConfiguredKiokukoStartup(ctx: Context, timeoutMs = 30_000): Promise<boolean> {
+export async function awaitConfiguredKiokukoStartup(
+  ctx: Context, timeoutMs = 30_000, reportTimeout?: (message: string) => void,
+): Promise<boolean> {
   const loader = ctx.get('loader') as StartupLoader | undefined
   if (typeof loader?.entries !== 'function') return true
   const configured = (): StartupEntry[] => [...loader.entries()].filter(entry =>
@@ -66,6 +67,7 @@ export async function awaitConfiguredKiokukoStartup(ctx: Context, timeoutMs = 30
       else resolve(ready)
     }
     const failed = (entry: StartupEntry, reason: string, cause?: unknown): void => {
+      if (finished) return
       const detail = cause instanceof Error ? cause.message : cause === undefined ? '' : String(cause)
       const suffix = detail && detail !== reason ? `: ${detail}` : ''
       ctx.logger.warn(`kiokuko-dsh startup failed (${entry.id}): ${reason}${suffix}; continuing without it`)
@@ -117,8 +119,15 @@ export async function awaitConfiguredKiokukoStartup(ctx: Context, timeoutMs = 30
       })
     }
     const timer = setTimeout(() => {
-      const pending = configured().map(entry => `${entry.id} (${entry.fiber?.state === PENDING ? 'waiting for required services' : 'activation incomplete'})`).join(', ')
-      finish(false, new Error(`kiokuko-dsh startup timed out after ${timeoutMs}ms: ${pending}. Check its Loader dependencies and startup log.`))
+      if (ctx.fiber.uid === null) return finish(false)
+      const pending = configured().filter(entry => entry.fiber?.state !== ACTIVE)
+        .map(entry => `${entry.id} (${entry.fiber?.state === PENDING ? 'waiting for required services' : 'activation incomplete'})`)
+      if (pending.length) {
+        const message = `kiokuko-dsh startup timed out after ${timeoutMs}ms: ${pending.join(', ')}. Continuing CLI startup. Kiokuko may become available later.`
+        ctx.logger.warn(message)
+        reportTimeout?.(message)
+      }
+      finish(true)
     }, timeoutMs)
     try {
       disposers.push(ctx.on('internal/status', schedule, { global: true }))

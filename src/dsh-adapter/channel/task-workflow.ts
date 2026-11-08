@@ -88,9 +88,6 @@ export function createTaskWorkflowProjection(deps: {
       if (!snapshot(value, String(capture.agent.session.id))) throw new Error('invalid task snapshot')
       if (value.task === null) { clear(); return }
       const task = value.task
-      // A successful explicit task operation can recover a failed handoff.
-      // Only a canonical task now owned by this exact target opens its input.
-      if (inputHold?.agent === capture.agent && inputHold.settled && inputHold.error) inputHold = undefined
       const previous = deps.rows().find(row => row.source === 'kiokuko')
       if (previous?.source === 'kiokuko' && previous.taskId === task.taskId && previous.revision > task.revision) return
       const row: KiokukoTaskPanelItem = {
@@ -120,16 +117,18 @@ export function createTaskWorkflowProjection(deps: {
       return error => {
         if (hold.settled) return
         hold.settled = true
-        hold.error = error === undefined ? undefined : `Kiokuko task handoff failed: ${error instanceof Error ? error.message : String(error)}. Use /kioku-task status or create a new task before sending.`
+        hold.error = error === undefined ? undefined : `Kiokuko task handoff failed: ${error instanceof Error ? error.message : String(error)}. Resend the input if you want to start work in the current session.`
+        if (inputHold === hold) inputHold = undefined
         hold.release()
-        if (inputHold === hold && hold.error === undefined) inputHold = undefined
       }
     },
-    async waitForInput(agent: Agent): Promise<void> {
+    captureInputWait(agent: Agent): (() => Promise<void>) | undefined {
       const hold = inputHold
-      if (hold?.agent !== agent) return
-      await hold.pending
-      if (hold.error && inputHold === hold) throw new Error(hold.error)
+      if (hold?.agent !== agent) return undefined
+      return async () => {
+        await hold.pending
+        if (hold.error !== undefined) throw new Error(hold.error)
+      }
     },
     async prepareHandoff(): Promise<((target: Agent) => Promise<void>) | undefined> {
       const source = deps.capture()

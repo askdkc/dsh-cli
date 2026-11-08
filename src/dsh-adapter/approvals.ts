@@ -384,6 +384,7 @@ export class ApprovalStore {
    */
   park(req: ApprovalRequest): Promise<ApprovalOutcome> {
     assertCapabilityShadowPolicy('host.presentation.approve', this.runtime.mode, this.runtime.slices)
+    if (req.signal?.aborted) return Promise.resolve('cancelled')
     return new Promise<ApprovalOutcome>(resolve => {
       const command = commandOf(req)
       // Source badge: park() is reached through the approval/request

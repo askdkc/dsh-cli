@@ -135,6 +135,38 @@ const check = (name: string, ok: boolean) => {
   }
 }
 
+// Cancel between the real service's precheck and its deferred waterfall.
+const { Context } = await import('@deepseek-ai/cordis')
+const { ApprovalService } = await import('@deepseek-ai/dsh-user-approval')
+const ctx = new Context()
+const service = new ApprovalService(ctx, { policy: 'ask' })
+Object.defineProperty(service, 'approvalStateOf', { value: () => ({ policy: 'ask', turnOpen: true }) })
+const raceStore = new ApprovalStore()
+ctx.on('approval/request', request => raceStore.park(request), { global: true })
+const controller = new AbortController()
+const approval = {
+  agent: { id: 'race', ctx, session: { snapshotEvents: () => [], append() {} } },
+  toolName: 'Bash',
+}
+const outcome = service.request({ ...approval, signal: controller.signal } as never)
+controller.abort()
+check('cancelled approval service request returns cancelled', await outcome === 'cancelled')
+check('cancelled approval never occupies the panel', raceStore.getSnapshot() === null)
+const nextApproval = service.request(approval as never)
+await new Promise<void>(resolve => setImmediate(resolve))
+raceStore.decide('rejected')
+raceStore.settleAll('cancelled')
+check('next approval can be decided normally', await nextApproval === 'rejected')
+await ctx.fiber.dispose()
+
+const cancelledQuestions = new QuestionStore()
+const cancelledQuestion = cancelledQuestions.ask({ questions: [{ id: 'cancelled', question: 'Already cancelled?' }], signal: controller.signal })
+  .catch(error => error)
+check('cancelled question never occupies the panel', cancelledQuestions.getSnapshot() === null)
+cancelledQuestions.rejectAll()
+const cancellation = await cancelledQuestion
+check('cancelled question preserves ASK_ABORTED', cancellation instanceof UserQuestionError && cancellation.code === 'ASK_ABORTED')
+
 const stdout = new FakeStdout()
 const stdin = new FakeStdin()
 const approvals = new ApprovalStore()

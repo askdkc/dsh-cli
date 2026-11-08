@@ -86,7 +86,7 @@ export function createModelSwitchAction(
     if (!deps.binding.isCurrent(adoption) || !deps.owner.current()) { await deps.binding.abandon(handle); reservation.abandon(); return false }
     let committed = false
     const releaseInput = taskHandoff ? deps.holdTaskInput?.(handle.agent) : undefined
-    let handoffError: unknown = new Error('Model switch did not complete')
+    let handoffError: Error | undefined = new Error('Model switch did not complete')
     let closingPrevious: Promise<void> | undefined
     let releaseHandoff: (() => void) | undefined
     const handoffFinished = taskHandoff ? new Promise<void>(resolve => { releaseHandoff = deps.owner.own(resolve) }) : undefined
@@ -130,9 +130,9 @@ export function createModelSwitchAction(
       if (taskHandoff) {
         try { await taskHandoff(handle.agent); handoffError = undefined }
         catch (error) {
-          handoffError = error
+          handoffError = error instanceof Error ? error : new Error(String(error))
           if (deps.owner.current() && deps.binding.agent === handle.agent) {
-            deps.notify(`Model changed, but Kiokuko task ownership was not transferred: ${error instanceof Error ? error.message : String(error)}`, { color: 'warning', timeoutMs: 8000 })
+            deps.notify(`Model changed, but Kiokuko task ownership was not transferred: ${handoffError.message}`, { color: 'warning', timeoutMs: 8000 })
           }
         }
       }

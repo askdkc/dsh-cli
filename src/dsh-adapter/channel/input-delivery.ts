@@ -40,6 +40,7 @@ interface UserTextOrigin {
    *  selection made while the FIFO or mention expansion parks the delivery
    *  can never attach to this message. */
   readonly selection: ChannelSelection | undefined
+  readonly waitForInput: (() => Promise<void>) | undefined
 }
 
 /** Input FIFO, staged attachments and decision notice timers share one lifetime. */
@@ -52,7 +53,7 @@ export function createInputDelivery(
  composer: ComposerImages,
  selection: () => ChannelSelection | undefined,
  rememberSelection: (messageId: string, info: SelectionAttachment) => void,
- waitForInput?: (agent: Agent) => Promise<void>,
+ captureInputWait?: (agent: Agent) => (() => Promise<void>) | undefined,
 ) {
   /**
    * `@` file mentions (issue #15): expansion reads files asynchronously, so
@@ -124,6 +125,7 @@ export function createInputDelivery(
    *  conversation's words into it. */
   const captureOrigin = (): UserTextOrigin => ({
     agent: binding.agent,
+    waitForInput: captureInputWait?.(binding.agent),
     agentId: state().agentId,
     generation: state().agentBindingGeneration,
     cwd: state().cwd,
@@ -293,7 +295,7 @@ export function createInputDelivery(
     // the session. Do not even expose that stale text to plugins.
     if (dropIfStale()) return
     try {
-      await waitForInput?.(origin.agent)
+      await origin.waitForInput?.()
     } catch (error) {
       if (!dropIfStale()) notify(error instanceof Error ? error.message : String(error), { color: 'error' })
       return

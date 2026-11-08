@@ -92,9 +92,9 @@ an already-running Laya worker as described in
 No runtime or worker is installed automatically.
 
 When the profile enables `kiokuko-dsh`, the CLI waits for that plugin to finish
-starting before accepting its first input. Import or startup failure, or an
-activation that does not finish within 30 seconds, stops CLI startup with a
-diagnostic. An absent or disabled Kiokuko plugin adds no startup wait.
+starting, up to 30 seconds. On import failure, startup failure, or timeout,
+the CLI warns and accepts input. After a timeout, Kiokuko can still finish
+starting in the background. An absent or disabled plugin adds no startup wait.
 
 Enter a normal request such as `検索機能を実装して`. When Jev/Laya accepts a
 coding classification, the existing question panel asks whether to use Lisp.

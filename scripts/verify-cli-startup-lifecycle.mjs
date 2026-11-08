@@ -59,12 +59,12 @@ async function fixture(run) {
   loader.await = () => { throw new Error('the frontend must never await the whole Loader') }
   const hold = () => { const gate = deferred(); releases.push(gate.resolve); return gate }
   const front = (timeoutMs = 1_000) => {
-    const observed = { ready: false }
+    const observed = { ready: false, timeoutWarning: undefined }
     observed.fiber = ctx.plugin({
       name: 'startup-test-frontend',
       async apply(frontend) {
         await ensureCliUserQuestions(frontend)
-        if (!await awaitConfiguredKiokukoStartup(frontend, timeoutMs)) return
+        if (!await awaitConfiguredKiokukoStartup(frontend, timeoutMs, message => { observed.timeoutWarning = message })) return
         observed.ready = true
       },
     })
@@ -157,12 +157,19 @@ for (const stage of ['import', 'apply']) {
   })
 }
 
-await fixture(async ({ loader, front }) => {
-  loader.import = () => ({ name: 'kiokuko-dsh', inject: ['neverProvided'], apply() {} })
+await fixture(async ({ ctx, loader, front, warnings }) => {
+  let addonReady = false
+  loader.import = () => ({ name: 'kiokuko-dsh', inject: ['lateDependency'], apply() { addonReady = true } })
   await loader.root.update([{ id: 'kiokuko', name: 'kiokuko-dsh' }])
   const ui = front(20)
-  assert.match((await ui.result)?.message ?? '', /kiokuko-dsh startup timed out.*waiting for required services/)
-  assert.equal(ui.ready, false)
+  assert.equal(await ui.result, undefined)
+  assert.equal(ui.ready, true)
+  assert.equal(addonReady, false)
+  assert.ok(warnings.some(line => /startup timed out.*kiokuko.*waiting for required services.*may become available later/.test(line)))
+  assert.ok(warnings.includes(ui.timeoutWarning), 'the frontend receives the timeout diagnostic for display')
+  ctx.provide('lateDependency', true)
+  await loader.resolve('kiokuko').fiber.await()
+  assert.equal(addonReady, true)
 })
 
 // Disabling an addon while its dependencies are pending releases the gate.

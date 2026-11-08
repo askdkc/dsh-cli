@@ -272,6 +272,10 @@ export class QuestionStore {
           this.fail(pending)
         },
       }
+      if (request.signal?.aborted) {
+        this.fail(pending)
+        return
+      }
       request.signal?.addEventListener('abort', pending.onAbort, { once: true })
       this.queue.push(pending)
       this.startNext()
