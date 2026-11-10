@@ -7,6 +7,10 @@ autoInstallPeers: true
 
 # Keep local lockfile generation subject to the same release-age rule as CI.
 minimumReleaseAge: 1440
+# These first-party dependencies deliberately track release-day latest.
+minimumReleaseAgeExclude:
+  - kiokuko-dsh
+  - agenticreplay
 
 supportedArchitectures:
   os:
@@ -21,6 +25,8 @@ supportedArchitectures:
 allowBuilds:
   '@google/genai': false
   protobufjs: false
+  # Optional Lisp compilation targets the host, not the cross-packaged runtime.
+  kiokuko-dsh: false
   # 原生依赖的构建脚本是便携包运行时必需的（pty/ffi/子进程桥），必须放行；
   # 否则 pnpm ≥11 以 ERR_PNPM_IGNORED_BUILDS 拒绝整个安装。
   koffi: true

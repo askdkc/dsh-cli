@@ -4,6 +4,16 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { standaloneTarget, stageStandaloneLauncher, pruneForeignPackages, prepareTargetPty } from './lib/standalone-layout.mjs'
+import YAML from 'yaml'
+
+// The builder copies this policy before resolving the packaged CLI's dependencies.
+const installPolicy = YAML.parse(readFileSync(new URL('../standalone/pnpm-workspace.yaml', import.meta.url), 'utf8'))
+assert.equal(installPolicy.minimumReleaseAge, 1440)
+assert.deepEqual(installPolicy.minimumReleaseAgeExclude, ['kiokuko-dsh', 'agenticreplay'])
+assert.equal(installPolicy.allowBuilds['kiokuko-dsh'], false, 'optional Lisp must not compile for the build host during cross-packaging')
+for (const name of ['koffi', 'node-pty', '@deepseek-ai/dsh-subprocess-local']) {
+  assert.equal(installPolicy.allowBuilds[name], true, `${name} remains required for the standalone runtime`)
+}
 
 for (const [name, os, cpu] of [
   ['node24-linux-x64', 'linux', 'x64'], ['node24-linux-arm64', 'linux', 'arm64'],
