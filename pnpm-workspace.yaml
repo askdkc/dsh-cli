@@ -52,7 +52,12 @@ allowBuilds:
   koffi: false
   node-pty: true
   protobufjs: false
+# Keep local installs and CI on the same 24-hour policy for third-party releases.
+minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
+  # These first-party runtime dependencies deliberately track latest, including release day.
+  - kiokuko-dsh
+  - agenticreplay
   # Prerelease adaptation: the current cohort can be younger than
   # pnpm 11's default 24h minimumReleaseAge; exempt the whole scope.
   - '@deepseek-ai/*'
