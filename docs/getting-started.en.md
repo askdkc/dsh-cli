@@ -52,6 +52,66 @@ sh install.sh /path/to/askdkc-dsh-cli-<version>.tgz
 `install.sh` checks for `dsh` and `pnpm` and installs the specified tarball through
 the profile plugin command. It does not copy source files.
 
+### pnpm 11 build decisions
+
+A fresh profile can stop with `ERR_PNPM_IGNORED_BUILDS` for `kiokuko-dsh`.
+Its postinstall compiles the optional native Lisp worker. This is a pending
+build decision, not a reason to disable all package-script checks.
+
+If you do **not** want Lisp compilation, open the profile's
+`$DSH_HOME/profiles/dsh-cli/pnpm-workspace.yaml` (default home: `~/.dsh`).
+Merge this entry into its existing `allowBuilds` mapping, preserving every
+other entry; do not create a duplicate mapping:
+
+```yaml
+allowBuilds:
+  kiokuko-dsh: false
+```
+
+For a **failed first installation only**, check the profile's `package.json`.
+If `@askdkc/dsh-cli` is a dependency but is absent from `dsh.profile.bundles`,
+DSH has left it installed but inactive. Remove that incomplete dependency
+before re-adding it; this does not delete the profile or credentials:
+
+```sh
+dsh plugin --profile dsh-cli remove @askdkc/dsh-cli
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
+```
+
+For an existing registered bundle, do not remove it: retry only the original
+`add` command. A successful package install alone does not prove activation.
+
+For a local tarball, retry its original named `@askdkc/dsh-cli@file:...` spec
+instead. Check the profile path when using a custom home or another profile.
+Do not overwrite an existing build policy or approve unrelated packages.
+To compile Lisp instead, review Kiokuko's installer and its SBCL/Bubblewrap
+requirements before explicitly allowing that package's build and rebuilding it.
+The profile acceptance test exercises the decline-and-retry path after observing
+this exact failure, then verifies the installed CLI and auth runtime. It does
+not claim unattended installation or a compiled Lisp worker.
+
+## Bun package consumers
+
+Use **npm for installation and Bun for package-module execution**. Native
+`bun add @askdkc/dsh-cli` is not supported with the current AgenticReplay
+release: Bun attempts to fetch its bundled, unpublished `@agenticreplay/*`
+packages from the registry and receives 404s. Upgrading Bun alone does not
+resolve this. Both first-party dependencies still track `latest`.
+
+In a local consumer with the DSH host installed:
+
+```sh
+npm install --ignore-scripts @deepseek-ai/dsh@alpha @askdkc/dsh-cli
+bun -e "await import('@askdkc/dsh-cli'); await import('@askdkc/dsh-cli/extensions')"
+```
+
+`--ignore-scripts` leaves optional native Lisp compilation disabled; it does
+not remove Kiokuko or AgenticReplay. Set up Lisp explicitly when needed.
+`pnpm verify:bun-package` packs the current checkout, installs it with npm,
+then checks the installed dependencies and imports with Bun. This does not
+claim that native Bun installation works or replace the Node-based DSH profile
+acceptance tests.
+
 ## Optional native LSP and structure analysis
 
 The separate `@askdkc/dsh-lsp-server` plugin belongs in the same profile as the

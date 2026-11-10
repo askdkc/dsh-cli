@@ -119,7 +119,30 @@ try {
     assert.match(mismatched.stderr, /profile updated package version must match requested artifact/)
     console.log('baseline auth active; mismatched artifact rejected before boot')
   }
-  run(node, [cli, 'plugin', '--profile', 'dsh-cli', 'add', `@askdkc/dsh-cli@file:${tarball}`])
+  const installArgs = [cli, 'plugin', '--profile', 'dsh-cli', 'add', `@askdkc/dsh-cli@file:${tarball}`]
+  try {
+    run(node, installArgs)
+  } catch (error) {
+    // Exercise the documented user choice, not a pre-seeded install policy.
+    // Any other failure or additional undecided package still fails acceptance.
+    if (!(error instanceof Error) || !/^\[ERR_PNPM_IGNORED_BUILDS\] Ignored build scripts: kiokuko-dsh@[0-9][0-9A-Za-z.+-]*\s*$/mu.test(error.message)) throw error
+    const profile = join(home, 'profiles', 'dsh-cli')
+    const policyPath = join(profile, 'pnpm-workspace.yaml')
+    const { default: YAML } = await import('yaml')
+    const before = YAML.parse(await readFile(policyPath, 'utf8'))
+    assert.equal(before.allowBuilds?.['kiokuko-dsh'], undefined, 'never overwrite an existing build decision')
+    console.log('profile acceptance: explicitly decline optional Kiokuko Lisp compilation, then retry installation')
+    run('pnpm', ['config', 'set', '--location=project', '--json', 'allowBuilds', JSON.stringify({ ...before.allowBuilds, 'kiokuko-dsh': false })], profile)
+    const after = YAML.parse(await readFile(policyPath, 'utf8'))
+    assert.deepEqual(after, { ...before, allowBuilds: { ...before.allowBuilds, 'kiokuko-dsh': false } }, 'preserve every other profile policy')
+    // A failed first add can leave a plain dependency that a second add does
+    // not activate. Recover via the public command, never inject bundle rows.
+    const installedProfile = JSON.parse(await readFile(join(profile, 'package.json'), 'utf8'))
+    if (freshInstall && !installedProfile.dsh?.profile?.bundles?.includes(manifest.name)) {
+      run(node, [cli, 'plugin', '--profile', 'dsh-cli', 'remove', manifest.name])
+    }
+    run(node, installArgs)
+  }
   const carrier = join(home, 'profiles', 'dsh-cli', 'node_modules', '@askdkc/dsh-cli')
   const auth = join(carrier, 'node_modules', '@askdkc/dsh-auth')
   assert.equal(JSON.parse(await readFile(join(carrier, 'package.json'))).version, manifest.version)

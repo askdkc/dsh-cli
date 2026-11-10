@@ -100,10 +100,16 @@ try {
         return undefined
       }
     }))).filter(Boolean)
-  run(bunCommand, ['add', ...hostPeers, join(temporaryRoot, report.filename)], temporaryRoot)
+  // npm owns installation; Bun is the runtime under test. Native `bun add`
+  // cannot resolve AgenticReplay's unpublished bundled dependencies.
+  run(npmCommand, ['install', '--ignore-scripts', '--no-audit', '--no-fund', ...hostPeers, join(temporaryRoot, report.filename)], temporaryRoot)
   run(bunCommand, [
     '-e',
     [
+      `import { createRequire } from 'node:module'`,
+      `const require = createRequire(import.meta.resolve(${JSON.stringify(packageName)}))`,
+      `require.resolve('kiokuko-dsh')`,
+      `createRequire(require.resolve('agenticreplay')).resolve('@agenticreplay/core')`,
       `await import(${JSON.stringify(packageName)})`,
       `await import(${JSON.stringify(`${packageName}/extensions`)})`,
       `await import(${JSON.stringify(`./node_modules/${packageName}/node_modules/@dsh-std/manifest`)})`,
@@ -111,7 +117,7 @@ try {
     ].join(';'),
   ], temporaryRoot)
 
-  console.log('bun package install OK (root, extensions, bundled @dsh-std and activity runtime imported)')
+  console.log('npm-installed Bun runtime OK (first-party dependencies resolved; root, extensions, bundled @dsh-std and activity imported)')
 } finally {
   await rm(temporaryRoot, { recursive: true, force: true })
 }

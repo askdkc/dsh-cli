@@ -53,6 +53,7 @@ if(process.env.DSH_AUTH_TEST_PHASE!=='independent') {
   console.log('host-owned pi', pi.version)
 }
 const profile=loadProfile('probe','dsh-cli',new URL('./node_modules/@deepseek-ai/dsh/package.json',import.meta.url).pathname,process.env.DSH_HOME)
+assert.deepEqual(profile.skippedBundles,[],`profile ${process.env.DSH_AUTH_TEST_PHASE} must load every installed bundle`)
 const entries=composeEntries(profile.layers.map(layer=>layer.patches))
   .filter(entry=>process.env.DSH_AUTH_TEST_PHASE!=='missing-auth'||entry.name!==`${installed.name}/oauth`)
 const authEntries=entries.filter(entry=>entry.name===`${installed.name}/oauth`)

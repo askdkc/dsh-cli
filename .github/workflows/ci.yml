@@ -175,7 +175,8 @@ jobs:
       # and smoke-import the two runtime entry points.
       - run: pnpm test:compatibility
       - run: pnpm verify:package
-      - run: pnpm verify:bun-package
+      - name: Verify npm-installed package with Bun runtime
+        run: pnpm verify:bun-package
 
   # Type-check the adapter and compose both patches against the installed
   # upstream default branch. Log the exact checkout for reproducibility.

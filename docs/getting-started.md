@@ -64,6 +64,55 @@ sh install.sh /path/to/askdkc-dsh-cli-<version>.tgz
 `install.sh` 检查 `dsh`、`pnpm`，通过 profile 插件命令安装指定的 tarball；
 它不会复制源码。
 
+### pnpm 11 构建决定
+
+新 profile 可能因 `kiokuko-dsh` 的 `ERR_PNPM_IGNORED_BUILDS` 停止安装。
+其 postinstall 编译可选的原生 Lisp worker。这表示仍需作出构建决定，不应因此关闭所有包的脚本检查。
+
+如果**不需要编译 Lisp**，请打开 profile 的
+`$DSH_HOME/profiles/dsh-cli/pnpm-workspace.yaml`（默认 home 为 `~/.dsh`），
+将以下条目合并到现有的 `allowBuilds` 映射，保留其他条目，不要创建重复映射：
+
+```yaml
+allowBuilds:
+  kiokuko-dsh: false
+```
+
+**仅对于失败的首次安装**，检查 profile 的 `package.json`。若 `@askdkc/dsh-cli`
+已列为依赖，却不在 `dsh.profile.bundles` 中，说明 DSH 留下了未激活的依赖。
+先移除该未完成的安装，再重新添加；这不会删除 profile 或凭据：
+
+```sh
+dsh plugin --profile dsh-cli remove @askdkc/dsh-cli
+dsh plugin --profile dsh-cli add @askdkc/dsh-cli
+```
+
+若 bundle 已注册，不要移除它，只重试原 `add` 命令。包安装成功不等于已激活。
+
+本地 tarball 应重试原先带名称的 `@askdkc/dsh-cli@file:...` spec。使用自定义 home
+或其他 profile 时先确认路径。不要覆盖已有构建决定，也不要批准无关包。
+若需要编译 Lisp，请先审阅 Kiokuko 安装脚本及 SBCL/Bubblewrap 要求，再明确允许
+该包的构建并重新构建。profile 验收在观察到此精确失败后执行拒绝与重试，再验证已安装
+CLI 和 auth 运行时；它不声称支持无人值守安装，也不声称已编译 Lisp worker。
+
+## Bun 包使用者
+
+使用 **npm 安装、Bun 执行包模块**。当前 AgenticReplay 版本不支持通过
+`bun add @askdkc/dsh-cli` 原生安装：Bun 会尝试从 registry 获取已经打包但未单独发布的
+`@agenticreplay/*` 包，得到 404。仅升级 Bun 不能解决此问题。两个第一方依赖仍使用 `latest`。
+
+在安装了 DSH host 的本地使用项目中：
+
+```sh
+npm install --ignore-scripts @deepseek-ai/dsh@alpha @askdkc/dsh-cli
+bun -e "await import('@askdkc/dsh-cli'); await import('@askdkc/dsh-cli/extensions')"
+```
+
+`--ignore-scripts` 不执行可选的原生 Lisp 编译，不会移除 Kiokuko 或 AgenticReplay；
+需要 Lisp 时再显式配置。`pnpm verify:bun-package` 将当前检出打包，用 npm 安装，
+再用 Bun 检查已安装依赖与模块导入。这不代表原生 Bun 安装可用，也不替代基于 Node 的
+DSH profile 验收。
+
 ## 可选的 Kiokuko Lisp 工作流
 
 将 Kiokuko 安装到与 dsh-cli **相同**的 profile：
