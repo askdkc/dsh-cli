@@ -4,6 +4,11 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 
+const packageManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+const latestDependencies = Object.fromEntries(['kiokuko-dsh', 'agenticreplay'].map(name => {
+  assert.equal(packageManifest.dependencies?.[name], 'latest', `${name} must track the latest dist-tag`)
+  return [name, packageManifest.dependencies[name]]
+}))
 const root = mkdtempSync(join(tmpdir(), 'dsh-publish-manifest-'))
 const bundles = ['command', 'connection', 'core', 'manifest', 'messages', 'presentation', 'storage']
 const sources = new Map(bundles.map(name => [`@dsh-std/${name}`, `vendor/dsh-std/packages/${name}`]))
@@ -16,7 +21,7 @@ const write = (path, value) => {
 try {
   mkdirSync(join(root, 'scripts'))
   cpSync(new URL('./with-publish-manifest.mjs', import.meta.url), join(root, 'scripts/with-publish-manifest.mjs'))
-  const manifest = JSON.stringify({ name: 'fixture', version: '1.0.0', dependencies: Object.fromEntries([...sources.keys()].map(name => [name, 'workspace:*'])) })
+  const manifest = JSON.stringify({ name: 'fixture', version: '1.0.0', dependencies: { ...Object.fromEntries([...sources.keys()].map(name => [name, 'workspace:*'])), ...latestDependencies } })
   write(join(root, 'package.json'), manifest)
   for (const [name, source] of sources) {
     write(join(root, source, 'package.json'), JSON.stringify({ name, version: '0.1.0', files: ['lib'], dependencies: name === '@dsh-std/core' ? {} : { '@dsh-std/core': 'workspace:*' } }))
@@ -30,6 +35,7 @@ try {
 import assert from 'node:assert/strict'
 import { readFileSync, lstatSync } from 'node:fs'
 const root = JSON.parse(readFileSync('package.json'))
+for (const name of ['kiokuko-dsh', 'agenticreplay']) assert.equal(root.dependencies[name], 'latest')
 for (const name of ${JSON.stringify([...sources.keys()])}) {
   assert.equal(root.dependencies[name], undefined)
   assert.equal(root.optionalDependencies[name], '0.1.0')
