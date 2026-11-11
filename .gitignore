@@ -20,5 +20,5 @@ HANDOVER.md
 .upstream/
 # run-ci-group artifacts
 ci-render-logs/
-.kiokuko.json
 .agenticreplay/
+.kiokuko.json

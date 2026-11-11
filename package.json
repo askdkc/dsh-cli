@@ -235,7 +235,7 @@
     "verify:activity-ownership": "node --import tsx/esm scripts/verify-activity-ownership.ts",
     "verify:response-language": "node --import tsx/esm scripts/verify-response-language.mjs",
     "verify:progress-language": "node --import tsx/esm scripts/verify-progress-language.mjs",
-    "verify:opencode-profile": "node scripts/verify-opencode-profile.mjs",
+    "verify:opencode-profile": "node --test scripts/opencode-profile-build-policy.test.mjs && node scripts/verify-opencode-profile.mjs",
     "verify:upstream-source": "node scripts/verify-upstream-source.mjs",
     "update:dsh": "pnpm update '@deepseek-ai/dsh-*'",
     "verify:ignore-kiokuko": "node scripts/verify-ignore-kiokuko.mjs",

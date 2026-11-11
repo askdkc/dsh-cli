@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process'
 import { satisfies, rcompare, valid, lt } from 'semver'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
+import { declineUndecidedKiokukoBuild } from './opencode-profile-build-policy.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const hostDefault = process.argv.includes('--host-default')
 const freshInstall = hostDefault || process.argv.includes('--fresh-install')
@@ -130,9 +131,9 @@ try {
     const policyPath = join(profile, 'pnpm-workspace.yaml')
     const { default: YAML } = await import('yaml')
     const before = YAML.parse(await readFile(policyPath, 'utf8'))
-    assert.equal(before.allowBuilds?.['kiokuko-dsh'], undefined, 'never overwrite an existing build decision')
+    const allowBuilds = declineUndecidedKiokukoBuild(before.allowBuilds)
     console.log('profile acceptance: explicitly decline optional Kiokuko Lisp compilation, then retry installation')
-    run('pnpm', ['config', 'set', '--location=project', '--json', 'allowBuilds', JSON.stringify({ ...before.allowBuilds, 'kiokuko-dsh': false })], profile)
+    run('pnpm', ['config', 'set', '--location=project', '--json', 'allowBuilds', JSON.stringify(allowBuilds)], profile)
     const after = YAML.parse(await readFile(policyPath, 'utf8'))
     assert.deepEqual(after, { ...before, allowBuilds: { ...before.allowBuilds, 'kiokuko-dsh': false } }, 'preserve every other profile policy')
     // A failed first add can leave a plain dependency that a second add does
