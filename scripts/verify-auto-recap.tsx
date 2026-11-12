@@ -25,6 +25,7 @@ const [
   { render, AlternateScreen },
   { Chat },
   { setLang },
+  { TIPS },
   { settle, settled, screenHas, findText, viewportLines },
   { stringWidth },
 ] = await Promise.all([
@@ -34,6 +35,7 @@ const [
   import('../src/ui.js'),
   import('../src/screens/Chat.js'),
   import('../src/i18n.js'),
+  import('../src/tips.js'),
   import('./lib/term-test.mjs'),
   import('../src/ink/stringWidth.js'),
 ])
@@ -180,6 +182,11 @@ const stdin = new FakeStdin()
 const channel = makeChannel()
 const questionStore = { subscribe: () => () => {}, getSnapshot: () => null, answerCurrent: () => {} }
 const approvalStore = { subscribe: () => () => {}, getSnapshot: () => null }
+// Always exercise the startup tip that shares the panel's suggested-title label.
+const recapTipIndex = TIPS.findIndex(tip => tip.id === 'cmd-recap')
+if (recapTipIndex < 0) throw new Error('Missing cmd-recap startup tip')
+const random = Math.random
+Math.random = () => (recapTipIndex + 0.5) / TIPS.length
 const instance = await render(
   <AlternateScreen>
     <Chat
@@ -196,7 +203,8 @@ const instance = await render(
     exitOnCtrlC: false,
     patchConsole: false,
   },
-)
+).finally(() => { Math.random = random })
+const hasRecapPanel = () => screenHas(term, '会话回顾')
 
 /** SGR hover 注入（1-indexed）。 */
 const hover = (col: number, row: number) => stdin.write(`\x1b[<35;${col};${row}M`)
@@ -210,7 +218,8 @@ const clickCell = (col: number, row: number) => {
 await settle(() => screenHas(term, 'AUTO_RECAP_SUMMARY'))
 check('挂载后灰行显示自动总结', screenHas(term, 'AUTO_RECAP_SUMMARY'))
 check('自动触发恰好一次 recapRecent', channel.recapCallCount === 1, String(channel.recapCallCount))
-check('手动面板未打开（无建议标题）', !screenHas(term, '建议标题'))
+check('启动提示包含建议标题字样', screenHas(term, '并建议标题'))
+check('手动面板未打开', !hasRecapPanel() && !screenHas(term, 'AUTO_RECAP_TITLE'))
 check('回顾行带「回顾：」前缀', screenHas(term, '回顾：'))
 {
   const line = findText(term, 'AUTO_RECAP_SUMMARY')
@@ -231,9 +240,8 @@ check('hover 显示关闭 chip', screenHas(term, '×'))
 // ── 3. 点击灰行：展开完整 RecapPanel ───────────────────────────────────
 const expandPos = findText(term, 'AUTO_RECAP_SUMMARY')
 if (expandPos !== null) clickCell(expandPos.col + 1, expandPos.row + 1)
-await settle(() => screenHas(term, '建议标题'))
-check('点击展开完整面板', screenHas(term, 'AUTO_RECAP_TITLE') && screenHas(term, '应用'))
-check('展开面板带标题栏', screenHas(term, '会话回顾'))
+check('点击展开完整面板', await settled(() => screenHas(term, 'AUTO_RECAP_TITLE') && screenHas(term, '[应用]')))
+check('展开面板带标题栏', await settled(hasRecapPanel))
 
 // ── 4. a 键应用建议标题（走 renameSession）────────────────────────────
 stdin.write('a')
@@ -243,8 +251,7 @@ check('会话标题已更新', channel.sessionTitle === 'AUTO_RECAP_TITLE', chan
 
 // ── 5. Esc 收起：回到灰行 ──────────────────────────────────────────────
 stdin.write('\x1b')
-await settle(() => !screenHas(term, '建议标题'))
-check('Esc 收起回灰行', screenHas(term, 'AUTO_RECAP_SUMMARY'))
+check('Esc 收起回灰行', await settled(() => !hasRecapPanel() && screenHas(term, 'AUTO_RECAP_SUMMARY')))
 
 // ── 6. 点击 × 关闭：灰行消失直到下次会话切换 ───────────────────────────
 // Esc 收起后 AutoRecapRow 重新挂载、hover 态复位；鼠标还停在原地，
