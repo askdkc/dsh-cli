@@ -46,7 +46,7 @@
     "clean": "node -e \"require('node:fs').rmSync('lib', { recursive: true, force: true })\"",
     "smoke": "node scripts/smoke.mjs",
     "sync:models": "node --import tsx/esm scripts/sync-owned-opencode.mjs",
-    "verify": "npm run build && npm run smoke && node --test scripts/verify-opencode.mjs && node --loader ./scripts/reject-pi-loader.mjs scripts/verify-opencode-isolated.mjs"
+    "verify": "npm run build && npm run smoke && node --experimental-test-module-mocks --test scripts/verify-opencode.mjs scripts/verify-opencode-failure.mjs scripts/verify-opencode-failure-stream.mjs scripts/verify-opencode-retry.mjs && node --loader ./scripts/reject-pi-loader.mjs scripts/verify-opencode-isolated.mjs"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
@@ -100,6 +100,7 @@
     "tsx": "4.23.13",
     "@deepseek-ai/dsh-launch-environment": "alpha",
     "@deepseek-ai/dsh-authorization": "alpha",
-    "@deepseek-ai/dsh-credentials": "alpha"
+    "@deepseek-ai/dsh-credentials": "alpha",
+    "@deepseek-ai/dsh-llm-retry": "0.2.1-alpha.1"
   }
 }

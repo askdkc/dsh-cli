@@ -8,7 +8,7 @@ import { spawnSync } from 'node:child_process'
 import { satisfies, rcompare, valid, lt } from 'semver'
 import { randomUUID } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { declineUndecidedKiokukoBuild } from './opencode-profile-build-policy.mjs'
+import { declineUndecidedKiokukoBuild, isUndecidedKiokukoBuild } from './opencode-profile-build-policy.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const hostDefault = process.argv.includes('--host-default')
 const freshInstall = hostDefault || process.argv.includes('--fresh-install')
@@ -48,10 +48,11 @@ try {
     await writeFile(join(host, 'package.json'), await readFile(join(providedHost, 'package.json')))
     await symlink(join(providedHost, 'node_modules'), join(host, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir')
   } else {
-    await writeFile(join(host, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': 'alpha' } }))
+    await writeFile(join(host, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: { '@deepseek-ai/dsh': process.env.DSH_AUTH_TEST_VERSION ?? 'alpha' } }))
     run('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund'])
   }
   const hostPackage = JSON.parse(await readFile(join(host, 'node_modules/@deepseek-ai/dsh/package.json')))
+  if (process.env.DSH_AUTH_TEST_VERSION) assert.equal(hostPackage.version, process.env.DSH_AUTH_TEST_VERSION)
   const nativePiVersion = await nativePiFor(host)
   console.log(`current host: DSH ${hostPackage.version}, native pi ${nativePiVersion}`)
   const cli = join(host, 'node_modules/@deepseek-ai/dsh', hostPackage.bin.dsh)
@@ -126,7 +127,7 @@ try {
   } catch (error) {
     // Exercise the documented user choice, not a pre-seeded install policy.
     // Any other failure or additional undecided package still fails acceptance.
-    if (!(error instanceof Error) || !/^\[ERR_PNPM_IGNORED_BUILDS\] Ignored build scripts: kiokuko-dsh@[0-9][0-9A-Za-z.+-]*\s*$/mu.test(error.message)) throw error
+    if (!(error instanceof Error) || !isUndecidedKiokukoBuild(error.message)) throw error
     const profile = join(home, 'profiles', 'dsh-cli')
     const policyPath = join(profile, 'pnpm-workspace.yaml')
     const { default: YAML } = await import('yaml')
@@ -163,6 +164,7 @@ try {
   assert.doesNotMatch(updated, /did not activate/)
   console.log(updated.split('\n').filter(line => /host-owned pi|installed auth pi|profile updated ready|passed|failed|FAIL|fixture transport OK/.test(line)).join('\n'))
   run(node, ['--loader', join(root, 'dsh-auth/scripts/reject-pi-loader.mjs'), probe], host, { DSH_AUTH_TEST_PHASE: 'independent', DSH_AUTH_TEST_EXPECT_CLI: manifest.version })
+  console.log(run(node, [join(root, 'scripts/verify-opencode-profile-lifecycle.mjs'), host, cli]))
   console.log(`DSH ${hostPackage.version} / native pi ${nativePiVersion}: ${freshInstall ? 'fresh install' : `formal upgrade from ${baselinePlugin}`} to cli ${manifest.version}/auth ${authManifest.version}, all configured routes, pi-free profile and installed wire fixture OK`)
 } finally {
   for (const probe of probes) await rm(probe, { force: true })

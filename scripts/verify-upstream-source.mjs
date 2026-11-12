@@ -152,6 +152,21 @@ try {
   }
   console.log(`upstream source types ${failures.length ? 'FAIL' : 'OK'} (${sourceManifest.version ?? 'unversioned checkout'}; ${Object.keys(sourcePaths).length} path mappings)`)
 
+  // Execute the provider contract against this very source snapshot as well as
+  // checking its types. Tests assert resolution, so npm fallback cannot pass.
+  const providerBuild = spawnSync('npm', ['--prefix', join(tuiRoot, 'dsh-auth'), 'run', 'build'], {
+    cwd: tuiRoot, stdio: 'inherit', shell: process.platform === 'win32',
+  })
+  if (providerBuild.error || providerBuild.status !== 0) {
+    failures.push(`provider artifact build failed: ${providerBuild.error ?? providerBuild.status}`)
+  } else {
+    const provider = spawnSync(process.execPath, ['--import', 'tsx/esm', '--experimental-test-module-mocks', '--test',
+      ...['verify-opencode.mjs', 'verify-opencode-failure.mjs', 'verify-opencode-failure-stream.mjs', 'verify-opencode-retry.mjs'].map(name => join(tuiRoot, 'dsh-auth/scripts', name)),
+    ], { cwd: tuiRoot, stdio: 'inherit', env: { ...process.env, DSH_AUTH_EXPECT_SOURCE: sourceRoot, TSX_TSCONFIG_PATH: join(sourceRoot, 'tsconfig.base.json') } })
+    if (provider.error || provider.status !== 0) failures.push(`upstream provider runtime failed: ${provider.error ?? provider.status}`)
+    console.log(`upstream provider runtime ${provider.status === 0 ? 'OK' : 'FAIL'} revision=${revision.stdout.trim()}`)
+  }
+
   if (process.argv.includes('--live-session')) {
     const live = spawnSync(process.execPath, ['--import', 'tsx/esm', join(tuiRoot, 'scripts/verify-live-session.ts'), '--real-upstream'], { cwd: tuiRoot, stdio: 'inherit', env: { ...process.env, HOME: isolation, USERPROFILE: isolation, DSH_HOME: join(isolation, 'dsh-home'), DSH_HARNESS_SOURCE_ROOT: sourceRoot, TSX_TSCONFIG_PATH: join(sourceRoot, 'tsconfig.base.json') } })
     if (live.error || live.status !== 0) failures.push(`isolated upstream Session failed: ${live.error ?? live.status}`)

@@ -4,6 +4,7 @@ import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import type { LanguageModelV4Prompt } from '@ai-sdk/provider'
 import type { OpenCodeModel } from './opencode-catalog.js'
 import { projectReplay, requireReplaySignature } from './opencode-replay.js'
+import { OpenCodeFailure } from './opencode-failure.js'
 import { createHash } from 'node:crypto'
 export async function encodePrompt(options: GenerateOptions, model: OpenCodeModel, attachments?: () => AttachmentStore | undefined, warn?: (reason: string) => void): Promise<LanguageModelV4Prompt> {
     const prompt: LanguageModelV4Prompt = []; const names = new Map<string, string>(); const callIds = new Map<string, string>(); const wireIds = new Set<string>()
@@ -12,9 +13,12 @@ export async function encodePrompt(options: GenerateOptions, model: OpenCodeMode
     let imageBytes = 0
     const imagePart = async (block: Extract<ContentBlock, { type: 'image' }>) => {
       if (block.offloaded || !model.inputModalities.includes('image')) return { type: 'text' as const, text: '[image omitted from this request]' }
-      const store = attachments?.(); if (!store) throw new LlmError('Image attachment service unavailable', 'ATTACHMENT_UNAVAILABLE')
+      const store = attachments?.(); if (!store) throw new OpenCodeFailure('Image attachment service unavailable', 'ATTACHMENT_UNAVAILABLE')
       const { requestImageDimensions } = await import('@deepseek-ai/dsh-attachment')
-      const image = await store.readImageRequest(block.attachment, { ...requestImageDimensions(block.attachment.width, block.attachment.height, 4_194_304), maxBytes: 1024 * 1024 }, options.signal)
+      const image = await store.readImageRequest(block.attachment, { ...requestImageDimensions(block.attachment.width, block.attachment.height, 4_194_304), maxBytes: 1024 * 1024 }, options.signal).catch(() => {
+        options.signal?.throwIfAborted()
+        throw new OpenCodeFailure('Image attachment unavailable', 'ATTACHMENT_UNAVAILABLE')
+      })
       imageBytes += Math.ceil(image.bytes / 3) * 4
       if (imageBytes > 20 * 1024 * 1024) throw new LlmError('Image request exceeds 20 MiB', 'IMAGE_OFFLOAD_REQUIRED', { offloadImages: 1 })
       return { type: 'file' as const, mediaType: image.mediaType, data: { type: 'data' as const, data: image.data } }

@@ -4,6 +4,9 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * *'
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -215,7 +218,11 @@ jobs:
             .upstream/deepseek-harness/pnpm-lock.yaml
 
       - name: Record upstream revision
-        run: git -C "$DSH_HARNESS_SOURCE_ROOT" rev-parse HEAD
+        run: |
+          sha=$(git -C "$DSH_HARNESS_SOURCE_ROOT" rev-parse HEAD)
+          echo "DSH_SOURCE_SHA=$sha" >> "$GITHUB_ENV"
+          echo "DSH source under test: $sha" >> "$GITHUB_STEP_SUMMARY"
+          git -C "$DSH_HARNESS_SOURCE_ROOT" show HEAD:package.json | node --input-type=module -e 'let s="";for await(const c of process.stdin)s+=c;console.log("DSH_AUTH_TEST_VERSION="+JSON.parse(s).version)' >> "$GITHUB_ENV"
 
       - run: pnpm install --frozen-lockfile --ignore-scripts
 
@@ -236,6 +243,8 @@ jobs:
       # Upgrade the previous published CLI release with each host's native
       # dependencies. Provider expectations come from the installed package.
       - run: pnpm verify:opencode-profile
+      - name: Record successful compatibility result
+        run: echo "Compatibility passed for DSH $DSH_SOURCE_SHA ($DSH_AUTH_TEST_VERSION), including provider runtime and installed profile lifecycle." >> "$GITHUB_STEP_SUMMARY"
 
   # 渲染 · 滚动 · resize · 子代理 · picker——与其余组并行；失败互不遮蔽。
   # needs: build：编译只在 build job 发生一次，本组经 artifact 复用产物。
