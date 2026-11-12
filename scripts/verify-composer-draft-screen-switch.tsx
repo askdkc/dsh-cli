@@ -62,6 +62,7 @@ const [
   { Chat },
   { QuestionStore },
   { LOCAL_COMMANDS, completeCommands },
+  { TIPS },
   { settled, viewportLines },
 ] = await Promise.all([
   import('node:stream'),
@@ -71,6 +72,7 @@ const [
   import('../src/screens/Chat.js'),
   import('../src/dsh-adapter/questions.js'),
   import('../src/commands.js'),
+  import('../src/tips.js'),
   import('./lib/term-test.mjs'),
 ])
 
@@ -453,7 +455,13 @@ function screenHas(app: Harness, text: string): boolean {
 }
 
 function dashboardVisible(app: Harness): boolean {
-  return screen(app).some(line => line.includes('子代理面板'))
+  return screenHas(app, '─ 子代理面板 ─')
+}
+
+function foldChipVisible(app: Harness): boolean {
+  const rows = inputBlock(app) ?? []
+  return rows.some(row => row.includes('▸') && row.includes('fold-line-00'))
+    && rows.every(row => !row.includes('fold-line-05'))
 }
 
 /**
@@ -595,14 +603,9 @@ async function scenarioEditState(): Promise<string> {
     // ── Phase A: inline text + fold block + staged image, vim INSERT ──────
     app.stdin.write('alpha ')
     await waitFor(scenario, 'head text before the paste', () => composerHas(app, 'alpha'))
+    assertTrue(scenario, 'startup tip shows the fold glyph', screenHas(app, '折成 ▸ 小条'))
     pasteText(app, BIG_PASTE)
-    await waitFor(
-      scenario,
-      'big bracketed paste to fold into one chip',
-      () => screenHas(app, '▸') && !screenHas(app, 'fold-line-05'),
-      8000,
-    )
-    assertTrue(scenario, 'fold chip keeps the first-line preview', screenHas(app, 'fold-line-00'))
+    await waitFor(scenario, 'fold chip with first-line preview in the composer', () => foldChipVisible(app), 8000)
     pasteText(app, pastedImagePath)
     await waitFor(scenario, 'staged image token', () => composerHas(app, STAGED_IMAGE_TOKEN), 8000)
     // The paste leaves the caret deterministically at the end of the inserted
@@ -613,8 +616,7 @@ async function scenarioEditState(): Promise<string> {
 
     await roundTripDashboard(scenario, app)
     assertSameComposerState(scenario, 'phase A (INSERT + fold + image)', beforeA, composerState(app))
-    assertTrue(scenario, 'phase A: fold chip survives', screenHas(app, '▸') && !screenHas(app, 'fold-line-05'))
-    assertTrue(scenario, 'phase A: fold preview survives', screenHas(app, 'fold-line-00'))
+    assertTrue(scenario, 'phase A: fold chip and its preview survive', foldChipVisible(app))
     const chipA2 = tokenIsChip(app, STAGED_IMAGE_TOKEN)
     assertTrue(scenario, `phase A: image binding survives as a chip (${chipA2.detail})`, chipA2.ok)
     assertEqual(scenario, 'phase A: vim INSERT restored', 'INSERT', vimBadge(app))
@@ -645,9 +647,8 @@ async function scenarioEditState(): Promise<string> {
     app.stdin.write('i') // back to INSERT so the editor opens over a live caret
     await waitFor(scenario, 'vim back to INSERT', () => vimBadge(app) === 'INSERT', 8000)
     app.stdin.write(CTRL_SHIFT_E)
-    await waitFor(scenario, 'fullscreen draft editor to open', () => screenHas(app, '草稿编辑'), 8000)
-    assertTrue(scenario, 'editor shows the draft text', screenHas(app, 'normal draft'))
-    assertTrue(scenario, 'editor shows the staged token text', screenHas(app, STAGED_IMAGE_TOKEN))
+    await waitFor(scenario, 'fullscreen draft editor to show the draft and staged token',
+      () => screenHas(app, '✎ 草稿编辑') && screenHas(app, 'normal draft') && screenHas(app, STAGED_IMAGE_TOKEN), 8000)
     // The editor paste leaves the caret deterministically at the end of the
     // draft. Enter a marker there (the wait observes the pre-trip caret), then
     // round-trip and type a second marker: it can only sit next to the first
@@ -669,10 +670,10 @@ async function scenarioEditState(): Promise<string> {
     await waitFor(
       scenario,
       'fullscreen editor to remount after the dashboard',
-      () => !dashboardVisible(app) && screenHas(app, '草稿编辑') && screenHas(app, 'normal draft'),
+      () => !dashboardVisible(app) && screenHas(app, '✎ 草稿编辑') && screenHas(app, 'normal draft'),
       8000,
     )
-    assertTrue(scenario, 'phase C: fullscreen editor restored', screenHas(app, '草稿编辑'))
+    assertTrue(scenario, 'phase C: fullscreen editor restored', screenHas(app, '✎ 草稿编辑'))
     assertTrue(scenario, 'phase C: editor text restored', screenHas(app, 'normal draft'))
     assertTrue(scenario, 'phase C: token text restored', screenHas(app, STAGED_IMAGE_TOKEN))
     // The second marker lands adjacent to the first only when the caret offset
@@ -776,7 +777,12 @@ async function scenarioEditState(): Promise<string> {
   return summary
 }
 
+const random = Math.random
 try {
+  // The startup tip and the actual folded preview share the ▸ glyph.
+  const foldTipIndex = TIPS.findIndex(tip => tip.id === 'keys-composer-fold')
+  if (foldTipIndex < 0) throw new Error('Missing keys-composer-fold startup tip')
+  Math.random = () => (foldTipIndex + 0.5) / TIPS.length
   const results: string[] = []
   // `VERIFY_COMPOSER_SCENARIOS=edit-state` runs a subset (debugging and the
   // TDD RED capture); unset/empty runs everything registered below.
@@ -840,6 +846,7 @@ try {
   }
   process.exitCode = 1
 } finally {
+  Math.random = random
   process.stderr.write = realStderrWrite as typeof process.stderr.write
   rmSync(home, { recursive: true, force: true })
 }
