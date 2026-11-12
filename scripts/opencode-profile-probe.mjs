@@ -73,8 +73,8 @@ if(fixtureFetch) globalThis.fetch=fixtureFetch
 const app=await runProfile({profile:'dsh-cli',environment:loadLayeredEnv('probe'),args:[],patchFiles:[overlay]})
 const api=app.ctx.get('dshAuth')?.api
 if(process.env.DSH_AUTH_TEST_PHASE==='baseline') {
-  assert(api,'published baseline auth must activate with its host-owned dependencies')
-  assert((await api.providers()).length>0,'published baseline must register providers')
+  assert(api,'upgrade baseline auth must activate with its host-owned dependencies')
+  assert((await api.providers()).length>0,'upgrade baseline must register providers')
 } else {
   assert(api);const llm=app.ctx.get('llm');const models=[['opencode','claude-sonnet-5-5'],['opencode-go','gpt-6-luna']]
   for(const [provider,id] of models) {

@@ -240,8 +240,8 @@ jobs:
       - run: pnpm --dir dsh-auth verify
       - run: pnpm verify:profile-sync
       - run: pnpm verify:opencode-profile --host-default
-      # Upgrade the previous published CLI release with each host's native
-      # dependencies. Provider expectations come from the installed package.
+      # Upgrade a generated baseline to the packed candidate using the real
+      # profile installer. Provider expectations come from the installed package.
       - run: pnpm verify:opencode-profile
       - name: Record successful compatibility result
         run: echo "Compatibility passed for DSH $DSH_SOURCE_SHA ($DSH_AUTH_TEST_VERSION), including provider runtime and installed profile lifecycle." >> "$GITHUB_STEP_SUMMARY"

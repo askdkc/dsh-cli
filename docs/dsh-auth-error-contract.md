@@ -55,8 +55,8 @@ bundled directories, so it must not overlap installs, builds or another pack.
 pnpm compile
 pnpm --dir dsh-auth verify
 DSH_REQUIRE_UPSTREAM_BASELINE=1 pnpm verify:upstream-source --live-session
-DSH_AUTH_TEST_VERSION=0.2.2-rc.2 pnpm verify:opencode-profile --host-default
-DSH_AUTH_TEST_VERSION=0.2.2-rc.2 pnpm verify:opencode-profile
+pnpm verify:opencode-profile --host-default
+pnpm verify:opencode-profile
 pnpm verify:build
 pnpm test:compatibility
 pnpm verify:package
@@ -64,7 +64,10 @@ pnpm verify:bun-package
 ```
 
 The profile check installs the packed plugin into a disposable profile on the
-specified distributed DSH version. Its PTY check submits input, cancels an active
+distributed DSH version (the current alpha by default, or `DSH_AUTH_TEST_VERSION`).
+The upgrade check uses a generated baseline
+with a distinct version, so the release being tested does not select a package
+from the npm release history. Its PTY check submits input, cancels an active
 stream, submits another input and exits with `/quit`. It asserts exactly one
 request for each generation; the host's separate session-title request is
 identified separately. No live provider credential is used: a fetch fixture
