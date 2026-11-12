@@ -24,6 +24,7 @@ const { Terminal: XTerm } = xtermHeadless
 import { render } from '../lib/types/ui.js'
 import { Chat } from '../lib/types/screens/Chat.js'
 import { setLang } from '../lib/types/i18n.js'
+import { TIPS } from '../lib/types/tips.js'
 import { settle, settled, sleep, viewportLines } from './lib/term-test.mjs'
 
 let failed = 0
@@ -196,6 +197,11 @@ const toPlain = s =>
 
 const { stdout, stderr, stdin } = makeStreams()
 const channel = makeChannel()
+// Exercise the startup tip that also contains the Chinese slider title.
+const effortTipIndex = TIPS.findIndex(tip => tip.id === 'cmd-effort')
+if (effortTipIndex < 0) throw new Error('Missing cmd-effort startup tip')
+const random = Math.random
+Math.random = () => (effortTipIndex + 0.5) / TIPS.length
 const instance = await render(
   React.createElement(Chat, {
     channel,
@@ -203,13 +209,14 @@ const instance = await render(
     onExit() {},
   }),
   { stdout, stderr, stdin, exitOnCtrlC: false, patchConsole: false },
-)
+).finally(() => { Math.random = random })
 // 固定窗:pacing 等 Chat 首帧与快捷键安装完成，无单一可轮询锚点
 await sleep(700)
 
 // inline 模式下有 scrollback 时 getLine(0..rows) 直扫读的是缓冲区开头；
 // 改用公共辅助按 baseY 读可见视口（issue #532）。
 const screen = () => viewportLines(term).join('\n')
+const sliderTitleVisible = title => viewportLines(term).some(line => line.trim() === title)
 
 // Pin the UI language so the assertions below don't depend on the host's
 // persisted /lang choice or OS locale (the slider chrome is localized).
@@ -229,7 +236,7 @@ check('en: Esc closes Help only', await settled(() => !/commands:/.test(screen()
 stdin.write('/effort')
 await settle(() => screen().includes('Adjust the reasoning effort'))
 stdin.write('\r')
-check('slider opens with Reasoning effort title', await settled(() => /Reasoning effort/.test(screen())), '')
+check('slider opens with Reasoning effort title', await settled(() => sliderTitleVisible('Reasoning effort')), '')
 check('slider lists all three levels', await settled(() => /Off/.test(screen()) && /High/.test(screen()) && /Max/.test(screen())), '')
 check('current level marked', await settled(() => /High\s*✓/.test(screen()) || /✓/.test(screen())), '')
 
@@ -240,7 +247,7 @@ check('statusline effort shows max', await settled(() => /max/.test(screen())), 
 
 // 3. Esc closes.
 stdin.write('\x1b')
-check('Esc closed the slider', await settled(() => !/Reasoning effort/.test(screen().slice(-4000))), '')
+check('Esc closed the slider', await settled(() => !sliderTitleVisible('Reasoning effort')), '')
 
 // 4. /effort off → direct set + notify.
 stdin.write('/effort off')
@@ -275,11 +282,12 @@ stdin.write('/effort')
 // /effort 暂无 cmd-desc-effort 键，zh 下补全描述回退英文；若日后补键需同步改这里。
 await settle(() => screen().includes('Adjust the reasoning effort'))
 stdin.write('\r')
-check('zh: slider title 推理强度', await settled(() => screen().includes('推理强度')), '')
-check('zh: hint line localized', await settled(() => screen().includes('调整') && screen().includes('完成')), '')
+check('zh: slider title 推理强度', await settled(() => sliderTitleVisible('推理强度')), '')
+check('zh: hint line localized', await settled(() => screen().includes('调整 · Enter/Esc 完成')), '')
 // Read the xterm visible screen after the repaint, not the raw output backlog.
 stdin.write('\x1b')
-check('zh: Esc closed the slider', await settled(() => !screen().includes('推理强度')), '')
+check('zh: Esc closed the slider', await settled(() => !sliderTitleVisible('推理强度')), '')
+check('zh: startup tip still includes the slider title', await settled(() => screen().includes('实时调推理强度')), '')
 setLang('en')
 
 instance.unmount()
